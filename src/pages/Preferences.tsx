@@ -29,11 +29,25 @@ export function Preferences() {
   const prefs = useStore((s) => s.userProfile.preferences)
   const updatePrefs = useStore((s) => s.updateUserPreferences)
 
+  // Draft state — nothing is applied until the user taps Save.
+  const [currency, setCurrency] = useState(prefs.currency)
+  const [language, setLanguage] = useState(prefs.language)
+  const [notifications, setNotifications] = useState(prefs.notifications)
+
   const [openCurrency, setOpenCurrency] = useState(false)
   const [openLanguage, setOpenLanguage] = useState(false)
+  const [saved, setSaved] = useState(false)
 
-  const currencyLabel = CURRENCIES.find((c) => c.code === prefs.currency)?.label || prefs.currency
-  const languageLabel = LANGUAGES.find((l) => l.code === prefs.language)?.label || 'English'
+  const currencyLabel = CURRENCIES.find((c) => c.code === currency)?.label || currency
+  const languageLabel = LANGUAGES.find((l) => l.code === language)?.label || 'English'
+
+  const dirty = currency !== prefs.currency || language !== prefs.language || notifications !== prefs.notifications
+
+  function handleSave() {
+    updatePrefs({ currency, language, notifications })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <AppShell showBottomNav topBar={<TopBar title="App Preferences" showBack />}>
@@ -51,8 +65,8 @@ export function Preferences() {
             {openCurrency && (
               <OptionList
                 options={CURRENCIES}
-                selected={prefs.currency}
-                onSelect={(code) => { updatePrefs({ currency: code }); setOpenCurrency(false) }}
+                selected={currency}
+                onSelect={(code) => { setCurrency(code); setOpenCurrency(false) }}
               />
             )}
 
@@ -67,8 +81,8 @@ export function Preferences() {
             {openLanguage && (
               <OptionList
                 options={LANGUAGES}
-                selected={prefs.language}
-                onSelect={(code) => { updatePrefs({ language: code }); setOpenLanguage(false) }}
+                selected={language}
+                onSelect={(code) => { setLanguage(code); setOpenLanguage(false) }}
               />
             )}
           </Card>
@@ -82,12 +96,23 @@ export function Preferences() {
               icon={<Bell size={20} />}
               title="Push Notifications"
               description="Budget alerts and weekly summaries"
-              checked={prefs.notifications}
-              onChange={(v) => updatePrefs({ notifications: v })}
+              checked={notifications}
+              onChange={setNotifications}
               iconBg="#FFF0E5"
             />
           </Card>
         </div>
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          disabled={!dirty && !saved}
+          className={`w-full rounded-2xl py-4 text-center text-[16px] font-bold text-white transition ${
+            saved ? 'bg-green' : dirty ? 'bg-primary active:bg-primary/90' : 'bg-primary/40'
+          }`}
+        >
+          {saved ? '✓ Saved' : dirty ? 'Save Changes' : 'Saved'}
+        </button>
       </div>
     </AppShell>
   )

@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
-import { Bell, AlertTriangle, Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Bell, AlertTriangle, Plus, Trash2, CheckCircle2, AlertCircle, ChevronRight, Check } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ToggleRow } from '@/components/ui/ToggleRow'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { formatMoney } from '@/utils/money'
 import type { SpendingAlert } from '@/types'
+
+// Choices offered when a user creates their own category (icon + colour)
+const ICON_CHOICES = ['🛒', '🍽️', '🚗', '🛍️', '📄', '❤️', '⭐', '🎁', '✈️', '🏠', '☕', '🎬', '💊', '🐾', '📚', '💡', '🎮', '💼', '👶', '🏋️']
+const COLOR_CHOICES = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B', '#0EA5E9', '#EC4899']
 
 export function SpendingAlerts() {
   const [newCategoryId, setNewCategoryId] = useState('')
@@ -22,12 +27,69 @@ export function SpendingAlerts() {
     percentage: true,
   })
   const [error, setError] = useState('')
+  const [catModal, setCatModal] = useState(false)
+  const [newCatName, setNewCatName] = useState('')
+  const [newCatIcon, setNewCatIcon] = useState(ICON_CHOICES[0])
+  const [newCatColor, setNewCatColor] = useState(COLOR_CHOICES[0])
 
   const spendingAlerts = useStore((s) => s.spendingAlerts)
   const addSpendingAlert = useStore((s) => s.addSpendingAlert)
   const updateSpendingAlert = useStore((s) => s.updateSpendingAlert)
   const deleteSpendingAlert = useStore((s) => s.deleteSpendingAlert)
+  const addCategory = useStore((s) => s.addCategory)
+  const deleteCategory = useStore((s) => s.deleteCategory)
+  const updateExpense = useStore((s) => s.updateExpense)
+  const expenses = useStore((s) => s.expenses)
   const { categories } = useLookups()
+
+  const [editMode, setEditMode] = useState(false)
+  const [toDelete, setToDelete] = useState<Set<string>>(new Set())
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const selectedCategory = categories.find((c) => c.id === newCategoryId)
+
+  // items affected if the currently-selected categories are deleted
+  const deleteUsage = expenses.filter((e) => toDelete.has(e.categoryId)).length
+  const fallbackCat = categories.find((c) => !toDelete.has(c.id))
+
+  function toggleEditMode() {
+    setEditMode((v) => {
+      if (v) setToDelete(new Set()) // leaving edit clears selection
+      return !v
+    })
+  }
+
+  function toggleToDelete(id: string) {
+    setToDelete((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function doDeleteSelected() {
+    toDelete.forEach((id) => {
+      // reassign this category's expenses to a category that survives the delete
+      if (fallbackCat) {
+        expenses.filter((e) => e.categoryId === id).forEach((e) => updateExpense(e.id, { categoryId: fallbackCat.id }))
+      }
+      deleteCategory(id)
+      if (newCategoryId === id) setNewCategoryId('')
+    })
+    setToDelete(new Set())
+    setConfirmDelete(false)
+    setEditMode(false)
+  }
+
+  function createCategory() {
+    if (!newCatName.trim()) return
+    const id = addCategory(newCatName.trim(), newCatIcon, newCatColor)
+    setNewCategoryId(id)
+    setNewCatName('')
+    setNewCatIcon(ICON_CHOICES[0])
+    setNewCatColor(COLOR_CHOICES[0])
+    setCatModal(false)
+  }
 
   // Check notification permissions on mount
   useEffect(() => {
@@ -217,32 +279,26 @@ export function SpendingAlerts() {
           Add New Alert
         </h2>
         <Card className="space-y-3 p-4">
-          {/* Category Selector */}
+          {/* Category Selector — opens a picker sheet that scales to any number of categories */}
           <div>
             <label className="block text-[13px] font-semibold text-muted mb-2">Category</label>
-            <div className="grid max-h-40 grid-cols-2 gap-2 overflow-y-auto">
-              {categories.map((cat) => {
-                const isSelected = newCategoryId === cat.id
-                const hasAlert = spendingAlerts.some((a) => a.categoryId === cat.id)
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setNewCategoryId(cat.id)}
-                    disabled={hasAlert && !isSelected}
-                    className={`rounded-input px-3 py-2 text-[13px] font-semibold transition ${
-                      isSelected
-                        ? 'bg-primary/20 text-ink ring-2 ring-primary'
-                        : hasAlert
-                          ? 'cursor-not-allowed bg-line/40 text-muted opacity-50'
-                          : 'bg-line/30 text-ink active:bg-line/50'
-                    }`}
-                  >
-                    <span className="mr-1">{cat.icon}</span>
-                    {cat.name}
-                  </button>
-                )
-              })}
-            </div>
+            <button
+              type="button"
+              onClick={() => setCatModal(true)}
+              className="flex w-full items-center justify-between rounded-input border border-line bg-surface px-4 py-3 active:bg-surfaceSoft"
+            >
+              <span className="flex items-center gap-2">
+                {selectedCategory ? (
+                  <>
+                    <CategoryIcon icon={selectedCategory.icon} color={selectedCategory.color} size={28} />
+                    <span className="text-[15px] font-semibold text-ink">{selectedCategory.name}</span>
+                  </>
+                ) : (
+                  <span className="text-[15px] text-muted">Select a category</span>
+                )}
+              </span>
+              <ChevronRight size={18} className="text-muted" />
+            </button>
           </div>
 
           {/* Alert Type Selector */}
@@ -374,6 +430,169 @@ export function SpendingAlerts() {
           </div>
         </div>
       </Card>
+
+      {/* Category picker sheet — scrolls for any number of categories, with inline create */}
+      <Modal open={catModal} onClose={() => setCatModal(false)} title="Choose Category">
+        {/* Edit / multi-select toolbar */}
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[13px] text-muted">{editMode ? 'Select categories to delete' : 'Tap to choose'}</p>
+          <div className="flex items-center gap-3">
+            {editMode && (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                disabled={toDelete.size === 0}
+                className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[13px] font-bold transition ${
+                  toDelete.size > 0 ? 'bg-[#FEE2E2] text-[#DC2626] active:bg-[#FBCFCF]' : 'bg-line/40 text-muted'
+                }`}
+              >
+                <Trash2 size={14} />
+                Delete{toDelete.size > 0 ? ` (${toDelete.size})` : ''}
+              </button>
+            )}
+            {categories.length > 1 && (
+              <button onClick={toggleEditMode} className="text-[14px] font-bold text-primary">
+                {editMode ? 'Done' : 'Edit'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 p-1">
+          {categories.map((c) => {
+            const isSelected = newCategoryId === c.id
+            const hasAlert = spendingAlerts.some((a) => a.categoryId === c.id)
+            const marked = toDelete.has(c.id)
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  if (editMode) { toggleToDelete(c.id); return }
+                  if (hasAlert && !isSelected) return // already has an alert — not selectable
+                  setNewCategoryId(c.id)
+                  setCatModal(false)
+                }}
+                className={`relative flex flex-col items-center gap-1.5 rounded-card border p-3 transition ${
+                  editMode && marked
+                    ? 'border-[#DC2626] bg-[#FEE2E2]'
+                    : isSelected
+                      ? 'border-primary bg-primarySoft'
+                      : !editMode && hasAlert
+                        ? 'cursor-not-allowed border-line bg-line/20 opacity-50'
+                        : 'border-line bg-surface active:bg-surfaceSoft'
+                }`}
+              >
+                <CategoryIcon icon={c.icon} color={c.color} size={40} />
+                <span className="truncate text-[12px] font-semibold text-ink">{c.name}</span>
+                {!editMode && hasAlert && !isSelected && (
+                  <span className="absolute right-1 top-1 text-[9px] font-bold uppercase text-muted">set</span>
+                )}
+                {editMode && (
+                  <span
+                    className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                      marked ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-line bg-surface'
+                    }`}
+                  >
+                    {marked && <Check size={12} />}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        {/* Create your own category (hidden while editing) */}
+        {!editMode && (
+        <div className="mt-5 rounded-card border border-line bg-surfaceSoft p-4">
+          <p className="mb-3 text-[14px] font-bold text-ink">Create your own</p>
+
+          {/* Live preview + name */}
+          <div className="flex items-center gap-3">
+            <CategoryIcon icon={newCatIcon} color={newCatColor} size={44} />
+            <input
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              placeholder="Category name"
+              className="flex-1 rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
+            />
+          </div>
+
+          {/* Icon picker */}
+          <p className="mb-2 mt-4 text-[12px] font-semibold uppercase tracking-wide text-muted">Icon</p>
+          <div className="grid grid-cols-8 gap-1.5">
+            {ICON_CHOICES.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => setNewCatIcon(emoji)}
+                className={`flex h-9 items-center justify-center rounded-lg text-xl transition ${
+                  newCatIcon === emoji ? 'bg-primarySoft ring-2 ring-primary' : 'bg-surface active:bg-line/40'
+                }`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* Color picker */}
+          <p className="mb-2 mt-4 text-[12px] font-semibold uppercase tracking-wide text-muted">Colour</p>
+          <div className="flex flex-wrap gap-2.5">
+            {COLOR_CHOICES.map((color) => (
+              <button
+                key={color}
+                onClick={() => setNewCatColor(color)}
+                aria-label={`Colour ${color}`}
+                className={`h-8 w-8 rounded-full transition ${
+                  newCatColor === color ? 'ring-2 ring-ink ring-offset-2 ring-offset-surfaceSoft' : ''
+                }`}
+                style={{ background: color }}
+              />
+            ))}
+          </div>
+
+          <ActionButton onClick={createCategory} className="mt-4" leftIcon={<Plus size={18} />}>
+            Add Category
+          </ActionButton>
+        </div>
+        )}
+      </Modal>
+
+      {/* Delete categories confirmation */}
+      <Modal
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        variant="center"
+        title={toDelete.size === 1 ? 'Delete category?' : 'Delete categories?'}
+      >
+        <p className="text-[14px] text-muted">
+          You're about to delete{' '}
+          <span className="font-semibold text-ink">
+            {toDelete.size} {toDelete.size === 1 ? 'category' : 'categories'}
+          </span>
+          .{' '}
+          {deleteUsage > 0 ? (
+            <>
+              <span className="font-semibold text-ink">
+                {deleteUsage} {deleteUsage === 1 ? 'item is' : 'items are'} currently using{' '}
+                {toDelete.size === 1 ? 'it' : 'them'}.
+              </span>{' '}
+              {fallbackCat ? <>Those items will be moved to “{fallbackCat.name}”. </> : null}
+            </>
+          ) : (
+            <>No items are using {toDelete.size === 1 ? 'it' : 'them'}. </>
+          )}
+          This can't be undone.
+        </p>
+        <div className="mt-5 flex gap-3">
+          <ActionButton variant="outline" className="flex-1" onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </ActionButton>
+          <button
+            onClick={doDeleteSelected}
+            className="flex-1 rounded-pill bg-[#DC2626] py-3 text-center text-[15px] font-bold text-white active:bg-[#B91C1C]"
+          >
+            Delete
+          </button>
+        </div>
+      </Modal>
     </AppShell>
   )
 }
