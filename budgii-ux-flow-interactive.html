@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budgii UX Flow Map - Interactive</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+
+    #header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: white;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    #header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a3b2e;
+    }
+
+    #searchContainer {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #search {
+      width: 280px;
+      padding: 8px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    #search:focus {
+      border-color: #ff6a00;
+      box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.1);
+    }
+
+    #legend {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
+
+    #legend h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    #stats {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    #cy {
+      width: 100%;
+      height: 100%;
+      padding-top: 80px;
+    }
+
+    .controls {
+      position: absolute;
+      top: 100px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .btn:hover {
+      background: #f9f9f9;
+      border-color: #ff6a00;
+      color: #ff6a00;
+    }
+
+    .info-panel {
+      position: absolute;
+      top: 80px;
+      right: 24px;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 100;
+      width: 320px;
+      display: none;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .info-panel.active {
+      display: block;
+    }
+
+    .info-panel h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 12px;
+    }
+
+    .info-panel p {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .links-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+
+    .links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .link-item {
+      padding: 6px 8px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .link-item:hover {
+      background: #ff6a00;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>Budgii UX Flow Map</h1>
+    <div id="searchContainer">
+      <input type="text" id="search" placeholder="Search pages...">
+    </div>
+  </div>
+
+  <div id="stats">
+    <div><strong>34</strong> Pages</div>
+    <div><strong id="edgeCount">46</strong> Connections</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="cy.fit()">Fit to View</button>
+    <button class="btn" onclick="cy.reset()">Reset</button>
+    <button class="btn" onclick="toggleLegend()">Toggle Legend</button>
+  </div>
+
+  <div id="legend" style="display: none;">
+    <h3>Feature Categories</h3>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #FF6A00;"></div>
+      <span>Auth & Onboarding</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #1A3B2E;"></div>
+      <span>Home Hub</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #16A34A;"></div>
+      <span>Expense Tracking</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #0284C7;"></div>
+      <span>Reports & Budget</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #DC2626;"></div>
+      <span>Deals & Shopping</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #7C3AED;"></div>
+      <span>Settings & User</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #6B7280;"></div>
+      <span>Support</span>
+    </div>
+  </div>
+
+  <div id="infoPanel" class="info-panel">
+    <h3 id="infoTitle">Home</h3>
+    <p id="infoDesc">Budget overview</p>
+    <div class="links-label">Navigates to:</div>
+    <div class="links-list" id="infoLinks"></div>
+  </div>
+
+  <div id="cy"></div>
+
+  <script>
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'content': 'data(label)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'background-color': 'data(color)',
+            'color': 'white',
+            'font-size': '11px',
+            'font-weight': '600',
+            'padding': '12px',
+            'border-width': '2px',
+            'border-color': 'rgba(255,255,255,0.3)',
+            'width': '120px',
+            'height': '80px',
+            'text-wrap': 'wrap',
+            'text-max-width': '110px',
+            'shape': 'round-rectangle',
+            'box-shadow': '0 2px 6px rgba(0,0,0,0.1)'
+          }
+        },
+        {
+          selector: 'node:hover',
+          style: {
+            'box-shadow': '0 6px 16px rgba(0,0,0,0.2)',
+            'padding': '14px'
+          }
+        },
+        {
+          selector: 'node.selected',
+          style: {
+            'box-shadow': '0 0 0 3px rgba(255,106,0,0.3)',
+            'border-width': '3px',
+            'border-color': '#FF6A00'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': '2px',
+            'line-color': '#e5e5e5',
+            'target-arrow-color': '#e5e5e5',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'arrow-scale': 1.2
+          }
+        },
+        {
+          selector: 'edge.highlighted',
+          style: {
+            'width': '3px',
+            'line-color': '#FF6A00',
+            'target-arrow-color': '#FF6A00',
+            'z-index': 10
+          }
+        }
+      ],
+
+      elements: [
+        // Nodes
+        { data: { id: 'login', label: '🔐 Login', color: '#FF6A00', desc: 'User authentication' } },
+        { data: { id: 'verification', label: '✓ Verification', color: '#FF6A00', desc: 'OTP verification' } },
+        { data: { id: 'onboarding', label: '🎯 OnBoarding', color: '#FF6A00', desc: '4-step setup' } },
+        { data: { id: 'home', label: '🏠 Home', color: '#1A3B2E', desc: 'Budget overview' } },
+
+        { data: { id: 'transactions', label: '💳 Transactions', color: '#16A34A', desc: 'Expense list' } },
+        { data: { id: 'add-expense', label: '➕ Add Expense', color: '#16A34A', desc: 'Manual entry' } },
+        { data: { id: 'scan-receipt', label: '📸 Scan Receipt', color: '#16A34A', desc: 'Receipt capture' } },
+        { data: { id: 'receipt-results', label: '📋 Receipt Results', color: '#16A34A', desc: 'AI review' } },
+        { data: { id: 'receipt-history', label: '📚 Receipt History', color: '#16A34A', desc: 'Past receipts' } },
+        { data: { id: 'receipt-viewer', label: '🖼️ Receipt Viewer', color: '#16A34A', desc: 'View receipt' } },
+        { data: { id: 'transaction-confirm', label: '✔️ Confirm', color: '#16A34A', desc: 'Confirm transaction' } },
+
+        { data: { id: 'reports', label: '📊 Reports', color: '#0284C7', desc: 'Budget charts' } },
+        { data: { id: 'spending-breakdown', label: '📉 Spending', color: '#0284C7', desc: 'Category breakdown' } },
+        { data: { id: 'budget-setup', label: '💰 Budget Setup', color: '#0284C7', desc: 'Monthly budget' } },
+        { data: { id: 'budget-comparison', label: '📈 Budget Comparison', color: '#0284C7', desc: 'Period analysis' } },
+        { data: { id: 'categories-tags', label: '🏷️ Categories', color: '#0284C7', desc: 'Category management' } },
+        { data: { id: 'category-create', label: '➕ Create Category', color: '#0284C7', desc: 'New category' } },
+        { data: { id: 'tag-create', label: '➕ Create Tag', color: '#0284C7', desc: 'New tag' } },
+        { data: { id: 'recurring-transactions', label: '🔄 Recurring', color: '#0284C7', desc: 'Recurring items' } },
+        { data: { id: 'income-tracking', label: '💵 Income', color: '#0284C7', desc: 'Income log' } },
+        { data: { id: 'spending-alerts', label: '🔔 Alerts', color: '#0284C7', desc: 'Budget notifications' } },
+        { data: { id: 'monthly-summary', label: '📅 Monthly Summary', color: '#0284C7', desc: 'Month overview' } },
+
+        { data: { id: 'deal-watchlist', label: '⭐ Watchlist', color: '#DC2626', desc: 'Tracked deals' } },
+        { data: { id: 'deal-cards', label: '🎴 Deal Cards', color: '#DC2626', desc: 'Swipe view' } },
+        { data: { id: 'todays-deal-report', label: '🎁 Today\'s Deals', color: '#DC2626', desc: 'Daily deals' } },
+        { data: { id: 'shopping-list', label: '🛒 Shopping List', color: '#DC2626', desc: 'Selected items' } },
+
+        { data: { id: 'profile', label: '👤 Profile', color: '#7C3AED', desc: 'User profile' } },
+        { data: { id: 'settings', label: '⚙️ Settings', color: '#7C3AED', desc: 'Account settings' } },
+        { data: { id: 'family-members', label: '👨‍👩‍👧 Family', color: '#7C3AED', desc: 'Family management' } },
+        { data: { id: 'family-invitation', label: '📧 Family Invite', color: '#7C3AED', desc: 'Invite family' } },
+        { data: { id: 'notifications', label: '📬 Notifications', color: '#7C3AED', desc: 'Notifications' } },
+
+        { data: { id: 'help', label: '❓ Help', color: '#6B7280', desc: 'Support' } },
+        { data: { id: 'data-export', label: '📥 Data Export', color: '#6B7280', desc: 'Export data' } },
+        { data: { id: 'item-detail', label: '🔍 Item Detail', color: '#6B7280', desc: 'Item details' } },
+
+        // Edges
+        { data: { source: 'login', target: 'verification' } },
+        { data: { source: 'verification', target: 'onboarding' } },
+        { data: { source: 'onboarding', target: 'home' } },
+
+        { data: { source: 'home', target: 'transactions' } },
+        { data: { source: 'home', target: 'spending-breakdown' } },
+        { data: { source: 'home', target: 'deal-watchlist' } },
+        { data: { source: 'home', target: 'notifications' } },
+
+        { data: { source: 'transactions', target: 'add-expense' } },
+        { data: { source: 'transactions', target: 'scan-receipt' } },
+        { data: { source: 'add-expense', target: 'transaction-confirm' } },
+        { data: { source: 'scan-receipt', target: 'receipt-results' } },
+        { data: { source: 'receipt-results', target: 'transaction-confirm' } },
+        { data: { source: 'transaction-confirm', target: 'home' } },
+        { data: { source: 'receipt-history', target: 'receipt-viewer' } },
+
+        { data: { source: 'reports', target: 'budget-setup' } },
+        { data: { source: 'reports', target: 'spending-breakdown' } },
+        { data: { source: 'spending-breakdown', target: 'transactions' } },
+
+        { data: { source: 'deal-watchlist', target: 'deal-cards' } },
+        { data: { source: 'deal-watchlist', target: 'todays-deal-report' } },
+        { data: { source: 'deal-cards', target: 'shopping-list' } },
+        { data: { source: 'todays-deal-report', target: 'deal-cards' } },
+        { data: { source: 'shopping-list', target: 'deal-watchlist' } },
+
+        { data: { source: 'budget-setup', target: 'reports' } },
+        { data: { source: 'category-create', target: 'categories-tags' } },
+        { data: { source: 'tag-create', target: 'categories-tags' } },
+
+        { data: { source: 'profile', target: 'login' } },
+        { data: { source: 'settings', target: 'login' } },
+        { data: { source: 'family-members', target: 'settings' } },
+      ],
+
+      layout: {
+        name: 'cose',
+        directed: true,
+        animate: true,
+        animationDuration: 500,
+        nodeSeparation: 200,
+        padding: 50,
+        componentSpacing: 100,
+        nodeSpacing: 5
+      }
+    });
+
+    // Node click handler
+    cy.on('tap', 'node', function(evt){
+      const node = evt.target;
+      cy.elements().removeClass('selected');
+      cy.edges().removeClass('highlighted');
+
+      node.addClass('selected');
+
+      const incomers = node.incomers().edges();
+      const outgoers = node.outgoers().edges();
+      incomers.addClass('highlighted');
+      outgoers.addClass('highlighted');
+
+      // Show info panel
+      const panel = document.getElementById('infoPanel');
+      document.getElementById('infoTitle').textContent = node.data('label');
+      document.getElementById('infoDesc').textContent = node.data('desc');
+
+      const outgoing = outgoers.map(e => e.target().data('label'));
+      const incoming = incomers.map(e => e.source().data('label'));
+
+      let html = '';
+      if (outgoing.length > 0) {
+        html += outgoing.map(label => `<div class="link-item" onclick="cy.elements().removeClass('selected');cy.$('#${label}').addClass('selected')">${label}</div>`).join('');
+      }
+      document.getElementById('infoLinks').innerHTML = html || '<div style="color: #ccc; font-size: 12px;">No connections</div>';
+
+      panel.classList.add('active');
+    });
+
+    // Click canvas to deselect
+    cy.on('tap', function(evt){
+      if(evt.target === cy){
+        cy.elements().removeClass('selected');
+        cy.edges().removeClass('highlighted');
+        document.getElementById('infoPanel').classList.remove('active');
+      }
+    });
+
+    // Search functionality
+    document.getElementById('search').addEventListener('keyup', function(e){
+      const query = e.target.value.toLowerCase();
+      cy.nodes().forEach(node => {
+        if(node.data('label').toLowerCase().includes(query)){
+          node.style('display', 'element');
+        } else {
+          node.style('display', 'none');
+        }
+      });
+    });
+
+    function toggleLegend(){
+      const legend = document.getElementById('legend');
+      legend.style.display = legend.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Initial fit
+    setTimeout(() => cy.fit(), 100);
+  </script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budgii UX Flow Map - With Screenshots</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: white;
+      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    #header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a3b2e;
+    }
+
+    #search {
+      width: 300px;
+      padding: 10px 14px;
+      border: 2px solid #e5e5e5;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    #search:focus {
+      border-color: #ff6a00;
+      box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.1);
+    }
+
+    #canvas {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      cursor: grab;
+    }
+
+    #canvas:active {
+      cursor: grabbing;
+    }
+
+    #screenshotPanel {
+      position: fixed;
+      top: 100px;
+      right: 24px;
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      z-index: 100;
+      width: 420px;
+      display: none;
+      max-height: 70vh;
+      overflow-y: auto;
+      border: 1px solid #f0f0f0;
+    }
+
+    #screenshotPanel.show {
+      display: block;
+    }
+
+    .screenshot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .screenshot-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #6b7280;
+      transition: color 0.2s;
+    }
+
+    .close-btn:hover {
+      color: #111827;
+    }
+
+    #screenshot {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #e5e5e5;
+      background: #f5f5f5;
+    }
+
+    .screenshot-info {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .link-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111827;
+      margin-top: 12px;
+      margin-bottom: 8px;
+    }
+
+    .link-item {
+      padding: 8px 10px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .link-item:hover {
+      background: #ff6a00;
+      color: white;
+    }
+
+    #legend {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      z-index: 100;
+      max-height: 45vh;
+      overflow-y: auto;
+      border: 1px solid #f0f0f0;
+      display: none;
+    }
+
+    #legend.show {
+      display: block;
+    }
+
+    #legend h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .controls {
+      position: fixed;
+      top: 100px;
+      left: 24px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+      flex-wrap: wrap;
+      width: 200px;
+    }
+
+    .btn {
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .btn:hover {
+      background: #ff6a00;
+      color: white;
+      border-color: #ff6a00;
+    }
+
+    #stats {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      background: white;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #6b7280;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 99;
+    }
+
+    #stats strong {
+      color: #111827;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>🗺️ Budgii UX Flow Map</h1>
+    <input type="text" id="search" placeholder="Search pages...">
+  </div>
+
+  <div id="stats">
+    <div><strong>20</strong> Pages • <strong>46</strong> Connections</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="resetView()">Reset</button>
+    <button class="btn" onclick="toggleLegend()">Legend</button>
+  </div>
+
+  <div id="legend">
+    <h3>Feature Categories</h3>
+    <div class="legend-item"><div class="legend-color" style="background: #FF6A00;"></div> Auth & Onboarding</div>
+    <div class="legend-item"><div class="legend-color" style="background: #1A3B2E;"></div> Home Hub</div>
+    <div class="legend-item"><div class="legend-color" style="background: #16A34A;"></div> Expense Tracking</div>
+    <div class="legend-item"><div class="legend-color" style="background: #0284C7;"></div> Reports & Budget</div>
+    <div class="legend-item"><div class="legend-color" style="background: #DC2626;"></div> Deals & Shopping</div>
+    <div class="legend-item"><div class="legend-color" style="background: #7C3AED;"></div> Settings & User</div>
+    <div class="legend-item"><div class="legend-color" style="background: #6B7280;"></div> Support</div>
+  </div>
+
+  <div id="screenshotPanel">
+    <div class="screenshot-header">
+      <h3 id="panelTitle">Home</h3>
+      <button class="close-btn" onclick="document.getElementById('screenshotPanel').classList.remove('show')">✕</button>
+    </div>
+    <img id="screenshot" src="" alt="Page screenshot">
+    <div class="link-label">Navigates to:</div>
+    <div id="panelLinks"></div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 70;
+
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+
+    const pages = {
+      login: { label: '🔐 Login', color: '#FF6A00', desc: 'Authentication' },
+      verification: { label: '✓ Verification', color: '#FF6A00', desc: 'OTP check' },
+      onboarding: { label: '🎯 OnBoarding', color: '#FF6A00', desc: '4-step setup' },
+      home: { label: '🏠 Home', color: '#1A3B2E', desc: 'Budget overview' },
+      transactions: { label: '💳 Transactions', color: '#16A34A', desc: 'Expense list' },
+      'add-expense': { label: '➕ Add Expense', color: '#16A34A', desc: 'Manual entry' },
+      'scan-receipt': { label: '📸 Scan Receipt', color: '#16A34A', desc: 'Receipt capture' },
+      reports: { label: '📊 Reports', color: '#0284C7', desc: 'Charts' },
+      'spending-breakdown': { label: '📉 Spending', color: '#0284C7', desc: 'Categories' },
+      'budget-setup': { label: '💰 Budget', color: '#0284C7', desc: 'Budget form' },
+      'budget-comparison': { label: '📈 Comparison', color: '#0284C7', desc: 'Period analysis' },
+      'categories-tags': { label: '🏷️ Categories', color: '#0284C7', desc: 'Management' },
+      'deal-watchlist': { label: '⭐ Watchlist', color: '#DC2626', desc: 'Tracked deals' },
+      'deal-cards': { label: '🎴 Deal Cards', color: '#DC2626', desc: 'Swipe' },
+      'shopping-list': { label: '🛒 Shopping', color: '#DC2626', desc: 'Items' },
+      profile: { label: '👤 Profile', color: '#7C3AED', desc: 'User profile' },
+      settings: { label: '⚙️ Settings', color: '#7C3AED', desc: 'Account' },
+      'family-members': { label: '👨‍👩‍👧 Family', color: '#7C3AED', desc: 'Management' },
+      notifications: { label: '📬 Notifications', color: '#7C3AED', desc: 'Alerts' },
+      help: { label: '❓ Help', color: '#6B7280', desc: 'Support' },
+    };
+
+    const edges = [
+      ['login', 'verification'], ['verification', 'onboarding'], ['onboarding', 'home'],
+      ['home', 'transactions'], ['home', 'spending-breakdown'], ['home', 'deal-watchlist'], ['home', 'notifications'],
+      ['transactions', 'add-expense'], ['transactions', 'scan-receipt'],
+      ['add-expense', 'home'], ['scan-receipt', 'home'],
+      ['reports', 'budget-setup'], ['reports', 'spending-breakdown'], ['spending-breakdown', 'transactions'],
+      ['deal-watchlist', 'deal-cards'], ['deal-watchlist', 'notifications'],
+      ['deal-cards', 'shopping-list'], ['shopping-list', 'deal-watchlist'],
+      ['budget-setup', 'reports'],
+      ['profile', 'login'], ['settings', 'login'], ['family-members', 'settings'],
+    ];
+
+    // Calculate positions
+    const positions = {};
+    const cols = 5;
+    const gridW = 220;
+    const gridH = 160;
+    let idx = 0;
+    for (const id in pages) {
+      const row = Math.floor(idx / cols);
+      const col = idx % cols;
+      positions[id] = { x: col * gridW - 400, y: row * gridH };
+      idx++;
+    }
+
+    let selected = null;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      // Draw edges
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 2 / scale;
+      edges.forEach(([from, to]) => {
+        const p1 = positions[from];
+        const p2 = positions[to];
+        if (p1 && p2) {
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+
+          const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+          const arrowLen = 15 / scale;
+          const ax = p2.x - Math.cos(angle) * arrowLen;
+          const ay = p2.y - Math.sin(angle) * arrowLen;
+          ctx.beginPath();
+          ctx.moveTo(ax + Math.cos(angle + 0.4) * arrowLen * 0.4, ay + Math.sin(angle + 0.4) * arrowLen * 0.4);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.lineTo(ax + Math.cos(angle - 0.4) * arrowLen * 0.4, ay + Math.sin(angle - 0.4) * arrowLen * 0.4);
+          ctx.stroke();
+        }
+      });
+
+      // Draw nodes
+      Object.entries(positions).forEach(([id, pos]) => {
+        const page = pages[id];
+        const w = 100 / scale;
+        const h = 70 / scale;
+
+        ctx.fillStyle = selected === id ? 'rgba(255,106,0,0.15)' : 'white';
+        ctx.strokeStyle = selected === id ? '#FF6A00' : page.color;
+        ctx.lineWidth = selected === id ? 3 / scale : 2.5 / scale;
+        ctx.beginPath();
+        ctx.roundRect(pos.x - w / 2, pos.y - h / 2, w, h, 8 / scale);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = page.color;
+        ctx.beginPath();
+        ctx.arc(pos.x - w / 2 + 8 / scale, pos.y - h / 2 + 8 / scale, 3.5 / scale, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#111827';
+        ctx.font = `600 ${10 / scale}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(page.label, pos.x, pos.y);
+      });
+
+      ctx.restore();
+    }
+
+    function resetView() {
+      scale = 1;
+      offsetX = 0;
+      offsetY = 0;
+      draw();
+    }
+
+    function toggleLegend() {
+      document.getElementById('legend').classList.toggle('show');
+    }
+
+    canvas.addEventListener('mousedown', e => {
+      isDragging = true;
+      dragStart = { x: e.clientX, y: e.clientY };
+
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+
+      const mx = (e.clientX - canvas.width / 2) / scale - offsetX / scale;
+      const my = (e.clientY - canvas.height / 2) / scale - offsetY / scale;
+
+      selected = null;
+      for (const [id, pos] of Object.entries(positions)) {
+        if (Math.abs(mx - pos.x) < 50 && Math.abs(my - pos.y) < 35) {
+          selected = id;
+          const page = pages[id];
+          document.getElementById('panelTitle').textContent = page.label;
+          document.getElementById('screenshot').src = `./screenshots/${id === 'add-expense' ? 'AddExpense' : id === 'scan-receipt' ? 'ScanReceipt' : id === 'budget-setup' ? 'BudgetSetup' : id === 'budget-comparison' ? 'BudgetComparison' : id === 'categories-tags' ? 'CategoriesTags' : id === 'deal-watchlist' ? 'DealWatchlist' : id === 'deal-cards' ? 'DealCards' : id === 'shopping-list' ? 'ShoppingList' : id === 'family-members' ? 'FamilyMembers' : id === 'spending-breakdown' ? 'SpendingBreakdown' : Object.keys(pages).find(k => k === id) ? pages[id].label.replace(/[🔐✓🎯🏠💳➕📸📊📉💰📈🏷️⭐🎴🛒👤⚙️👨‍👩‍👧📬❓]/g, '').trim().replace(/\s+/g, '') : id}.png`;
+          const outgoing = edges.filter(e => e[0] === id).map(e => pages[e[1]].label);
+          document.getElementById('panelLinks').innerHTML = outgoing.length ? outgoing.map(l => `<div class="link-item">${l}</div>`).join('') : '<div style="color:#ccc;font-size:12px">No outgoing connections</div>';
+          document.getElementById('screenshotPanel').classList.add('show');
+          break;
+        }
+      }
+      ctx.restore();
+      draw();
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      if (isDragging) {
+        offsetX += e.clientX - dragStart.x;
+        offsetY += e.clientY - dragStart.y;
+        dragStart = { x: e.clientX, y: e.clientY };
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      scale *= e.deltaY < 0 ? 1.1 : 0.9;
+      scale = Math.max(0.3, Math.min(3, scale));
+      draw();
+    });
+
+    document.getElementById('search').addEventListener('keyup', e => {
+      const q = e.target.value.toLowerCase();
+      selected = null;
+      draw();
+    });
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight - 70;
+      draw();
+    });
+
+    draw();
+  </script>
+</body>
+</html>

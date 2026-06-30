@@ -1,0 +1,15 @@
+import { Outlet } from 'react-router-dom'
+
+/**
+ * Budgii is a phone-only app. In the packaged Electron window the viewport is
+ * already 390px wide, but in a browser (dev / web build) the viewport can be any
+ * width — so we constrain every route to a centered phone-width column. The body
+ * background shows on either side like a device on a desk.
+ */
+export function AppLayout() {
+  return (
+    <div id="mobile-frame-root" className="relative mx-auto h-full w-full max-w-[390px] bg-bg">
+      <Outlet />
+    </div>
+  )
+}

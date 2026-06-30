@@ -1,0 +1,15 @@
+<svg viewBox="0 0 1400 380" xmlns="http://www.w3.org/2000/svg" width="1400" height="380">
+  <!-- Background -->
+  <rect width="1400" height="380" fill="#FFF8EE"/>
+
+  <!-- "Budgii" wordmark in orange -->
+  <text x="60" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="180" font-weight="bold" fill="#FF7600">Budgii</text>
+
+  <!-- Green dots above the final 'ii' -->
+  <!-- Positioned approximately above the last two i's -->
+  <circle cx="535" cy="50" r="12" fill="#0B3D2E"/>
+  <circle cx="590" cy="50" r="12" fill="#0B3D2E"/>
+
+  <!-- Tagline below -->
+  <text x="60" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="bold" fill="#FF7600">SMART BUDGETS. BETTER FUTURES.</text>
+</svg>

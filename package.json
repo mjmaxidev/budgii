@@ -1,0 +1,70 @@
+{
+  "name": "budgii",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Budgii — Smart household budgeting for better financial futures",
+  "author": "MJ Productions <dev@mjproductions.app>",
+  "main": "electron/main-qa.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "electron:dev:app": "node electron/dev-app.cjs",
+    "electron:dev:qa": "node electron/dev-qa.cjs",
+    "electron:start:app": "node scripts/build-app-variant.cjs app start",
+    "electron:start:qa": "node scripts/build-app-variant.cjs qa start",
+    "electron:dist:app": "node scripts/build-app-variant.cjs app dist",
+    "electron:dist:qa": "node scripts/build-app-variant.cjs qa dist"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.462.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "canvas": "^3.2.3",
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.3",
+    "postcss": "^8.4.49",
+    "puppeteer": "^25.2.0",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "app.mjproductions.budgii",
+    "productName": "Budgii QA",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.finance",
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Finance",
+      "icon": "build/icon.png"
+    }
+  }
+}

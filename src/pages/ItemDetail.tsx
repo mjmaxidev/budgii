@@ -1,0 +1,145 @@
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { MoreVertical, Trash2, Sparkles, FileText, Plus, X, Maximize2 } from 'lucide-react'
+import { AppShell } from '@/components/layout/AppShell'
+import { TopBar } from '@/components/layout/TopBar'
+import { Card } from '@/components/ui/Card'
+import { Chip } from '@/components/ui/Chip'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { MoneyText } from '@/components/ui/MoneyText'
+import { Modal } from '@/components/ui/Modal'
+import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
+import { ActionButton } from '@/components/ui/ActionButton'
+import { useStore } from '@/store/appStore'
+import { useLookups } from '@/store/lookups'
+import { formatDateTime } from '@/utils/dates'
+
+export function ItemDetail() {
+  const { itemId = '' } = useParams()
+  const navigate = useNavigate()
+  const item = useStore((s) => s.receiptItems.find((i) => i.id === itemId))
+  const receipt = useStore((s) => s.receipts.find((r) => r.id === item?.receiptId))
+  const removeReceiptItem = useStore((s) => s.removeReceiptItem)
+  const { category, tag } = useLookups()
+  const [openReceipt, setOpenReceipt] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
+
+  if (!item) {
+    return (
+      <AppShell topBar={<TopBar title="Item Detail" showBack />}>
+        <p className="mt-10 text-center text-muted">Item not found.</p>
+      </AppShell>
+    )
+  }
+
+  const cat = category(item.categoryId)
+  const confidence = Math.round(item.aiConfidence * 100)
+
+  return (
+    <AppShell
+      topBar={
+        <TopBar
+          title="Item Detail"
+          showBack
+          right={
+            <button className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40">
+              <MoreVertical size={20} />
+            </button>
+          }
+        />
+      }
+    >
+      <div className="flex items-center gap-4 py-2">
+        <CategoryIcon icon={cat?.icon ?? '🧾'} color={cat?.color ?? '#16A34A'} size={88} className="rounded-full text-4xl" />
+        <div>
+          <h2 className="text-[24px] font-extrabold text-ink">{item.name}</h2>
+          <MoneyText amount={item.amount} className="text-[30px] font-extrabold text-ink" />
+        </div>
+      </div>
+
+      <div className="mt-1 flex flex-wrap gap-2">
+        {cat && <Chip color={cat.color}>{cat.name}</Chip>}
+        <span className="inline-flex items-center gap-1 rounded-pill bg-greenSoft px-3 py-1.5 text-[13px] font-semibold text-green">
+          <Sparkles size={14} /> AI {confidence}% confident
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-3 border-t border-line/70 pt-4 text-[15px]">
+        <Row label="Merchant" value={receipt?.merchant ?? '—'} />
+        <Row label="Date" value={receipt ? formatDateTime(receipt.date) : '—'} />
+        <div className="flex items-start justify-between">
+          <span className="font-semibold text-muted">Tags</span>
+          <div className="flex items-center gap-2">
+            {item.tagIds.map((id) => {
+              const t = tag(id)
+              return t ? <Chip key={id} color={t.color}>{t.name}</Chip> : null
+            })}
+            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-line/40 text-muted">
+              <Plus size={16} />
+            </button>
+          </div>
+        </div>
+        <Row label="Receipt ID" value={`#${(receipt?.id ?? '').slice(-8).toUpperCase() || 'N/A'}`} />
+      </div>
+
+      <h3 className="mt-6 text-[19px] font-extrabold text-ink">Source Receipt</h3>
+      <div className="mt-3 flex gap-4">
+        <button onClick={() => setOpenReceipt(true)} className="w-32 shrink-0">
+          <ReceiptThumbnail imageUrl={receipt?.imageUrl} className="h-40 w-32 border border-line" />
+        </button>
+        <div className="flex-1">
+          <p className="text-[15px] leading-snug text-muted">This item was detected from your scanned receipt.</p>
+          <ActionButton variant="greenOutline" className="mt-4" leftIcon={<FileText size={18} />} onClick={() => setOpenReceipt(true)}>
+            Open Receipt
+          </ActionButton>
+        </div>
+      </div>
+
+      <button
+        onClick={() => setConfirmRemove(true)}
+        className="mt-8 flex items-center gap-2 text-[16px] font-bold text-red active:opacity-70"
+      >
+        <Trash2 size={20} /> Remove This Item
+      </button>
+
+      {/* Receipt viewer */}
+      <Modal open={openReceipt} onClose={() => setOpenReceipt(false)} title={receipt?.merchant} variant="center">
+        {receipt?.imageUrl ? (
+          <img src={receipt.imageUrl} alt="receipt" className="max-h-[70vh] w-full rounded-input object-contain" />
+        ) : (
+          <pre className="max-h-[70vh] overflow-auto rounded-input bg-[#FAF6F0] p-4 font-mono text-[12px] leading-relaxed text-ink/80">
+            {receipt?.ocrText ?? 'No receipt image available.'}
+          </pre>
+        )}
+      </Modal>
+
+      {/* Confirm remove */}
+      <Modal open={confirmRemove} onClose={() => setConfirmRemove(false)} title="Remove item?" variant="center">
+        <p className="text-[15px] text-muted">This will remove “{item.name}” from the receipt.</p>
+        <div className="mt-5 flex gap-3">
+          <ActionButton variant="ghost" onClick={() => setConfirmRemove(false)}>
+            Cancel
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            onClick={() => {
+              removeReceiptItem(item.id)
+              navigate(-1)
+            }}
+          >
+            Remove
+          </ActionButton>
+        </div>
+      </Modal>
+    </AppShell>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="font-semibold text-muted">{label}</span>
+      <span className="text-ink">{value}</span>
+    </div>
+  )
+}
