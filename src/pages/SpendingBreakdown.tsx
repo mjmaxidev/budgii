@@ -151,9 +151,8 @@ export function SpendingBreakdown() {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="mt-6 flex items-center justify-between">
+    <div className="mt-6">
       <h2 className="text-[18px] font-extrabold text-ink">{title}</h2>
-      <button className="text-[14px] font-bold text-green">View All</button>
     </div>
   )
 }

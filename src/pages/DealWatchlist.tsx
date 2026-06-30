@@ -74,7 +74,7 @@ export function DealWatchlist() {
           title="Deal Watchlist"
           showBack
           right={
-            <button className="relative">
+            <button className="relative" onClick={() => navigate('/notifications')}>
               <Bell size={22} className="text-ink" />
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-bg" />
             </button>

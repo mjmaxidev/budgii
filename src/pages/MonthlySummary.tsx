@@ -164,7 +164,7 @@ export function MonthlySummary() {
                 <Card
                   key={breakdown.id}
                   className="flex cursor-pointer items-center justify-between py-3 hover:bg-line/20"
-                  onClick={() => navigate(`/item-detail?categoryId=${breakdown.id}`)}
+                  onClick={() => navigate('/spending-breakdown')}
                 >
                   <div className="flex items-center gap-3">
                     {cat && (

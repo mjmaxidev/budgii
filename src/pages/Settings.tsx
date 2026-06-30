@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  User, Mail, DollarSign, Languages, Wallet, Users, Home,
-  ScanLine, Sparkles, ShieldCheck, FileText, Bell, BarChart3, Database, LifeBuoy, LogOut,
-  Trash2, ChevronRight, Tags, Gift,
+  User, SlidersHorizontal, Wallet, TrendingUp, Repeat, Tags, Users,
+  CalendarDays, BarChart3, Bell, ScanLine, Gift, Sparkles,
+  Download, LifeBuoy, LogOut, Trash2, ChevronRight,
 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -23,83 +23,51 @@ export function Settings() {
     {
       title: 'Account',
       items: [
-        { icon: DollarSign, label: 'Currency' },
-        { icon: Languages, label: 'Language' },
+        { icon: SlidersHorizontal, label: 'App Preferences', to: '/preferences' },
       ],
     },
     {
-      title: 'Budget',
+      title: 'Money',
       items: [
         { icon: Wallet, label: 'Budget Setting', to: '/budget-setup' },
+        { icon: TrendingUp, label: 'Income Tracking', to: '/income-tracking' },
+        { icon: Repeat, label: 'Recurring Transactions', to: '/recurring-transactions' },
+        { icon: Tags, label: 'Categories & Tags', to: '/categories-tags' },
+      ],
+    },
+    {
+      title: 'Insights',
+      items: [
+        { icon: CalendarDays, label: 'Monthly Summary', to: '/monthly-summary' },
+        { icon: BarChart3, label: 'Budget Comparison', to: '/budget-comparison' },
+        { icon: Bell, label: 'Spending Alerts', to: '/spending-alerts' },
       ],
     },
     {
       title: 'Family',
       items: [
         { icon: Users, label: 'Manage Family Members', to: '/family-members' },
-        { icon: Home, label: 'Shared Household Profile', soon: true },
       ],
     },
     {
-      title: 'Categories & Tags',
+      title: 'Receipts & Deals',
       items: [
-        { icon: Tags, label: 'Manage Categories and Tags', to: '/categories-tags' },
-      ],
-    },
-    {
-      title: 'Receipt & AI',
-      items: [
-        { icon: ScanLine, label: 'Receipt Scan Settings', to: '/scan-receipt' },
-        { icon: Sparkles, label: 'Auto Categorization' },
-        { icon: Sparkles, label: 'AI Confidence Review' },
-        { icon: Database, label: 'Receipt Storage' },
-      ],
-    },
-    {
-      title: 'Deals',
-      items: [
+        { icon: ScanLine, label: 'Scan a Receipt', to: '/scan-receipt' },
         { icon: Gift, label: 'Deal Watchlist', to: '/deal-watchlist' },
-        { icon: BarChart3, label: "Today's Deal Report", to: '/todays-deal-report' },
+        { icon: Sparkles, label: "Today's Deal Report", to: '/todays-deal-report' },
       ],
     },
     {
-      title: 'Reports',
+      title: 'Data',
       items: [
-        { icon: BarChart3, label: 'Default Report View', to: '/reports' },
-        { icon: FileText, label: 'Export Reports', soon: true },
-      ],
-    },
-    {
-      title: 'Notifications',
-      items: [
-        { icon: Bell, label: 'Budget Alerts' },
-        { icon: Bell, label: 'Weekly / Monthly Summary' },
-        { icon: Bell, label: 'Receipt Processing Alerts' },
-      ],
-    },
-    {
-      title: 'Privacy & Security',
-      items: [
-        { icon: ShieldCheck, label: 'Face ID / App Lock' },
-        { icon: ShieldCheck, label: 'Data Privacy' },
-        { icon: Trash2, label: 'Delete Account', danger: true },
-      ],
-    },
-    {
-      title: 'Data & Backup',
-      items: [
-        { icon: Database, label: 'Backup', soon: true },
-        { icon: Database, label: 'Export Data', soon: true },
-        { icon: Database, label: 'Import Data', soon: true },
+        { icon: Download, label: 'Export Data', to: '/data-export' },
         { icon: Trash2, label: 'Reset Demo Data', action: () => resetData(), danger: true },
       ],
     },
     {
       title: 'Support',
       items: [
-        { icon: LifeBuoy, label: 'Help Center' },
-        { icon: Mail, label: 'Contact Support' },
-        { icon: FileText, label: 'Terms & Privacy Policy' },
+        { icon: LifeBuoy, label: 'Help Center', to: '/help' },
       ],
     },
   ]

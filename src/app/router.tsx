@@ -24,8 +24,8 @@ import { TodaysDealReport } from '@/pages/TodaysDealReport'
 import { DealCards } from '@/pages/DealCards'
 import { ShoppingList } from '@/pages/ShoppingList'
 import { FamilyInvitation } from '@/pages/FamilyInvitation'
-import { Profile } from '@/pages/Profile'
 import { AccountSettings } from '@/pages/AccountSettings'
+import { Preferences } from '@/pages/Preferences'
 import { IncomeTracking } from '@/pages/IncomeTracking'
 import { RecurringTransactions } from '@/pages/RecurringTransactions'
 import { SpendingAlerts } from '@/pages/SpendingAlerts'
@@ -67,8 +67,8 @@ export const appRoutes: RouteWithMeta[] = [
   { path: '/deal-cards', element: <DealCards />, meta: { label: 'Deal Cards', description: 'Swipe cards', section: 'app' } },
   { path: '/shopping-list', element: <ShoppingList />, meta: { label: 'Shopping List', description: 'Selected items', section: 'app' } },
   { path: '/onboarding', element: <OnBoarding />, meta: { label: 'OnBoarding', description: 'Setup flow', section: 'app' } },
-  { path: '/profile', element: <Profile />, meta: { label: 'Profile', description: 'User profile', section: 'app' } },
   { path: '/account-settings', element: <AccountSettings />, meta: { label: 'Account', description: 'Profile & account settings', section: 'app' } },
+  { path: '/preferences', element: <Preferences />, meta: { label: 'Preferences', description: 'Currency, language, notifications', section: 'app' } },
   { path: '/income-tracking', element: <IncomeTracking />, meta: { label: 'Income', description: 'Income log', section: 'app' } },
   { path: '/recurring-transactions', element: <RecurringTransactions />, meta: { label: 'Recurring', description: 'Scheduled items', section: 'app' } },
   { path: '/spending-alerts', element: <SpendingAlerts />, meta: { label: 'Alerts', description: 'Budget notifications', section: 'app' } },
