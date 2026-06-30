@@ -42,21 +42,15 @@ Thumbs.db
 # Local-only files
 *.local
 
-# Python virtualenv (dev tooling for asset cropping)
-.crop-venv/
+# Python
 __pycache__/
 *.pyc
-
-# Generated screenshots (dev/QA artifacts)
-screenshots/
 
 # Claude Code local settings
 .claude/settings.local.json
 
-# Old / reference material (not part of the app)
-_old-frozen-desktop-app/
-ui-references/
+# Archived planning docs, dev scripts, and reference material (local only)
+_archive/
 
 # Excluded per project preference
 build/
-.onboarding_prev_backup/

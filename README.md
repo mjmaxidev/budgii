@@ -1,9 +1,7 @@
 # Smart Budget Tracker
 
-A mobile-first React + Vite + TypeScript PWA for household budget tracking with AI
-receipt breakdown (mocked) and a Deal Watchlist agent (Milestone 2, mock data).
-
-Built from `CODEX_BUILD_SPEC.md`.
+A mobile-first React + Vite + TypeScript Electron app for household budget tracking
+with AI receipt breakdown (mocked) and a Deal Watchlist agent (Milestone 2, mock data).
 
 ## Run
 
@@ -20,14 +18,14 @@ width and centered as a device mockup on larger screens.
 ## Desktop app (Electron)
 
 ```bash
-npm run electron:dev     # Vite dev server + Electron window with hot reload + devtools
-npm run electron:start   # production build, then run it in Electron (no installer)
-npm run electron:pack    # build an unpacked .app/.exe into release/ (fast, unsigned)
-npm run electron:dist    # build a distributable installer (.dmg / .nsis / .AppImage)
+npm run electron:dev:app  # Budgii app — Vite + Electron (hot reload)
+npm run electron:dev:qa   # Budgii QA studio — iframe + sidebar + annotations
+npm run electron:start:app
+npm run electron:dist:app # distributable installer (.dmg / .nsis / .AppImage)
 ```
 
-The Electron shell lives in [electron/](electron/): `main.cjs` (window + load logic),
-`preload.cjs` (context-isolated bridge), `dev.cjs` (dev launcher that waits for Vite).
+The Electron shell lives in [electron/](electron/): `main-app.cjs` / `main-qa.cjs`,
+`preload.cjs`, and `dev-app.cjs` / `dev-qa.cjs` dev launchers.
 The app uses a **hash router** and **relative asset base** so the same build runs both in
 the browser and from `file://` inside Electron. Packaging is configured under the `build`
 field in `package.json` (electron-builder); output goes to `release/`.
