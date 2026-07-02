@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.models import ReceiptUpload, User
 from app.schemas.receipts import ReceiptUploadResponse
 from app.services.household import require_membership
+from app.services.permissions import require_receipt_upload
 
 router = APIRouter()
 
@@ -23,7 +24,8 @@ async def upload_receipt(
     settings: Settings = Depends(get_settings),
 ) -> ReceiptUploadResponse:
     household_uuid = parse_uuid(household_id, "household_id")
-    await require_membership(session, user.id, household_uuid)
+    membership = await require_membership(session, user.id, household_uuid)
+    require_receipt_upload(membership)
 
     upload_dir = Path(settings.receipt_storage_path) / str(household_uuid)
     upload_dir.mkdir(parents=True, exist_ok=True)

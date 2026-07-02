@@ -6,16 +6,30 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import HouseholdDocument
+from app.models import HouseholdSyncChunk, HouseholdSyncMeta
 from app.services.household import require_membership
+from app.services.permissions import allowed_sync_keys, require_can_pull, require_can_push
 from app.services.seed import SYNC_KEYS
 
 
-async def get_document(session: AsyncSession, household_id: uuid.UUID) -> HouseholdDocument:
-    document = await session.get(HouseholdDocument, household_id)
-    if not document:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Household document not found")
-    return document
+async def get_sync_meta(session: AsyncSession, household_id: uuid.UUID) -> HouseholdSyncMeta:
+    meta = await session.get(HouseholdSyncMeta, household_id)
+    if not meta:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Household sync not found")
+    return meta
+
+
+async def load_snapshot(session: AsyncSession, household_id: uuid.UUID) -> dict[str, Any]:
+    chunks = await session.scalars(
+        select(HouseholdSyncChunk).where(HouseholdSyncChunk.household_id == household_id)
+    )
+    return {chunk.chunk_key: chunk.data for chunk in chunks}
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 
 async def pull_snapshot(
@@ -24,20 +38,19 @@ async def pull_snapshot(
     household_id: uuid.UUID,
     since: datetime | None,
 ) -> tuple[dict[str, Any], datetime, int]:
-    await require_membership(session, user_id, household_id)
-    document = await get_document(session, household_id)
+    membership = await require_membership(session, user_id, household_id)
+    require_can_pull(membership)
+    meta = await get_sync_meta(session, household_id)
 
-    updated_at = document.updated_at
-    if updated_at.tzinfo is None:
-        updated_at = updated_at.replace(tzinfo=timezone.utc)
+    updated_at = _as_utc(meta.updated_at)
 
     if since is not None:
-        if since.tzinfo is None:
-            since = since.replace(tzinfo=timezone.utc)
+        since = _as_utc(since)
         if updated_at <= since:
-            return {}, updated_at, document.revision
+            return {}, updated_at, meta.revision
 
-    return dict(document.data), updated_at, document.revision
+    snapshot = await load_snapshot(session, household_id)
+    return snapshot, updated_at, meta.revision
 
 
 async def push_changes(
@@ -47,28 +60,27 @@ async def push_changes(
     changes: dict[str, Any],
     base_revision: int | None,
 ) -> tuple[datetime, list[str]]:
-    await require_membership(session, user_id, household_id)
-    document = await get_document(session, household_id)
+    membership = await require_membership(session, user_id, household_id)
+    require_can_push(membership)
+    meta = await get_sync_meta(session, household_id)
 
     conflicts: list[str] = []
-    if base_revision is not None and base_revision != document.revision:
+    if base_revision is not None and base_revision != meta.revision:
         conflicts = sorted(changes.keys())
-        updated_at = document.updated_at
-        if updated_at.tzinfo is None:
-            updated_at = updated_at.replace(tzinfo=timezone.utc)
-        return updated_at, conflicts
+        return _as_utc(meta.updated_at), conflicts
 
-    filtered = {key: value for key, value in changes.items() if key in SYNC_KEYS}
-    merged = dict(document.data)
+    permitted = allowed_sync_keys(membership)
+    filtered = {key: value for key, value in changes.items() if key in SYNC_KEYS and key in permitted}
+
     for key, value in filtered.items():
-        merged[key] = value
+        chunk = await session.get(HouseholdSyncChunk, (household_id, key))
+        if chunk:
+            chunk.data = value
 
-    document.data = merged
-    document.revision += 1
+    if filtered:
+        meta.revision += 1
+
     await session.flush()
-    await session.refresh(document)
+    await session.refresh(meta)
 
-    updated_at = document.updated_at
-    if updated_at.tzinfo is None:
-        updated_at = updated_at.replace(tzinfo=timezone.utc)
-    return updated_at, conflicts
+    return _as_utc(meta.updated_at), conflicts

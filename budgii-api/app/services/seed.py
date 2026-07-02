@@ -1,4 +1,10 @@
-"""Default household document matching the Budgii client store shape."""
+"""Default household sync chunks matching the Budgii client store shape."""
+
+import uuid
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models import HouseholdSyncChunk, HouseholdSyncMeta
 
 DEFAULT_DOCUMENT: dict = {
     "categories": [
@@ -12,7 +18,6 @@ DEFAULT_DOCUMENT: dict = {
         {"id": "cat-travel", "name": "Travel", "icon": "✈️", "color": "#06B6D4"},
     ],
     "tags": [],
-    "familyMembers": [],
     "expenses": [],
     "receipts": [],
     "receiptItems": [],
@@ -59,3 +64,15 @@ DEFAULT_DOCUMENT: dict = {
 }
 
 SYNC_KEYS = frozenset(DEFAULT_DOCUMENT.keys())
+
+
+def seed_household_sync(session: AsyncSession, household_id: uuid.UUID) -> None:
+    session.add(HouseholdSyncMeta(household_id=household_id, revision=1))
+    for key in SYNC_KEYS:
+        session.add(
+            HouseholdSyncChunk(
+                household_id=household_id,
+                chunk_key=key,
+                data=DEFAULT_DOCUMENT[key],
+            )
+        )
