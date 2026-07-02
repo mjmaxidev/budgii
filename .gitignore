@@ -45,6 +45,8 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+.venv/
+budgii-api/.venv/
 
 # Claude Code local settings
 .claude/settings.local.json

@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: budgii
+      POSTGRES_PASSWORD: budgii
+      POSTGRES_DB: budgii
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgii -d budgii"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8001:8000"
+    environment:
+      APP_ENV: development
+      APP_DEBUG: "true"
+      API_PREFIX: /v1
+      DATABASE_URL: postgresql+asyncpg://budgii:budgii@db:5432/budgii
+      JWT_SECRET: dev-docker-secret-change-me
+      INVITE_LINK_BASE: https://budgii.app/join
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
