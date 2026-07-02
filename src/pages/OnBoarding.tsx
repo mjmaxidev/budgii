@@ -207,7 +207,17 @@ export function OnBoarding() {
   }
 
   function completeProfile() {
-    if (name.trim()) addFamilyMember({ name: name.trim(), relationship: 'You', avatar: '👤' })
+    if (name.trim()) {
+      addFamilyMember({
+        name: name.trim(),
+        relationship: 'You',
+        avatar: '👤',
+        isDefault: true,
+        isAccountHolder: true,
+        hasAppAccess: true,
+        accessRole: 'admin',
+      })
+    }
     setStep(4)
   }
 

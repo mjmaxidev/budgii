@@ -4,8 +4,10 @@ import type {
   Budget,
   Category,
   Deal,
+  EditorLevel,
   Expense,
   FamilyMember,
+  MemberAccessRole,
   IncomeItem,
   IncomeSource,
   OngoingIncome,
@@ -40,6 +42,7 @@ import {
 import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
 import { sumOngoingIncome } from '@/utils/income'
 import { normalizeInviteCode } from '@/utils/familyInvite'
+import { defaultEditorLevel, normalizeEditorLevel } from '@/utils/memberAccess'
 
 const TAG_PALETTE = ['#FB8500', '#16A34A', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
@@ -89,6 +92,8 @@ export type FamilyInvite = {
   usedBy?: string
   sentToContact?: string
   sentAt?: string
+  accessRole: MemberAccessRole
+  editorLevel?: EditorLevel
 }
 
 export type AppStore = {
@@ -228,12 +233,13 @@ export type AppStore = {
   getAllSpendingAlerts: () => SpendingAlert[]
 
   // Family Invites
-  createFamilyInvite: () => string
+  createFamilyInvite: (accessRole?: MemberAccessRole, editorLevel?: EditorLevel) => string
   useFamilyInvite: (code: string, usedBy: string) => boolean
   findFamilyInvite: (code: string) => FamilyInvite | undefined
   getFamilyInvites: () => FamilyInvite[]
   getUnusedInvites: () => FamilyInvite[]
   sendFamilyInvite: (code: string, contact: string) => void
+  updateFamilyInvite: (code: string, patch: Partial<Pick<FamilyInvite, 'accessRole' | 'editorLevel'>>) => void
 
   // App lock (PIN)
   setAppPin: (pin: string) => Promise<void>
@@ -478,6 +484,11 @@ export const useStore = create<AppStore>()(
         const id = uid('mem')
         const avatars = ['🧑', '👶', '🧓', '👵', '🧔']
         const idx = get().familyMembers.length
+        const isAccountHolder = member.isAccountHolder ?? false
+        const hasAppAccess = member.hasAppAccess ?? isAccountHolder
+        const accessRole: MemberAccessRole =
+          member.accessRole ?? (isAccountHolder ? 'admin' : hasAppAccess ? 'viewer' : 'viewer')
+        const editorLevel = normalizeEditorLevel(accessRole, member.editorLevel)
         const m: FamilyMember = {
           id,
           name: member.name ?? 'New Member',
@@ -485,6 +496,10 @@ export const useStore = create<AppStore>()(
           avatar: member.avatar ?? avatars[idx % avatars.length],
           active: member.active ?? true,
           isDefault: member.isDefault,
+          isAccountHolder,
+          hasAppAccess,
+          accessRole: hasAppAccess || isAccountHolder ? accessRole : undefined,
+          editorLevel: hasAppAccess || isAccountHolder ? editorLevel : undefined,
         }
         set((s) => ({
           familyMembers: [...s.familyMembers, m],
@@ -500,12 +515,27 @@ export const useStore = create<AppStore>()(
 
       updateFamilyMember: (id, patch) =>
         set((s) => ({
-          familyMembers: s.familyMembers.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+          familyMembers: s.familyMembers.map((m) => {
+            if (m.id !== id) return m
+            if (m.isAccountHolder && patch.accessRole && patch.accessRole !== 'admin') return m
+            const accessRole = patch.accessRole ?? m.accessRole
+            const hasAppAccess = patch.hasAppAccess ?? m.hasAppAccess
+            const editorLevel = normalizeEditorLevel(
+              accessRole ?? 'viewer',
+              patch.editorLevel ?? m.editorLevel,
+            )
+            return {
+              ...m,
+              ...patch,
+              accessRole: hasAppAccess ? accessRole : undefined,
+              editorLevel: hasAppAccess && accessRole === 'editor' ? editorLevel : undefined,
+            }
+          }),
         })),
 
       deleteFamilyMember: (id) =>
         set((s) => ({
-          familyMembers: s.familyMembers.filter((m) => m.id !== id),
+          familyMembers: s.familyMembers.filter((m) => m.id !== id || m.isAccountHolder),
           settings: {
             ...s.settings,
             incomeMemberIds: s.settings.incomeMemberIds.filter((mid) => mid !== id),
@@ -855,13 +885,15 @@ export const useStore = create<AppStore>()(
         return get().spendingAlerts
       },
 
-      createFamilyInvite: () => {
+      createFamilyInvite: (accessRole = 'editor', editorLevel = defaultEditorLevel()) => {
         const id = uid('fi')
         const code = Math.random().toString(36).substring(2, 8).toUpperCase()
         const invite: FamilyInvite = {
           id,
           code,
           createdAt: todayISO(),
+          accessRole,
+          editorLevel: accessRole === 'editor' ? editorLevel : undefined,
         }
         set((s) => ({ familyInvites: [...s.familyInvites, invite] }))
         return code
@@ -901,6 +933,25 @@ export const useStore = create<AppStore>()(
           familyInvites: s.familyInvites.map((fi) =>
             fi.code === code ? { ...fi, sentToContact: normalized, sentAt: todayISO() } : fi,
           ),
+        }))
+      },
+
+      updateFamilyInvite: (code, patch) => {
+        const normalized = normalizeInviteCode(code)
+        set((s) => ({
+          familyInvites: s.familyInvites.map((fi) => {
+            if (normalizeInviteCode(fi.code) !== normalized || fi.usedAt) return fi
+            const accessRole = patch.accessRole ?? fi.accessRole
+            return {
+              ...fi,
+              ...patch,
+              accessRole,
+              editorLevel:
+                accessRole === 'editor'
+                  ? normalizeEditorLevel(accessRole, patch.editorLevel ?? fi.editorLevel)
+                  : undefined,
+            }
+          }),
         }))
       },
 
@@ -981,7 +1032,7 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: 'budgii',
-      version: 12,
+      version: 13,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -1072,6 +1123,38 @@ export const useStore = create<AppStore>()(
             settings.notificationsEnabled = settings.notificationsEnabled ?? false
             settings.alertTypeAmount = settings.alertTypeAmount ?? true
             settings.alertTypePercentage = settings.alertTypePercentage ?? true
+          }
+        }
+        if (version < 13) {
+          const members = state.familyMembers as FamilyMember[] | undefined
+          if (members) {
+            state.familyMembers = members.map((m) => {
+              const isAccountHolder = m.isAccountHolder ?? m.isDefault ?? m.relationship === 'You'
+              const hasAppAccess = m.hasAppAccess ?? isAccountHolder
+              const accessRole: MemberAccessRole =
+                m.accessRole ?? (isAccountHolder ? 'admin' : hasAppAccess ? 'viewer' : 'viewer')
+              return {
+                ...m,
+                isAccountHolder,
+                hasAppAccess,
+                accessRole: hasAppAccess ? accessRole : undefined,
+                editorLevel:
+                  hasAppAccess && accessRole === 'editor'
+                    ? normalizeEditorLevel(accessRole, m.editorLevel)
+                    : undefined,
+              }
+            })
+          }
+          const invites = state.familyInvites as FamilyInvite[] | undefined
+          if (invites) {
+            state.familyInvites = invites.map((invite) => ({
+              ...invite,
+              accessRole: invite.accessRole ?? 'editor',
+              editorLevel:
+                (invite.accessRole ?? 'editor') === 'editor'
+                  ? invite.editorLevel ?? defaultEditorLevel()
+                  : undefined,
+            }))
           }
         }
         return state as AppStore

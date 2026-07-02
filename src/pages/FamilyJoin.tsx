@@ -57,6 +57,9 @@ export function FamilyJoin() {
       relationship: 'Family',
       avatar: '👤',
       active: true,
+      hasAppAccess: true,
+      accessRole: invite.accessRole,
+      editorLevel: invite.editorLevel,
     })
     const ok = useFamilyInvite(normalizedCode, memberId)
     if (!ok) {

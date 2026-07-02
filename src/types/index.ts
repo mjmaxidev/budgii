@@ -11,6 +11,9 @@ export type Tag = {
   color: string
 }
 
+export type MemberAccessRole = 'admin' | 'editor' | 'viewer'
+export type EditorLevel = 'full' | 'standard' | 'limited'
+
 export type FamilyMember = {
   id: string
   name: string
@@ -18,6 +21,12 @@ export type FamilyMember = {
   avatar: string
   active: boolean
   isDefault?: boolean
+  /** Account creator — always admin */
+  isAccountHolder?: boolean
+  /** Can sign in and use the household in the app */
+  hasAppAccess?: boolean
+  accessRole?: MemberAccessRole
+  editorLevel?: EditorLevel
 }
 
 export type Expense = {
@@ -181,6 +190,8 @@ export type FamilyInvite = {
   usedBy?: string
   sentToContact?: string
   sentAt?: string
+  accessRole: MemberAccessRole
+  editorLevel?: EditorLevel
 }
 
 export type AppLockState = {

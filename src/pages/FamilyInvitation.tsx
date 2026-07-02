@@ -6,8 +6,11 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
+import { MemberAccessPicker } from '@/components/family/MemberAccessPicker'
 import { useStore } from '@/store/appStore'
 import { buildFamilyInviteUrl } from '@/utils/familyInvite'
+import type { EditorLevel, MemberAccessRole } from '@/types'
+import { defaultEditorLevel, formatMemberAccessLabel } from '@/utils/memberAccess'
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
@@ -31,22 +34,48 @@ export function FamilyInvitation() {
   const [inviteeContact, setInviteeContact] = useState('')
   const [contactError, setContactError] = useState('')
   const [sentTo, setSentTo] = useState('')
+  const [inviteRole, setInviteRole] = useState<MemberAccessRole>('editor')
+  const [inviteEditorLevel, setInviteEditorLevel] = useState<EditorLevel>(defaultEditorLevel())
 
   const createFamilyInvite = useStore((s) => s.createFamilyInvite)
+  const findFamilyInvite = useStore((s) => s.findFamilyInvite)
   const getUnusedInvites = useStore((s) => s.getUnusedInvites)
   const sendFamilyInvite = useStore((s) => s.sendFamilyInvite)
+  const updateFamilyInvite = useStore((s) => s.updateFamilyInvite)
+
+  function applyInvite(code: string) {
+    setFamilyCode(code)
+    const invite = findFamilyInvite(code)
+    if (invite) {
+      setInviteRole(invite.accessRole)
+      setInviteEditorLevel(invite.editorLevel ?? defaultEditorLevel())
+    }
+  }
 
   useEffect(() => {
     const unusedInvites = getUnusedInvites()
     if (unusedInvites.length > 0) {
-      setFamilyCode(unusedInvites[0].code)
+      applyInvite(unusedInvites[0].code)
     } else {
-      const code = createFamilyInvite()
-      setFamilyCode(code)
+      const code = createFamilyInvite('editor', defaultEditorLevel())
+      applyInvite(code)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createFamilyInvite, getUnusedInvites])
 
   const inviteUrl = familyCode ? buildFamilyInviteUrl(familyCode) : ''
+
+  function syncInviteAccess(accessRole: MemberAccessRole, editorLevel: EditorLevel) {
+    if (!familyCode) return
+    updateFamilyInvite(familyCode, { accessRole, editorLevel })
+  }
+
+  const handleGenerateNew = () => {
+    const code = createFamilyInvite(inviteRole, inviteEditorLevel)
+    applyInvite(code)
+    setSentTo('')
+    setContactError('')
+  }
 
   const handleCopyCode = async () => {
     try {
@@ -56,13 +85,6 @@ export function FamilyInvitation() {
     } catch (err) {
       console.error('Failed to copy:', err)
     }
-  }
-
-  const handleGenerateNew = () => {
-    const code = createFamilyInvite()
-    setFamilyCode(code)
-    setSentTo('')
-    setContactError('')
   }
 
   const handleSendInvite = () => {
@@ -107,6 +129,30 @@ export function FamilyInvitation() {
           >
             {copied ? 'Copied!' : 'Copy Code'}
           </ActionButton>
+        </Card>
+
+        <Card className="space-y-3">
+          <div className="space-y-1 text-center">
+            <p className="text-[12px] font-bold uppercase tracking-wide text-muted">Invite access</p>
+            <p className="text-[13px] text-muted">
+              They&apos;ll join as{' '}
+              <span className="font-bold text-ink">
+                {formatMemberAccessLabel(inviteRole, inviteEditorLevel)}
+              </span>
+            </p>
+          </div>
+          <MemberAccessPicker
+            accessRole={inviteRole}
+            editorLevel={inviteEditorLevel}
+            onAccessRoleChange={(role) => {
+              setInviteRole(role)
+              syncInviteAccess(role, inviteEditorLevel)
+            }}
+            onEditorLevelChange={(level) => {
+              setInviteEditorLevel(level)
+              syncInviteAccess(inviteRole, level)
+            }}
+          />
         </Card>
 
         <Card className="space-y-3">

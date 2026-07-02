@@ -1,4 +1,8 @@
 /** Public invite link scanned from the Family Invitation QR code. */
+export function isValidInviteEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 export function normalizeInviteCode(code: string) {
   return code.replace(/\s+/g, '').toUpperCase()
 }

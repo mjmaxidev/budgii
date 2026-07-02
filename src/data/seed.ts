@@ -40,7 +40,17 @@ export const seedTags: Tag[] = [
 ]
 
 export const seedFamilyMembers: FamilyMember[] = [
-  { id: 'mem_mom', name: 'Mom', relationship: 'You', avatar: '👩', active: true, isDefault: true },
+  {
+    id: 'mem_mom',
+    name: 'Mom',
+    relationship: 'You',
+    avatar: '👩',
+    active: true,
+    isDefault: true,
+    isAccountHolder: true,
+    hasAppAccess: true,
+    accessRole: 'admin',
+  },
   { id: 'mem_dad', name: 'Dad', relationship: 'Husband', avatar: '👨', active: true },
   { id: 'mem_emma', name: 'Emma', relationship: 'Child 1', avatar: '👧', active: true },
   { id: 'mem_noah', name: 'Noah', relationship: 'Child 2', avatar: '👦', active: true },
