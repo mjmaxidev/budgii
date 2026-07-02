@@ -9,7 +9,7 @@ import { ProgressRing } from '@/components/ui/ProgressRing'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { MoneyText } from '@/components/ui/MoneyText'
 import { useStore } from '@/store/appStore'
-import { dailyTotalsThisMonth, expensesInPeriod, sumExpenses } from '@/store/selectors'
+import { dailyCategoryBreakdownThisMonth, expensesInPeriod, sumExpenses } from '@/store/selectors'
 import { getBudgetStatus, statusColor } from '@/utils/budget'
 import { formatMoneyShort } from '@/utils/money'
 import type { Period } from '@/types'
@@ -31,8 +31,8 @@ export function ReportsBudget() {
   const warning = budget.warningThreshold / periodDivisor[period]
   const status = getBudgetStatus(spent, limit, warning)
 
-  const dailyTotals = dailyTotalsThisMonth(expenses)
-  const maxDaily = Math.max(...dailyTotals.map((d) => d.total), 1)
+  const dailyBreakdown = dailyCategoryBreakdownThisMonth(expenses)
+  const maxDaily = Math.max(...dailyBreakdown.map((d) => d.total), 1)
 
   return (
     <AppShell
@@ -71,17 +71,52 @@ export function ReportsBudget() {
       </div>
       <Card className="mt-2">
         <div className="flex h-36 items-end gap-[3px]">
-          {dailyTotals.map((d) => (
-            <div
-              key={d.day}
-              className="flex-1 rounded-t-sm bg-gradient-to-t from-primary/60 to-green/70"
-              style={{ height: `${Math.max(4, (d.total / maxDaily) * 100)}%` }}
-              title={`Day ${d.day}: ${formatMoneyShort(d.total)}`}
-            />
-          ))}
+          {dailyBreakdown.map((d) => {
+            const barHeight = d.total > 0 ? Math.max((d.total / maxDaily) * 100, 8) : 0
+            return (
+              <div key={d.day} className="flex h-full flex-1 flex-col justify-end">
+                {d.total === 0 ? (
+                  <div
+                    className="h-1 w-full rounded-full border border-dashed border-line/70"
+                    title={`Day ${d.day}: no spending`}
+                  />
+                ) : (
+                  <div
+                    className="flex w-full flex-col justify-end overflow-hidden rounded-t-sm"
+                    style={{ height: `${barHeight}%` }}
+                    title={`Day ${d.day}: ${formatMoneyShort(d.total)}`}
+                  >
+                    {[...d.categories].reverse().map((seg) => {
+                      const cat = category(seg.categoryId)
+                      const color = cat?.color ?? '#9CA3AF'
+                      const label = cat?.name ?? 'Other'
+                      return (
+                        <div
+                          key={seg.categoryId}
+                          className="flex w-full items-center justify-center"
+                          style={{
+                            height: `${(seg.amount / d.total) * 100}%`,
+                            backgroundColor: color,
+                            minHeight: 2,
+                          }}
+                          title={`${label}: ${formatMoneyShort(seg.amount)} (${seg.percent}%)`}
+                        >
+                          {seg.percent >= 25 && barHeight >= 30 && (
+                            <span className="text-[8px] font-bold leading-none text-white drop-shadow-sm">
+                              {seg.percent}%
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
         <div className="mt-1 flex justify-between text-[11px] text-muted">
-          <span>1</span><span>8</span><span>15</span><span>22</span><span>{dailyTotals.length}</span>
+          <span>1</span><span>8</span><span>15</span><span>22</span><span>{dailyBreakdown.length}</span>
         </div>
       </Card>
 

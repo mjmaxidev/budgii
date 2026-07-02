@@ -46,7 +46,6 @@ export function Home() {
   const warning = budget.warningThreshold / periodDivisor[period]
   const remaining = limit - spent
   const status = getBudgetStatus(spent, limit, warning)
-  const color = statusColor[status]
 
   // Get monthly summary
   const { startDate, endDate } = getMonthRange()
@@ -62,7 +61,15 @@ export function Home() {
     return '#EF4444' // red
   }
 
-  const cats = breakdownByCategory(periodExpenses).slice(0, 4)
+  const categoryBreakdown = breakdownByCategory(periodExpenses)
+  const ringSegments = categoryBreakdown
+    .filter((c) => c.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .map((c) => ({
+      value: limit > 0 ? c.total / limit : 0,
+      color: category(c.id)?.color ?? '#9CA3AF',
+    }))
+  const cats = categoryBreakdown.slice(0, 4)
   const recent = [...periodExpenses]
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4)
@@ -125,7 +132,7 @@ export function Home() {
             onClick={() => navigate('/spending-breakdown', withFrom('/home'))}
             className="flex items-center gap-0.5 text-[13px] font-bold text-primary active:opacity-70"
           >
-            Report
+            Spending Breakdown
             <ChevronRight size={16} />
           </button>
         </div>
@@ -133,7 +140,12 @@ export function Home() {
 
       {/* Budget ring */}
       <div className="mt-6 flex items-center justify-between">
-        <ProgressRing progress={limit > 0 ? spent / limit : 0} color={color} size={190} stroke={16}>
+        <ProgressRing
+          progress={limit > 0 ? spent / limit : 0}
+          segments={ringSegments}
+          size={190}
+          stroke={16}
+        >
           <span className="text-[14px] text-muted">Spent</span>
           <MoneyText amount={spent} cents={false} className="text-[34px] font-extrabold text-ink" />
           <span className="text-[13px] text-muted">of {formatMoneyShort(limit)}</span>
