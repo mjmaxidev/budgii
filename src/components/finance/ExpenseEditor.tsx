@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ChevronRight, FileText, Trash2 } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Chip } from '@/components/ui/Chip'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
+import { withFrom } from '@/utils/navigation'
 
 type Props = {
   expenseId: string
@@ -12,7 +15,9 @@ type Props = {
 }
 
 export function ExpenseEditor({ expenseId, onDone }: Props) {
+  const navigate = useNavigate()
   const expense = useStore((s) => s.expenses.find((e) => e.id === expenseId))
+  const receipt = useStore((s) => s.receipts.find((r) => r.id === expense?.receiptId))
   const updateExpense = useStore((s) => s.updateExpense)
   const deleteExpense = useStore((s) => s.deleteExpense)
   const { categories, tags, familyMembers } = useLookups()
@@ -56,6 +61,27 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
           className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
         />
       </label>
+
+      {receipt && (
+        <button
+          type="button"
+          onClick={() => {
+            onDone()
+            navigate(`/receipt-viewer/${receipt.id}`, withFrom('/transactions'))
+          }}
+          className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left active:bg-line/30"
+        >
+          <ReceiptThumbnail imageUrl={receipt.imageUrl} className="h-14 w-11 shrink-0" rounded="rounded-lg" />
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-1.5 text-[13px] font-bold text-ink">
+              <FileText size={14} className="text-primary" />
+              View scanned receipt
+            </p>
+            <p className="truncate text-[12px] text-muted">{receipt.merchant}</p>
+          </div>
+          <ChevronRight size={18} className="shrink-0 text-muted" />
+        </button>
+      )}
 
       <div>
         <span className="mb-2 block text-[13px] font-semibold text-muted">Category</span>
