@@ -9,6 +9,7 @@ import { MoneyText } from '@/components/ui/MoneyText'
 import { useStore } from '@/store/appStore'
 import { breakdownByCategory, sumExpenses } from '@/store/selectors'
 import { formatMoney, formatMoneyShort, percent } from '@/utils/money'
+import { sumOngoingIncome } from '@/utils/income'
 import { useLookups } from '@/store/lookups'
 
 export function MonthlySummary() {
@@ -17,6 +18,7 @@ export function MonthlySummary() {
 
   const expenses = useStore((s) => s.expenses)
   const incomeItems = useStore((s) => s.incomeItems)
+  const ongoingIncomes = useStore((s) => s.ongoingIncomes)
   const { category } = useLookups()
 
   // Calculate date range for selected month
@@ -41,7 +43,7 @@ export function MonthlySummary() {
 
   // Calculate totals
   const totalSpending = sumExpenses(monthExpenses)
-  const totalIncome = monthIncome.reduce((sum, item) => sum + item.amount, 0)
+  const totalIncome = monthIncome.reduce((sum, item) => sum + item.amount, 0) + sumOngoingIncome(ongoingIncomes)
   const netAmount = totalIncome - totalSpending
 
   const prevTotalSpending = sumExpenses(prevMonthExpenses)

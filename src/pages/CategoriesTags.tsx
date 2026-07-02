@@ -6,6 +6,8 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Chip } from '@/components/ui/Chip'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { ColorPickerField } from '@/components/ui/ColorPickerField'
+import { CATEGORY_COLOR_CHOICES } from '@/constants/categoryChoices'
 import { useStore } from '@/store/appStore'
 
 const EMOJI = ['🛒', '🍽️', '🚗', '🛍️', '📄', '❤️', '⭐', '🎁', '✈️', '🏠', '🐶', '💊']
@@ -25,23 +27,26 @@ export function CategoriesTags() {
   const [tagModal, setTagModal] = useState(false)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState(EMOJI[0])
+  const [color, setColor] = useState(CATEGORY_COLOR_CHOICES[0])
   const [tagName, setTagName] = useState('')
 
   function openNewCat() {
     setName('')
     setEmoji(EMOJI[0])
+    setColor(CATEGORY_COLOR_CHOICES[0])
     setCatModal({ open: true })
   }
   function openEditCat(id: string) {
     const c = categories.find((x) => x.id === id)!
     setName(c.name)
     setEmoji(c.icon)
+    setColor(c.color)
     setCatModal({ open: true, id })
   }
   function saveCat() {
     if (!name.trim()) return
-    if (catModal.id) updateCategory(catModal.id, { name: name.trim(), icon: emoji })
-    else addCategory(name.trim(), emoji)
+    if (catModal.id) updateCategory(catModal.id, { name: name.trim(), icon: emoji, color })
+    else addCategory(name.trim(), emoji, color)
     setCatModal({ open: false })
   }
   function saveTag() {
@@ -141,6 +146,9 @@ export function CategoriesTags() {
               {e}
             </button>
           ))}
+        </div>
+        <div className="mt-4">
+          <ColorPickerField value={color} onChange={setColor} presets={CATEGORY_COLOR_CHOICES} label="Colour" />
         </div>
         <div className="mt-5 flex gap-3">
           {catModal.id && (

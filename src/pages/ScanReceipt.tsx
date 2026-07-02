@@ -5,25 +5,37 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useStore } from '@/store/appStore'
+import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
 
 export function ScanReceipt() {
   const navigate = useNavigate()
   const addReceipt = useStore((s) => s.addReceipt)
   const updateReceipt = useStore((s) => s.updateReceipt)
+  const analyzeReceipt = useStore((s) => s.analyzeReceipt)
   const [analyzing, setAnalyzing] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
   async function handleFile(file?: File) {
     setAnalyzing(true)
-    // Create receipt with filename as merchant, mock total
-    const merchant = file?.name?.split('.')[0] || 'Receipt'
-    const today = new Date().toISOString().split('T')[0]
-    const id = addReceipt(merchant, today, 0, '')
+    const merchant = file?.name?.split('.')[0] || MOCK_RECEIPT_MERCHANT
+    const today = new Date().toISOString()
+    let imageUrl = ''
 
-    // Mock OCR/AI delay - mark as analyzing
+    if (file) {
+      imageUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.readAsDataURL(file)
+      })
+    }
+
+    const id = addReceipt(merchant, today, MOCK_RECEIPT_TOTAL, imageUrl)
+
     window.setTimeout(() => {
-      updateReceipt(id, { status: 'analyzing' })
+      if (imageUrl) updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
+      analyzeReceipt(id)
+      setAnalyzing(false)
       navigate(`/receipt-results/${id}`)
     }, 1200)
   }

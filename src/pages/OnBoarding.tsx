@@ -188,6 +188,7 @@ function GoogleLogo() {
 
 export function OnBoarding() {
   const addFamilyMember = useStore(s => s.addFamilyMember)
+  const triggerPinSetupPrompt = useStore(s => s.triggerPinSetupPrompt)
   const navigate = useNavigate()
 
   const [step, setStep] = useState<Step>(1)
@@ -256,6 +257,7 @@ export function OnBoarding() {
       name={name}
       onBack={() => setStep(3)}
       onAction={(action) => {
+        triggerPinSetupPrompt()
         const routes: Record<string, string> = {
           budget: '/budget-setup',
           expense: '/add-expense',

@@ -9,7 +9,8 @@ import { useStore } from '@/store/appStore'
 import { breakdownByCategory, sumExpenses } from '@/store/selectors'
 import { useLookups } from '@/store/lookups'
 import { monthLabel } from '@/utils/dates'
-import type { Expense, IncomeItem } from '@/types'
+import type { Expense, IncomeItem, OngoingIncome } from '@/types'
+import { sumOngoingIncome } from '@/utils/income'
 
 /**
  * Get expenses for a specific month (year-month offset from today)
@@ -30,20 +31,21 @@ function getExpensesForMonth(expenses: Expense[], monthOffset: number): Expense[
 /**
  * Get income for a specific month
  */
-function getIncomeForMonth(income: IncomeItem[], monthOffset: number) {
+function getIncomeForMonth(income: IncomeItem[], ongoing: OngoingIncome[], monthOffset: number) {
   const now = new Date()
   const targetDate = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
   const year = targetDate.getFullYear()
   const month = targetDate.getMonth()
 
-  return income.filter((i) => {
+  const manual = income.filter((i) => {
     const d = new Date(i.date)
     return d.getFullYear() === year && d.getMonth() === month
   })
+  return { manual, ongoingTotal: sumOngoingIncome(ongoing) }
 }
 
-function sumIncome(incomeItems: IncomeItem[]): number {
-  return incomeItems.reduce((sum, item) => sum + item.amount, 0)
+function sumIncome(incomeItems: IncomeItem[], ongoingTotal = 0): number {
+  return incomeItems.reduce((sum, item) => sum + item.amount, 0) + ongoingTotal
 }
 
 function getMonthLabel(monthOffset: number): string {
@@ -64,18 +66,19 @@ type MonthData = {
 function computeMonthData(
   expenses: Expense[],
   income: IncomeItem[],
+  ongoing: OngoingIncome[],
   monthOffset: number,
-  category: ReturnType<typeof useLookups>['category']
+  category: ReturnType<typeof useLookups>['category'],
 ): MonthData {
   const monthExpenses = getExpensesForMonth(expenses, monthOffset)
-  const monthIncome = getIncomeForMonth(income, monthOffset)
+  const { manual, ongoingTotal } = getIncomeForMonth(income, ongoing, monthOffset)
   const totalExpenses = sumExpenses(monthExpenses)
-  const totalIncome = sumIncome(monthIncome)
+  const totalIncome = sumIncome(manual, ongoingTotal)
   const categoryBreakdown = breakdownByCategory(monthExpenses)
 
   return {
     expenses: monthExpenses,
-    income: monthIncome,
+    income: manual,
     categoryBreakdown,
     totalExpenses,
     totalIncome,
@@ -87,11 +90,12 @@ export function BudgetComparison() {
   const [monthOffset, setMonthOffset] = useState(-1) // Start with last month
   const expenses = useStore((s) => s.expenses)
   const incomeItems = useStore((s) => s.incomeItems)
+  const ongoingIncomes = useStore((s) => s.ongoingIncomes)
   const { category } = useLookups()
 
   // Current month and previous month for comparison
-  const currentMonth = computeMonthData(expenses, incomeItems, 0, category)
-  const comparisonMonth = computeMonthData(expenses, incomeItems, monthOffset, category)
+  const currentMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, 0, category)
+  const comparisonMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, monthOffset, category)
 
   const currentLabel = getMonthLabel(0)
   const comparisonLabel = getMonthLabel(monthOffset)

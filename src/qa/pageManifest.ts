@@ -15,7 +15,8 @@ export type AppPage = {
 
 export const appPages: AppPage[] = [
   { path: '/home', label: 'Home', description: 'Budget overview' },
-  { path: '/add-expense', label: 'Add Expense', description: 'Manual entry' },
+  { path: '/add-expense-choice', label: 'Add Expense', description: 'Manual or scan' },
+  { path: '/add-expense', label: 'Add Expense Form', description: 'Manual entry' },
   { path: '/scan-receipt', label: 'Scan Receipt', description: 'Receipt capture' },
   { path: '/transactions', label: 'Transactions', description: 'Expense rows' },
   { path: '/reports', label: 'Reports', description: 'Budget charts' },

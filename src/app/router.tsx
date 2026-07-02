@@ -5,6 +5,7 @@ import { Verification } from '@/pages/Verification'
 import { OnBoarding } from '@/pages/OnBoarding'
 import { Home } from '@/pages/Home'
 import { AddExpense } from '@/pages/AddExpense'
+import { AddExpenseChoice } from '@/pages/AddExpenseChoice'
 import { ScanReceipt } from '@/pages/ScanReceipt'
 import { ReceiptResults } from '@/pages/ReceiptResults'
 import { ReceiptHistory } from '@/pages/ReceiptHistory'
@@ -50,7 +51,8 @@ export type RouteWithMeta = RouteObject & {
 export const appRoutes: RouteWithMeta[] = [
   { path: '/', element: <Navigate to="/home" replace /> },
   { path: '/home', element: <Home />, meta: { label: 'Home', description: 'Budget overview', section: 'app' } },
-  { path: '/add-expense', element: <AddExpense />, meta: { label: 'Add Expense', description: 'Manual entry', section: 'app' } },
+  { path: '/add-expense-choice', element: <AddExpenseChoice />, meta: { label: 'Add Expense', description: 'Manual or scan', section: 'app' } },
+  { path: '/add-expense', element: <AddExpense />, meta: { label: 'Add Expense Form', description: 'Manual entry', section: 'app', hidden: true } },
   { path: '/scan-receipt', element: <ScanReceipt />, meta: { label: 'Scan Receipt', description: 'Receipt capture', section: 'app' } },
   { path: '/receipt-results/:receiptId', element: <ReceiptResults />, meta: { label: 'Receipt Results', description: 'AI item review', section: 'app', hidden: true } },
   { path: '/item/:itemId', element: <ItemDetail />, meta: { label: 'Item Detail', description: 'Source receipt', section: 'app', hidden: true } },

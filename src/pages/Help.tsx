@@ -16,7 +16,7 @@ const faqItems: FAQItem[] = [
     id: 'add-expense',
     icon: Plus,
     question: 'How do I add an expense?',
-    answer: 'Tap the "+" button on the home screen to open the Add Expense form. Enter the amount, select a category, add optional notes or tags, and choose who paid. Then tap Save. Your expense will appear in your transaction history and affect your budget.',
+    answer: 'Tap the "+" button to choose how to add an expense — enter it manually or scan a receipt. For manual entry, fill in the amount, category, tags, and who paid, then tap Save. For receipts, take a photo and Budgii will extract items and suggest categories for you to review.',
   },
   {
     id: 'scan-receipt',

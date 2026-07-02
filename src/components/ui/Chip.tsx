@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/utils/cn'
+import { hexToHsl } from '@/utils/color'
 
 type Props = {
   children: ReactNode
@@ -18,8 +19,9 @@ function hexToSoft(hex: string, alpha = 0.16): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export function Chip({ children, color = '#FB8500', active = false, onClick, className, size = 'md' }: Props) {
+export function Chip({ children, color = '#E5A97A', active = false, onClick, className, size = 'md' }: Props) {
   const interactive = !!onClick
+  const textColor = active ? (hexToHsl(color).l > 62 ? '#3D3229' : '#fff') : color
   return (
     <button
       type="button"
@@ -27,7 +29,7 @@ export function Chip({ children, color = '#FB8500', active = false, onClick, cla
       disabled={!interactive}
       style={
         active
-          ? { backgroundColor: color, color: '#fff' }
+          ? { backgroundColor: color, color: textColor }
           : { backgroundColor: hexToSoft(color), color }
       }
       className={cn(

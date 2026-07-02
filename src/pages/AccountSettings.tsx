@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Lock, Mail, User as UserIcon, X } from 'lucide-react'
+import { Camera, Lock, Mail, User as UserIcon, X, Shield, ChevronRight } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
+import { PinSetupModal } from '@/components/security/PinSetupModal'
 import { useStore } from '@/store/appStore'
 
 const EMOJI_AVATARS = ['👤', '👨', '👩', '🧑', '😊', '😎', '🧔', '👵', '🧓', '👶', '💼', '🎨']
@@ -17,6 +18,7 @@ export function AccountSettings() {
   const navigate = useNavigate()
   const userProfile = useStore((s) => s.userProfile)
   const setUserProfile = useStore((s) => s.setUserProfile)
+  const hasPin = useStore((s) => !!s.appLock.pinHash)
 
   const [name, setName] = useState(userProfile.name || 'Alex Johnson')
   const [email, setEmail] = useState(userProfile.email || 'dev@mjproductions.app')
@@ -25,6 +27,7 @@ export function AccountSettings() {
   const [confirmPw, setConfirmPw] = useState('')
 
   const [showEmoji, setShowEmoji] = useState(false)
+  const [pinModal, setPinModal] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -128,6 +131,28 @@ export function AccountSettings() {
 
       {/* Security */}
       <div className="mt-5">
+        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">App Lock</h2>
+        <Card>
+          <button
+            type="button"
+            onClick={() => setPinModal(true)}
+            className="flex w-full items-center gap-3 py-1 text-left active:opacity-80"
+          >
+            <Shield size={20} className="text-primary" />
+            <div className="flex-1">
+              <p className="text-[15px] font-semibold text-ink">
+                {hasPin ? 'Change PIN' : 'Set PIN'}
+              </p>
+              <p className="text-[13px] text-muted">
+                {hasPin ? 'Update your 4-digit unlock code' : 'Require a PIN when you return to Budgii'}
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-muted" />
+          </button>
+        </Card>
+      </div>
+
+      <div className="mt-5">
         <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Email &amp; Password</h2>
         <Card className="space-y-3">
           <FormField
@@ -163,6 +188,12 @@ export function AccountSettings() {
       >
         Log Out
       </button>
+
+      <PinSetupModal
+        open={pinModal}
+        onClose={() => setPinModal(false)}
+        mode={hasPin ? 'change' : 'create'}
+      />
     </AppShell>
   )
 }

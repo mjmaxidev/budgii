@@ -35,7 +35,7 @@ export function TransactionConfirm() {
   }
 
   function handleAddAnother() {
-    navigate('/add-expense', { replace: true })
+    navigate('/add-expense-choice', { replace: true })
   }
 
   return (

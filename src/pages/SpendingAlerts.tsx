@@ -6,15 +6,12 @@ import { Card } from '@/components/ui/Card'
 import { ToggleRow } from '@/components/ui/ToggleRow'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { CategoryCreateModal, CategoryAddTile } from '@/components/finance/CategoryCreateModal'
 import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { formatMoney } from '@/utils/money'
 import type { SpendingAlert } from '@/types'
-
-// Choices offered when a user creates their own category (icon + colour)
-const ICON_CHOICES = ['🛒', '🍽️', '🚗', '🛍️', '📄', '❤️', '⭐', '🎁', '✈️', '🏠', '☕', '🎬', '💊', '🐾', '📚', '💡', '🎮', '💼', '👶', '🏋️']
-const COLOR_CHOICES = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B', '#0EA5E9', '#EC4899']
 
 export function SpendingAlerts() {
   const [newCategoryId, setNewCategoryId] = useState('')
@@ -28,15 +25,12 @@ export function SpendingAlerts() {
   })
   const [error, setError] = useState('')
   const [catModal, setCatModal] = useState(false)
-  const [newCatName, setNewCatName] = useState('')
-  const [newCatIcon, setNewCatIcon] = useState(ICON_CHOICES[0])
-  const [newCatColor, setNewCatColor] = useState(COLOR_CHOICES[0])
+  const [catCreateModal, setCatCreateModal] = useState(false)
 
   const spendingAlerts = useStore((s) => s.spendingAlerts)
   const addSpendingAlert = useStore((s) => s.addSpendingAlert)
   const updateSpendingAlert = useStore((s) => s.updateSpendingAlert)
   const deleteSpendingAlert = useStore((s) => s.deleteSpendingAlert)
-  const addCategory = useStore((s) => s.addCategory)
   const deleteCategory = useStore((s) => s.deleteCategory)
   const updateExpense = useStore((s) => s.updateExpense)
   const expenses = useStore((s) => s.expenses)
@@ -81,14 +75,14 @@ export function SpendingAlerts() {
     setEditMode(false)
   }
 
-  function createCategory() {
-    if (!newCatName.trim()) return
-    const id = addCategory(newCatName.trim(), newCatIcon, newCatColor)
-    setNewCategoryId(id)
-    setNewCatName('')
-    setNewCatIcon(ICON_CHOICES[0])
-    setNewCatColor(COLOR_CHOICES[0])
+  function openCategoryCreate() {
     setCatModal(false)
+    setCatCreateModal(true)
+  }
+
+  function onCategoryCreated(id: string) {
+    setNewCategoryId(id)
+    setCatCreateModal(false)
   }
 
   // Check notification permissions on mount
@@ -499,61 +493,18 @@ export function SpendingAlerts() {
               </button>
             )
           })}
+          {!editMode && <CategoryAddTile onClick={openCategoryCreate} />}
         </div>
-        {/* Create your own category (hidden while editing) */}
-        {!editMode && (
-        <div className="mt-5 rounded-card border border-line bg-surfaceSoft p-4">
-          <p className="mb-3 text-[14px] font-bold text-ink">Create your own</p>
-
-          {/* Live preview + name */}
-          <div className="flex items-center gap-3">
-            <CategoryIcon icon={newCatIcon} color={newCatColor} size={44} />
-            <input
-              value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="Category name"
-              className="flex-1 rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
-            />
-          </div>
-
-          {/* Icon picker */}
-          <p className="mb-2 mt-4 text-[12px] font-semibold uppercase tracking-wide text-muted">Icon</p>
-          <div className="grid grid-cols-8 gap-1.5">
-            {ICON_CHOICES.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => setNewCatIcon(emoji)}
-                className={`flex h-9 items-center justify-center rounded-lg text-xl transition ${
-                  newCatIcon === emoji ? 'bg-primarySoft ring-2 ring-primary' : 'bg-surface active:bg-line/40'
-                }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-
-          {/* Color picker */}
-          <p className="mb-2 mt-4 text-[12px] font-semibold uppercase tracking-wide text-muted">Colour</p>
-          <div className="flex flex-wrap gap-2.5">
-            {COLOR_CHOICES.map((color) => (
-              <button
-                key={color}
-                onClick={() => setNewCatColor(color)}
-                aria-label={`Colour ${color}`}
-                className={`h-8 w-8 rounded-full transition ${
-                  newCatColor === color ? 'ring-2 ring-ink ring-offset-2 ring-offset-surfaceSoft' : ''
-                }`}
-                style={{ background: color }}
-              />
-            ))}
-          </div>
-
-          <ActionButton onClick={createCategory} className="mt-4" leftIcon={<Plus size={18} />}>
-            Add Category
-          </ActionButton>
-        </div>
-        )}
       </Modal>
+
+      <CategoryCreateModal
+        open={catCreateModal}
+        onClose={() => {
+          setCatCreateModal(false)
+          setCatModal(true)
+        }}
+        onSaved={onCategoryCreated}
+      />
 
       {/* Delete categories confirmation */}
       <Modal

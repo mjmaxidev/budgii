@@ -75,7 +75,7 @@ export function ReportsBudget() {
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Budget Settings</h2>
         <button onClick={() => navigate('/budget-setup')} className="text-[14px] font-bold text-primary">
-          Edit
+          Adjust Budget
         </button>
       </div>
       <Card className="mt-2 flex justify-between">
@@ -103,14 +103,11 @@ export function ReportsBudget() {
             <AlertCircle size={24} className="shrink-0 text-red" />
             <div>
               <p className="text-[15px] font-bold text-ink">You've exceeded this period's budget.</p>
-              <p className="text-[13px] text-muted">Increase this period's limit or adjust next month's.</p>
+              <p className="text-[13px] text-muted">Adjust next month's budget to get back on track.</p>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <ActionButton size="md" variant="danger" onClick={() => navigate('/budget-setup?mode=current')}>
-              Increase Budget
-            </ActionButton>
-            <ActionButton size="md" variant="outline" onClick={() => navigate('/budget-setup?mode=next')}>
+          <div className="mt-3">
+            <ActionButton size="md" variant="outline" fullWidth onClick={() => navigate('/budget-setup?mode=next')}>
               Adjust Next Month
             </ActionButton>
           </div>
@@ -118,14 +115,9 @@ export function ReportsBudget() {
       )}
 
       {status !== 'over' && (
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <ActionButton size="md" onClick={() => navigate('/budget-setup?mode=current')}>
-            Increase Budget
-          </ActionButton>
-          <ActionButton size="md" variant="outline" onClick={() => navigate('/budget-setup?mode=next')}>
-            Adjust Next Month
-          </ActionButton>
-        </div>
+        <ActionButton size="md" variant="outline" className="mt-4" onClick={() => navigate('/budget-setup?mode=next')}>
+          Adjust Next Month
+        </ActionButton>
       )}
 
       {/* Current spend summary */}

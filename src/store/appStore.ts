@@ -6,11 +6,15 @@ import type {
   Deal,
   Expense,
   FamilyMember,
+  IncomeItem,
+  IncomeSource,
+  OngoingIncome,
   Receipt,
   ReceiptItem,
   ShoppingListItem,
   Tag,
   WatchlistItem,
+  AppLockState,
 } from '@/types'
 import {
   seedBudget,
@@ -18,6 +22,7 @@ import {
   seedDeals,
   seedExpenses,
   seedFamilyMembers,
+  seedIncomeSources,
   seedReceiptItems,
   seedReceipts,
   seedShoppingList,
@@ -32,20 +37,14 @@ import {
   MOCK_RECEIPT_TOTAL,
   mockExtractReceiptItems,
 } from '@/utils/mockAi'
+import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
+import { sumOngoingIncome } from '@/utils/income'
 
 const TAG_PALETTE = ['#FB8500', '#16A34A', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_ICONS = ['🛒', '🍽️', '🚗', '🛍️', '📄', '❤️', '⭐', '🎁', '✈️', '🏠']
 
 // ── New types for extended store ────────────────────────────────────────
-
-export type IncomeItem = {
-  id: string
-  date: string
-  source: 'Salary' | 'Freelance' | 'Investment' | 'Other'
-  amount: number
-  notes?: string
-}
 
 export type UserProfile = {
   name: string
@@ -105,15 +104,20 @@ export type AppStore = {
     suggestMemberFromHistory: boolean
     currency: string
     defaultReportView: 'daily' | 'weekly' | 'monthly'
+    /** Family members shown on Income Tracking — does not delete household members */
+    incomeMemberIds: string[]
   }
 
   // Extended store state
+  incomeSources: IncomeSource[]
   incomeItems: IncomeItem[]
+  ongoingIncomes: OngoingIncome[]
   userProfile: UserProfile
   budgetGoals: BudgetGoal[]
   recurringTransactions: RecurringTransaction[]
   spendingAlerts: SpendingAlert[]
   familyInvites: FamilyInvite[]
+  appLock: AppLockState
 
   // ── Existing methods ────────────────────────────────────────────────
 
@@ -131,7 +135,7 @@ export type AppStore = {
   deleteReceipt: (id: string) => void
   analyzeReceipt: (receiptId: string) => void
   confirmReceiptItems: (receiptId: string) => void
-  addReceiptItem: (receiptId: string, item: Partial<Omit<ReceiptItem, 'id' | 'receiptId' | 'aiConfidence'>>) => void
+  addReceiptItem: (receiptId: string, item: Partial<Omit<ReceiptItem, 'id' | 'receiptId'>>) => void
   updateReceiptItem: (id: string, patch: Partial<ReceiptItem>) => void
   removeReceiptItem: (id: string) => void
 
@@ -150,6 +154,9 @@ export type AppStore = {
   updateFamilyMember: (id: string, patch: Partial<FamilyMember>) => void
   deleteFamilyMember: (id: string) => void
 
+  addMemberToIncomePicker: (id: string) => void
+  removeMembersFromIncomePicker: (ids: string[]) => void
+
   // Watchlist & Deals
   addWatchlistItem: (item: Partial<WatchlistItem>) => void
   removeWatchlistItem: (id: string) => void
@@ -163,10 +170,22 @@ export type AppStore = {
 
   // ── New store methods ────────────────────────────────────────────────
 
-  // Income Items
+  // Income
+  addIncomeSource: (name: string, color?: string) => string
+  updateIncomeSource: (id: string, patch: Partial<IncomeSource>) => void
+  deleteIncomeSource: (id: string) => void
   addIncomeItem: (item: Partial<IncomeItem>) => string
   updateIncomeItem: (id: string, patch: Partial<IncomeItem>) => void
   deleteIncomeItem: (id: string) => void
+  addOngoingIncome: (item: Partial<OngoingIncome>) => string
+  updateOngoingIncome: (id: string, patch: Partial<OngoingIncome>) => void
+  deleteOngoingIncome: (id: string) => void
+  upsertOngoingIncome: (item: {
+    sourceId: string
+    amount: number
+    memberId?: string
+    notes?: string
+  }) => string
   getIncomeItems: (startDate: string, endDate: string) => IncomeItem[]
   getTotalIncome: (startDate: string, endDate: string) => number
 
@@ -205,6 +224,14 @@ export type AppStore = {
   getFamilyInvites: () => FamilyInvite[]
   getUnusedInvites: () => FamilyInvite[]
 
+  // App lock (PIN)
+  setAppPin: (pin: string) => Promise<void>
+  changeAppPin: (currentPin: string, newPin: string) => Promise<{ ok: boolean; error?: string }>
+  clearAppPin: () => void
+  verifyAppPin: (pin: string) => Promise<boolean>
+  triggerPinSetupPrompt: () => void
+  dismissPinSetupPrompt: () => void
+
   resetData: () => void
 }
 
@@ -226,10 +253,13 @@ export const useStore = create<AppStore>()(
         suggestMemberFromHistory: true,
         currency: 'USD',
         defaultReportView: 'monthly',
+        incomeMemberIds: seedFamilyMembers.map((m) => m.id),
       },
 
       // Initialize extended state
+      incomeSources: seedIncomeSources,
       incomeItems: [],
+      ongoingIncomes: [],
       userProfile: {
         name: 'Alex Johnson',
         email: 'dev@mjproductions.app',
@@ -245,6 +275,11 @@ export const useStore = create<AppStore>()(
       recurringTransactions: [],
       spendingAlerts: [],
       familyInvites: [],
+      appLock: {
+        pinHash: null,
+        pinSalt: null,
+        pendingSetupPrompt: false,
+      },
 
       // ── Existing methods ────────────────────────────────────────────
 
@@ -319,8 +354,10 @@ export const useStore = create<AppStore>()(
         if (!receipt) return
 
         const { categories: allCategories, familyMembers } = get()
-        const resolveCategoryId = (name: string) =>
-          allCategories[0]?.id ?? ''
+        const resolveCategoryId = (name: string) => {
+          const match = allCategories.find((c) => c.name.toLowerCase() === name.toLowerCase())
+          return match?.id ?? allCategories[0]?.id ?? ''
+        }
         const defaultMember = familyMembers.find((m) => m.isDefault)?.id
         const items = mockExtractReceiptItems({
           receiptId,
@@ -376,18 +413,20 @@ export const useStore = create<AppStore>()(
           expenses: s.expenses.filter((e) => e.id !== `exp_${id}`),
         })),
 
-      addReceiptItem: (receiptId: string, item: Partial<Omit<ReceiptItem, 'id' | 'receiptId' | 'aiConfidence'>>) =>
-        set((s) => ({
-          receiptItems: [
-            ...s.receiptItems,
-            {
-              id: `item_${Date.now()}`,
-              receiptId,
-              ...item,
-              aiConfidence: 0,
-            } as ReceiptItem,
-          ],
-        })),
+      addReceiptItem: (receiptId: string, item: Partial<Omit<ReceiptItem, 'id' | 'receiptId'>>) =>
+        set((s) => {
+          const newItem = {
+            id: `item_${Date.now()}`,
+            receiptId,
+            name: '',
+            amount: 0,
+            categoryId: '',
+            tagIds: [] as string[],
+            aiConfidence: 0,
+            ...item,
+          } as ReceiptItem
+          return { receiptItems: [...s.receiptItems, newItem] }
+        }),
 
       addCategory: (name, icon, color) => {
         const id = uid('cat')
@@ -433,7 +472,15 @@ export const useStore = create<AppStore>()(
           active: member.active ?? true,
           isDefault: member.isDefault,
         }
-        set((s) => ({ familyMembers: [...s.familyMembers, m] }))
+        set((s) => ({
+          familyMembers: [...s.familyMembers, m],
+          settings: {
+            ...s.settings,
+            incomeMemberIds: s.settings.incomeMemberIds.includes(id)
+              ? s.settings.incomeMemberIds
+              : [...s.settings.incomeMemberIds, id],
+          },
+        }))
         return id
       },
 
@@ -445,6 +492,29 @@ export const useStore = create<AppStore>()(
       deleteFamilyMember: (id) =>
         set((s) => ({
           familyMembers: s.familyMembers.filter((m) => m.id !== id),
+          settings: {
+            ...s.settings,
+            incomeMemberIds: s.settings.incomeMemberIds.filter((mid) => mid !== id),
+          },
+        })),
+
+      addMemberToIncomePicker: (id) =>
+        set((s) => {
+          if (s.settings.incomeMemberIds.includes(id)) return s
+          return {
+            settings: {
+              ...s.settings,
+              incomeMemberIds: [...s.settings.incomeMemberIds, id],
+            },
+          }
+        }),
+
+      removeMembersFromIncomePicker: (ids) =>
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            incomeMemberIds: s.settings.incomeMemberIds.filter((mid) => !ids.includes(mid)),
+          },
         })),
 
       addWatchlistItem: (item) => {
@@ -536,35 +606,107 @@ export const useStore = create<AppStore>()(
 
       // ── New store methods ────────────────────────────────────────────
 
+      addIncomeSource: (name, color) => {
+        const id = uid('incsrc')
+        const idx = get().incomeSources.length
+        const source: IncomeSource = {
+          id,
+          name,
+          color: color ?? TAG_PALETTE[idx % TAG_PALETTE.length],
+        }
+        set((s) => ({ incomeSources: [...s.incomeSources, source] }))
+        return id
+      },
+
+      updateIncomeSource: (id, patch) =>
+        set((s) => ({
+          incomeSources: s.incomeSources.map((src) => (src.id === id ? { ...src, ...patch } : src)),
+        })),
+
+      deleteIncomeSource: (id) => {
+        const fallback = get().incomeSources.find((s) => s.id !== id)
+        set((s) => ({
+          incomeSources: s.incomeSources.filter((src) => src.id !== id),
+          incomeItems: fallback
+            ? s.incomeItems.map((item) =>
+                item.sourceId === id ? { ...item, sourceId: fallback.id } : item,
+              )
+            : s.incomeItems,
+        }))
+      },
+
       addIncomeItem: (item) => {
+        if (!item.memberId) return ''
         const id = item.id ?? uid('inc')
+        const defaultSourceId = get().incomeSources[0]?.id ?? ''
         const incomeItem: IncomeItem = {
           id,
           date: item.date ?? todayISO(),
-          source: (item.source as IncomeItem['source']) ?? 'Other',
+          sourceId: item.sourceId ?? defaultSourceId,
           amount: item.amount ?? 0,
+          memberId: item.memberId,
           notes: item.notes,
         }
         set((s) => ({ incomeItems: [incomeItem, ...s.incomeItems] }))
         return id
       },
 
-      updateIncomeItem: (id, patch) =>
+      updateIncomeItem: (id, patch) => {
+        if ('memberId' in patch && !patch.memberId) return
         set((s) => ({
           incomeItems: s.incomeItems.map((i) => (i.id === id ? { ...i, ...patch } : i)),
-        })),
+        }))
+      },
 
       deleteIncomeItem: (id) =>
         set((s) => ({ incomeItems: s.incomeItems.filter((i) => i.id !== id) })),
+
+      addOngoingIncome: (item) => {
+        if (!item.memberId) return ''
+        const id = item.id ?? uid('oinc')
+        const entry: OngoingIncome = {
+          id,
+          sourceId: item.sourceId ?? get().incomeSources[0]?.id ?? '',
+          amount: item.amount ?? 0,
+          memberId: item.memberId,
+          notes: item.notes,
+          enabled: item.enabled ?? true,
+        }
+        set((s) => ({ ongoingIncomes: [...s.ongoingIncomes, entry] }))
+        return id
+      },
+
+      updateOngoingIncome: (id, patch) => {
+        if ('memberId' in patch && !patch.memberId) return
+        set((s) => ({
+          ongoingIncomes: s.ongoingIncomes.map((o) => (o.id === id ? { ...o, ...patch } : o)),
+        }))
+      },
+
+      deleteOngoingIncome: (id) =>
+        set((s) => ({ ongoingIncomes: s.ongoingIncomes.filter((o) => o.id !== id) })),
+
+      upsertOngoingIncome: ({ sourceId, amount, memberId, notes }) => {
+        if (!memberId) return ''
+        const existing = get().ongoingIncomes.find(
+          (o) => o.sourceId === sourceId && o.memberId === memberId,
+        )
+        if (existing) {
+          get().updateOngoingIncome(existing.id, { amount, notes, enabled: true })
+          return existing.id
+        }
+        return get().addOngoingIncome({ sourceId, amount, memberId, notes, enabled: true })
+      },
 
       getIncomeItems: (startDate, endDate) => {
         return get().incomeItems.filter((i) => i.date >= startDate && i.date <= endDate)
       },
 
       getTotalIncome: (startDate, endDate) => {
-        return get()
+        const manual = get()
           .getIncomeItems(startDate, endDate)
           .reduce((sum, item) => sum + item.amount, 0)
+        return manual + sumOngoingIncome(get().ongoingIncomes)
       },
 
       setUserProfile: (profile) => {
@@ -727,6 +869,55 @@ export const useStore = create<AppStore>()(
         return get().familyInvites.filter((fi) => !fi.usedAt)
       },
 
+      setAppPin: async (pin) => {
+        const salt = generateSalt()
+        const pinHash = await hashPin(pin, salt)
+        set((s) => ({
+          appLock: {
+            ...s.appLock,
+            pinHash,
+            pinSalt: salt,
+            pendingSetupPrompt: false,
+          },
+        }))
+      },
+
+      changeAppPin: async (currentPin, newPin) => {
+        const { pinHash, pinSalt } = get().appLock
+        if (!pinHash || !pinSalt) {
+          return { ok: false, error: 'No PIN is set yet' }
+        }
+        const valid = await verifyPin(currentPin, pinSalt, pinHash)
+        if (!valid) return { ok: false, error: 'Incorrect current PIN' }
+        const salt = generateSalt()
+        const nextHash = await hashPin(newPin, salt)
+        set((s) => ({
+          appLock: { ...s.appLock, pinHash: nextHash, pinSalt: salt },
+        }))
+        return { ok: true }
+      },
+
+      clearAppPin: () =>
+        set((s) => ({
+          appLock: { ...s.appLock, pinHash: null, pinSalt: null },
+        })),
+
+      verifyAppPin: async (pin) => {
+        const { pinHash, pinSalt } = get().appLock
+        if (!pinHash || !pinSalt) return true
+        return verifyPin(pin, pinSalt, pinHash)
+      },
+
+      triggerPinSetupPrompt: () =>
+        set((s) => ({
+          appLock: { ...s.appLock, pendingSetupPrompt: true },
+        })),
+
+      dismissPinSetupPrompt: () =>
+        set((s) => ({
+          appLock: { ...s.appLock, pendingSetupPrompt: false },
+        })),
+
       resetData: () =>
         set({
           categories: seedCategories,
@@ -739,16 +930,117 @@ export const useStore = create<AppStore>()(
           watchlistItems: seedWatchlistItems,
           deals: seedDeals,
           shoppingList: seedShoppingList,
+          incomeSources: seedIncomeSources,
           incomeItems: [],
+          ongoingIncomes: [],
           budgetGoals: [],
           recurringTransactions: [],
           spendingAlerts: [],
           familyInvites: [],
+          appLock: {
+            pinHash: null,
+            pinSalt: null,
+            pendingSetupPrompt: false,
+          },
         }),
     }),
     {
       name: 'budgii',
-      version: 1,
+      version: 11,
+      migrate: (persisted, version) => {
+        const state = persisted as Record<string, unknown>
+        if (version < 2) {
+          state.appLock = {
+            pinHash: null,
+            pinSalt: null,
+            pendingSetupPrompt: false,
+          }
+        }
+        if (version < 3) {
+          const legacySources: IncomeSource[] = [
+            { id: 'incsrc_salary', name: 'Salary', color: '#2386F6' },
+            { id: 'incsrc_freelance', name: 'Freelance', color: '#16A34A' },
+            { id: 'incsrc_investment', name: 'Investment', color: '#9B5DE5' },
+            { id: 'incsrc_other', name: 'Other', color: '#F59E0B' },
+          ]
+          const legacyMap: Record<string, string> = {
+            Salary: 'incsrc_salary',
+            Freelance: 'incsrc_freelance',
+            Investment: 'incsrc_investment',
+            Other: 'incsrc_other',
+          }
+          if (!state.incomeSources) state.incomeSources = legacySources
+          const items = state.incomeItems as Array<Record<string, unknown>> | undefined
+          if (items) {
+            state.incomeItems = items.map((item) => {
+              const { source, ...rest } = item
+              const sourceId =
+                (rest.sourceId as string | undefined) ??
+                legacyMap[String(source)] ??
+                'incsrc_other'
+              return { ...rest, sourceId }
+            })
+          }
+        }
+        if (version < 4) {
+          const settings = state.settings as Record<string, unknown> | undefined
+          const members = state.familyMembers as FamilyMember[] | undefined
+          if (settings && !settings.incomeMemberIds && members) {
+            settings.incomeMemberIds = members.map((m) => m.id)
+          }
+        }
+        if (version < 5) {
+          state.incomeItems = []
+        }
+        if (version < 6) {
+          const receiptItems = state.receiptItems as ReceiptItem[] | undefined
+          if (receiptItems) {
+            const brokenIds = new Set(
+              receiptItems
+                .filter((i) => i.name === 'New Item' && i.amount === 0)
+                .map((i) => i.id),
+            )
+            if (brokenIds.size > 0) {
+              state.receiptItems = receiptItems.filter((i) => !brokenIds.has(i.id))
+              const receipts = state.receipts as Receipt[] | undefined
+              if (receipts) {
+                state.receipts = receipts.map((r) => ({
+                  ...r,
+                  itemIds: r.itemIds.filter((id) => !brokenIds.has(id)),
+                }))
+              }
+            }
+          }
+        }
+        if (version < 7) {
+          state.ongoingIncomes = []
+        }
+        if (version < 8) {
+          state.incomeItems = []
+          state.ongoingIncomes = []
+        }
+        if (version < 9) {
+          state.incomeItems = []
+          state.ongoingIncomes = []
+        }
+        if (version < 10) {
+          state.incomeItems = []
+          state.ongoingIncomes = []
+        }
+        if (version < 11) {
+          state.incomeItems = []
+          state.ongoingIncomes = []
+        }
+        return state as AppStore
+      },
+      onRehydrateStorage: () => (state, err) => {
+        if (err || typeof window === 'undefined') return
+        if (localStorage.getItem('budgii-income-cleared-v11')) return
+        queueMicrotask(() => {
+          useStore.setState({ incomeItems: [], ongoingIncomes: [] })
+          localStorage.setItem('budgii-income-cleared-v11', '1')
+        })
+      },
     },
   ),
 )

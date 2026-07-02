@@ -114,12 +114,29 @@ export type Period = 'daily' | 'weekly' | 'monthly'
 
 // ── Extended store types ────────────────────────────────────────────
 
+export type IncomeSource = {
+  id: string
+  name: string
+  color: string
+}
+
 export type IncomeItem = {
   id: string
   date: string
-  source: 'Salary' | 'Freelance' | 'Investment' | 'Other'
+  sourceId: string
   amount: number
+  memberId?: string
   notes?: string
+}
+
+/** Stable monthly income — counted every month while enabled */
+export type OngoingIncome = {
+  id: string
+  sourceId: string
+  amount: number
+  memberId?: string
+  notes?: string
+  enabled: boolean
 }
 
 export type UserProfile = {
@@ -162,4 +179,11 @@ export type FamilyInvite = {
   createdAt: string
   usedAt?: string
   usedBy?: string
+}
+
+export type AppLockState = {
+  pinHash: string | null
+  pinSalt: string | null
+  /** Show one-time setup prompt after onboarding */
+  pendingSetupPrompt: boolean
 }

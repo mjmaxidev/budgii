@@ -9,6 +9,7 @@ import type {
   ShoppingListItem,
   Tag,
   WatchlistItem,
+  IncomeSource,
 } from '@/types'
 
 /** Dates are generated relative to first-run "today" so all period views look alive. */
@@ -44,6 +45,13 @@ export const seedFamilyMembers: FamilyMember[] = [
   { id: 'mem_emma', name: 'Emma', relationship: 'Child 1', avatar: '👧', active: true },
   { id: 'mem_noah', name: 'Noah', relationship: 'Child 2', avatar: '👦', active: true },
   { id: 'mem_ava', name: 'Ava', relationship: 'Child 3', avatar: '🧒', active: true },
+]
+
+export const seedIncomeSources: IncomeSource[] = [
+  { id: 'incsrc_salary', name: 'Salary', color: '#2386F6' },
+  { id: 'incsrc_freelance', name: 'Freelance', color: '#16A34A' },
+  { id: 'incsrc_investment', name: 'Investment', color: '#9B5DE5' },
+  { id: 'incsrc_other', name: 'Other', color: '#F59E0B' },
 ]
 
 export const seedBudget: Budget = {

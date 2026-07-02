@@ -1,20 +1,23 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Camera, ImageUp, Plus, Eye, CheckCircle2, ChevronRight, Repeat } from 'lucide-react'
+import { Calendar, Plus, ChevronRight, Repeat } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Chip } from '@/components/ui/Chip'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { ColorPickerField } from '@/components/ui/ColorPickerField'
 import { Modal } from '@/components/ui/Modal'
+import { CategoryCreateModal, CategoryAddTile } from '@/components/finance/CategoryCreateModal'
+import { TAG_COLOR_CHOICES } from '@/constants/tagChoices'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 
 export function AddExpense() {
   const navigate = useNavigate()
   const addExpense = useStore((s) => s.addExpense)
-  const addCategory = useStore((s) => s.addCategory)
+  const addTag = useStore((s) => s.addTag)
   const addRecurringTransaction = useStore((s) => s.addRecurringTransaction)
   const { categories, tags, familyMembers } = useLookups()
 
@@ -25,29 +28,15 @@ export function AddExpense() {
   const [tagIds, setTagIds] = useState<string[]>([])
   const [memberId, setMemberId] = useState<string | undefined>(familyMembers.find((m) => m.isDefault)?.id)
   const [notes, setNotes] = useState('')
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
-  const [receiptName, setReceiptName] = useState<string>('')
-  const [receiptSize, setReceiptSize] = useState<string>('')
   const [catModal, setCatModal] = useState(false)
-  const [newCatName, setNewCatName] = useState('')
-  const [viewReceipt, setViewReceipt] = useState(false)
+  const [catCreateModal, setCatCreateModal] = useState(false)
+  const [tagModal, setTagModal] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [newTagColor, setNewTagColor] = useState(TAG_COLOR_CHOICES[0])
   const [isRecurring, setIsRecurring] = useState(false)
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly')
 
-  const fileRef = useRef<HTMLInputElement>(null)
-  const cameraRef = useRef<HTMLInputElement>(null)
-
   const cat = categories.find((c) => c.id === categoryId)
-
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setReceiptName(file.name)
-    setReceiptSize(`${Math.max(1, Math.round(file.size / 1024))} KB`)
-    const reader = new FileReader()
-    reader.onload = () => setReceiptPreview(reader.result as string)
-    reader.readAsDataURL(file)
-  }
 
   function toggleTag(id: string) {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
@@ -79,12 +68,23 @@ export function AddExpense() {
     })
   }
 
-  function createCat() {
-    if (!newCatName.trim()) return
-    const id = addCategory(newCatName.trim())
-    setCategoryId(id)
-    setNewCatName('')
+  function openCategoryCreate() {
     setCatModal(false)
+    setCatCreateModal(true)
+  }
+
+  function onCategoryCreated(id: string) {
+    setCategoryId(id)
+    setCatCreateModal(false)
+  }
+
+  function createTag() {
+    if (!newTagName.trim()) return
+    const id = addTag(newTagName.trim(), newTagColor)
+    setTagIds((prev) => [...prev, id])
+    setNewTagName('')
+    setNewTagColor(TAG_COLOR_CHOICES[0])
+    setTagModal(false)
   }
 
   return (
@@ -150,14 +150,21 @@ export function AddExpense() {
 
         {/* Tags */}
         <Card className="py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[15px] font-bold text-ink">Tags</span>
-            <div className="no-scrollbar flex flex-1 flex-wrap gap-2">
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 pt-1 text-[15px] font-bold text-ink">Tags</span>
+            <div className="flex flex-1 flex-wrap gap-2">
               {tags.map((t) => (
                 <Chip key={t.id} color={t.color} active={tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
                   {t.name}
                 </Chip>
               ))}
+              <button
+                type="button"
+                onClick={() => setTagModal(true)}
+                className="inline-flex items-center gap-1 rounded-pill border-2 border-dashed border-line px-3 py-1.5 text-[13px] font-bold text-muted active:bg-surfaceSoft"
+              >
+                <Plus size={14} /> Add
+              </button>
             </div>
           </div>
         </Card>
@@ -227,61 +234,16 @@ export function AddExpense() {
           </Card>
         )}
 
-        {/* Receipt */}
-        <Card className="py-4">
-          <p className="mb-3 text-[15px] font-bold text-ink">Receipt</p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => cameraRef.current?.click()}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-input border border-line bg-surface text-[15px] font-bold text-primary active:bg-primarySoft"
-            >
-              <Camera size={20} /> Take Photo
-            </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex min-h-[52px] items-center justify-center gap-2 rounded-input border border-line bg-surface text-[15px] font-bold text-green active:bg-greenSoft"
-            >
-              <ImageUp size={20} /> Upload Receipt
-            </button>
-          </div>
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
-          <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
-
-          {receiptPreview && (
-            <div className="mt-3 flex items-center gap-3 rounded-input border border-line bg-surfaceSoft p-3">
-              <img src={receiptPreview} alt="receipt" className="h-14 w-14 rounded-lg object-cover" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-bold text-ink">{receiptName || 'Receipt'}</p>
-                <p className="text-[12px] text-muted">{receiptSize}</p>
-                <p className="mt-0.5 inline-flex items-center gap-1 text-[12px] font-semibold text-green">
-                  <CheckCircle2 size={13} /> Attached
-                </p>
-              </div>
-              <button
-                onClick={() => setViewReceipt(true)}
-                className="flex flex-col items-center gap-0.5 rounded-lg bg-primarySoft px-3 py-2 text-[12px] font-bold text-primary"
-              >
-                <Eye size={18} /> View
-              </button>
-            </div>
-          )}
-        </Card>
-
-        <button onClick={() => setCatModal(true)} className="w-full">
-          <Card className="flex items-center justify-center gap-2 py-3 text-[15px] font-bold text-ink">
-            <Plus size={18} /> Create New Category
-          </Card>
-        </button>
-
         <ActionButton onClick={save}>Save Expense</ActionButton>
       </div>
 
-      {/* Category picker / create modal */}
+      {/* Category picker */}
       <Modal open={catModal} onClose={() => setCatModal(false)} title="Choose Category">
         <div className="grid grid-cols-3 gap-3">
           {categories.map((c) => (
             <button
               key={c.id}
+              type="button"
               onClick={() => {
                 setCategoryId(c.id)
                 setCatModal(false)
@@ -294,22 +256,39 @@ export function AddExpense() {
               <span className="truncate text-[12px] font-semibold text-ink">{c.name}</span>
             </button>
           ))}
-        </div>
-        <div className="mt-4 flex gap-2">
-          <input
-            value={newCatName}
-            onChange={(e) => setNewCatName(e.target.value)}
-            placeholder="New category name"
-            className="flex-1 rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
-          />
-          <ActionButton fullWidth={false} onClick={createCat} className="px-5">
-            Add
-          </ActionButton>
+          <CategoryAddTile onClick={openCategoryCreate} />
         </div>
       </Modal>
 
-      <Modal open={viewReceipt} onClose={() => setViewReceipt(false)} title="Receipt" variant="center">
-        {receiptPreview && <img src={receiptPreview} alt="receipt" className="max-h-[70vh] w-full rounded-input object-contain" />}
+      <CategoryCreateModal
+        open={catCreateModal}
+        onClose={() => {
+          setCatCreateModal(false)
+          setCatModal(true)
+        }}
+        onSaved={onCategoryCreated}
+      />
+
+      <Modal open={tagModal} onClose={() => setTagModal(false)} title="Create Tag">
+        <p className="mb-4 text-[14px] text-muted">Add a custom tag for this expense and future ones.</p>
+        <input
+          value={newTagName}
+          onChange={(e) => setNewTagName(e.target.value)}
+          placeholder="Tag name"
+          className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
+        />
+        <ColorPickerField value={newTagColor} onChange={setNewTagColor} presets={TAG_COLOR_CHOICES} label="Colour" />
+        {newTagName.trim() && (
+          <div className="mt-4">
+            <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Preview</p>
+            <Chip color={newTagColor} active>
+              {newTagName.trim()}
+            </Chip>
+          </div>
+        )}
+        <ActionButton onClick={createTag} className="mt-5" leftIcon={<Plus size={18} />}>
+          Add Tag
+        </ActionButton>
       </Modal>
     </AppShell>
   )

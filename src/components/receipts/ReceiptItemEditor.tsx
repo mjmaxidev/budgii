@@ -1,7 +1,7 @@
 import { Trash2 } from 'lucide-react'
-import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Chip } from '@/components/ui/Chip'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { ReceiptItemMetaFields } from '@/components/receipts/ReceiptItemMetaFields'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 
@@ -15,14 +15,9 @@ export function ReceiptItemEditor({ itemId, onDone }: Props) {
   const item = useStore((s) => s.receiptItems.find((i) => i.id === itemId))
   const updateReceiptItem = useStore((s) => s.updateReceiptItem)
   const removeReceiptItem = useStore((s) => s.removeReceiptItem)
-  const { categories, tags, familyMembers } = useLookups()
+  const { familyMembers } = useLookups()
 
   if (!item) return null
-
-  function toggleTag(id: string) {
-    const next = item!.tagIds.includes(id) ? item!.tagIds.filter((t) => t !== id) : [...item!.tagIds, id]
-    updateReceiptItem(itemId, { tagIds: next })
-  }
 
   return (
     <div className="space-y-4">
@@ -46,34 +41,12 @@ export function ReceiptItemEditor({ itemId, onDone }: Props) {
         </label>
       </div>
 
-      <div>
-        <span className="mb-2 block text-[13px] font-semibold text-muted">Category</span>
-        <div className="grid grid-cols-4 gap-2">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => updateReceiptItem(itemId, { categoryId: c.id })}
-              className={`flex flex-col items-center gap-1 rounded-2xl border p-2 ${
-                item.categoryId === c.id ? 'border-primary bg-primarySoft' : 'border-line'
-              }`}
-            >
-              <CategoryIcon icon={c.icon} color={c.color} size={32} />
-              <span className="truncate w-full text-center text-[10px] font-semibold text-ink">{c.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <span className="mb-2 block text-[13px] font-semibold text-muted">Tags</span>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((t) => (
-            <Chip key={t.id} color={t.color} active={item.tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
-              {t.name}
-            </Chip>
-          ))}
-        </div>
-      </div>
+      <ReceiptItemMetaFields
+        categoryId={item.categoryId}
+        tagIds={item.tagIds}
+        onCategoryChange={(id) => updateReceiptItem(itemId, { categoryId: id })}
+        onTagIdsChange={(ids) => updateReceiptItem(itemId, { tagIds: ids })}
+      />
 
       <div>
         <span className="mb-2 block text-[13px] font-semibold text-muted">Member</span>

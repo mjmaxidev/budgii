@@ -6,6 +6,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { MoneyText } from '@/components/ui/MoneyText'
 import { ReceiptItemRow } from '@/components/receipts/ReceiptItemRow'
+import { ReceiptItemCreateForm } from '@/components/receipts/ReceiptItemCreateForm'
 import { ReceiptItemEditor } from '@/components/receipts/ReceiptItemEditor'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
@@ -26,8 +27,10 @@ export function ReceiptResults() {
     [allReceiptItems, receiptId],
   )
   const confirmReceiptItems = useStore((s) => s.confirmReceiptItems)
-  const addReceiptItem = useStore((s) => s.addReceiptItem)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [addItemOpen, setAddItemOpen] = useState(false)
+  const [matchHelpOpen, setMatchHelpOpen] = useState(false)
+  const [matchHelpConfidence, setMatchHelpConfidence] = useState<number | null>(null)
 
   if (!receipt) {
     return (
@@ -80,11 +83,31 @@ export function ReceiptResults() {
         </div>
       </div>
 
-      <p className="mt-4 text-[15px] font-bold text-ink">{items.length} items found</p>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <p className="text-[15px] font-bold text-ink">{items.length} items found</p>
+        <div className="flex items-center gap-2 text-[11px] font-semibold text-muted">
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-green" />
+            90%+ match
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            Review
+          </span>
+        </div>
+      </div>
 
-      <Card className="mt-2 px-4 py-0">
+      <Card className="mt-3 px-3 py-0">
         {items.map((item) => (
-          <ReceiptItemRow key={item.id} item={item} onEdit={() => setEditingId(item.id)} />
+          <ReceiptItemRow
+            key={item.id}
+            item={item}
+            onEdit={() => setEditingId(item.id)}
+            onMatchClick={(confidence) => {
+              setMatchHelpConfidence(confidence)
+              setMatchHelpOpen(true)
+            }}
+          />
         ))}
       </Card>
 
@@ -94,9 +117,7 @@ export function ReceiptResults() {
         </ActionButton>
         <ActionButton
           variant="greenOutline"
-          onClick={() => {
-            addReceiptItem(receiptId, { name: 'New Item', amount: 0 })
-          }}
+          onClick={() => setAddItemOpen(true)}
           leftIcon={<Plus size={18} />}
         >
           Add Missing Item
@@ -109,11 +130,33 @@ export function ReceiptResults() {
           <div>
             <p className="text-[16px] font-bold text-ink">Looks good!</p>
             <p className="text-[14px] text-muted">
-              {allHighConfidence ? 'All items were recognized with high accuracy.' : 'Review the highlighted items before confirming.'}
+              {allHighConfidence
+                ? 'All categories were matched with high confidence.'
+                : 'Some items have lower category match scores — review them before confirming.'}
             </p>
           </div>
         </div>
       </div>
+
+      <Modal open={matchHelpOpen} onClose={() => setMatchHelpOpen(false)} title="Category match" variant="center">
+        <p className="text-[15px] leading-snug text-muted">
+          The <span className="font-bold text-ink">{matchHelpConfidence}%</span> shows how confident the AI is about
+          this item&apos;s category.
+        </p>
+        <p className="mt-3 text-[15px] leading-snug text-muted">
+          {matchHelpConfidence !== null && matchHelpConfidence >= 90
+            ? 'Green scores usually look right.'
+            : 'Orange scores are worth a quick check.'}{' '}
+          Tap the pencil on the item to change the category if it looks wrong.
+        </p>
+        <ActionButton className="mt-5" variant="green" onClick={() => setMatchHelpOpen(false)}>
+          Got it
+        </ActionButton>
+      </Modal>
+
+      <Modal open={addItemOpen} onClose={() => setAddItemOpen(false)} title="Add Missing Item">
+        <ReceiptItemCreateForm receiptId={receiptId} onDone={() => setAddItemOpen(false)} />
+      </Modal>
 
       <Modal open={!!editingId} onClose={() => setEditingId(null)} title="Edit Item">
         {editingId && <ReceiptItemEditor itemId={editingId} onDone={() => setEditingId(null)} />}

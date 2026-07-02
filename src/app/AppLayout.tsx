@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { AppLockProvider } from '@/components/security/AppLockProvider'
 
 /**
  * Budgii is a phone-only app. In the packaged Electron window the viewport is
@@ -9,7 +10,9 @@ import { Outlet } from 'react-router-dom'
 export function AppLayout() {
   return (
     <div id="mobile-frame-root" className="relative mx-auto h-full w-full max-w-[390px] bg-bg">
-      <Outlet />
+      <AppLockProvider>
+        <Outlet />
+      </AppLockProvider>
     </div>
   )
 }

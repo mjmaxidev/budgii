@@ -9,17 +9,16 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Chip } from '@/components/ui/Chip'
 import { useStore } from '@/store/appStore'
 
-// Color and icon palettes from store
-const COLOR_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
-const ICON_PALETTE = ['🛒', '🍽️', '🚗', '🛍️', '📄', '❤️', '⭐', '🎁', '✈️', '🏠']
+import { CATEGORY_COLOR_CHOICES, CATEGORY_ICON_CHOICES } from '@/constants/categoryChoices'
+import { ColorPickerField } from '@/components/ui/ColorPickerField'
 
 export function CategoryCreation() {
   const navigate = useNavigate()
   const addCategory = useStore((s) => s.addCategory)
 
   const [name, setName] = useState('')
-  const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0])
-  const [selectedIcon, setSelectedIcon] = useState(ICON_PALETTE[0])
+  const [selectedColor, setSelectedColor] = useState(CATEGORY_COLOR_CHOICES[0])
+  const [selectedIcon, setSelectedIcon] = useState(CATEGORY_ICON_CHOICES[0])
 
   function save() {
     if (!name.trim()) return
@@ -46,31 +45,19 @@ export function CategoryCreation() {
           containerClassName="w-full"
         />
 
-        {/* Color Picker */}
-        <div>
-          <label className="mb-2.5 block text-[13px] font-semibold text-muted">Color</label>
-          <div className="flex flex-wrap gap-2">
-            {COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                onClick={() => setSelectedColor(color)}
-                className="h-10 w-10 rounded-full border-2 transition-transform active:scale-90"
-                style={{
-                  backgroundColor: color,
-                  borderColor: selectedColor === color ? 'rgba(0, 0, 0, 0.4)' : 'transparent',
-                  borderWidth: selectedColor === color ? 2 : 1,
-                }}
-                aria-label={`Color ${color}`}
-              />
-            ))}
-          </div>
-        </div>
+        <ColorPickerField
+          value={selectedColor}
+          onChange={setSelectedColor}
+          presets={CATEGORY_COLOR_CHOICES}
+          label="Color"
+          swatchSize="md"
+        />
 
         {/* Icon Picker */}
         <div>
           <label className="mb-2.5 block text-[13px] font-semibold text-muted">Icon</label>
           <div className="flex flex-wrap gap-2">
-            {ICON_PALETTE.map((icon) => (
+            {CATEGORY_ICON_CHOICES.map((icon) => (
               <button
                 key={icon}
                 onClick={() => setSelectedIcon(icon)}
