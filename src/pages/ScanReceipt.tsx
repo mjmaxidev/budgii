@@ -4,7 +4,9 @@ import { Camera, ImageUp, Info, Sparkles } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
+import { withFrom } from '@/utils/navigation'
 import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
 
 export function ScanReceipt() {
@@ -13,6 +15,7 @@ export function ScanReceipt() {
   const updateReceipt = useStore((s) => s.updateReceipt)
   const analyzeReceipt = useStore((s) => s.analyzeReceipt)
   const [analyzing, setAnalyzing] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
@@ -36,7 +39,7 @@ export function ScanReceipt() {
       if (imageUrl) updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
       analyzeReceipt(id)
       setAnalyzing(false)
-      navigate(`/receipt-results/${id}`)
+      navigate(`/receipt-results/${id}`, withFrom('/scan-receipt'))
     }, 1200)
   }
 
@@ -47,7 +50,11 @@ export function ScanReceipt() {
           title="Scan Receipt"
           showBack
           right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted">
+            <button
+              onClick={() => setShowInfo(true)}
+              aria-label="How scanning works"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted active:bg-line/40"
+            >
               <Info size={18} />
             </button>
           }
@@ -127,6 +134,23 @@ export function ScanReceipt() {
           Use demo receipt (no photo)
         </button>
       )}
+
+      <Modal open={showInfo} onClose={() => setShowInfo(false)} title="How scanning works" variant="center">
+        <div className="space-y-3 text-[14px] leading-snug text-muted">
+          <p>
+            <span className="font-bold text-ink">1. Capture or upload</span> — take a photo of your
+            receipt or choose one from your library.
+          </p>
+          <p>
+            <span className="font-bold text-ink">2. AI reads the items</span> — each line item is
+            extracted with a name, price, and suggested category.
+          </p>
+          <p>
+            <span className="font-bold text-ink">3. Review & confirm</span> — fix anything the AI got
+            wrong, then confirm to add everything to your expenses.
+          </p>
+        </div>
+      </Modal>
     </AppShell>
   )
 }

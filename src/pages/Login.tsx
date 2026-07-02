@@ -51,6 +51,13 @@ export function Login() {
         <ActionButton variant="outline" onClick={() => navigate('/onboarding')}>
           Create Account
         </ActionButton>
+        <button
+          type="button"
+          onClick={() => navigate('/join-family')}
+          className="w-full py-2 text-center text-[14px] font-semibold text-primary active:opacity-80"
+        >
+          Have an invite code?
+        </button>
       </div>
 
       <div className="my-5 flex items-center gap-3 text-[13px] text-muted">

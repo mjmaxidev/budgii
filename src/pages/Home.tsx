@@ -16,6 +16,7 @@ import { getBudgetStatus, statusColor } from '@/utils/budget'
 import type { Period } from '@/types'
 import { useLookups } from '@/store/lookups'
 import { formatMoneyShort } from '@/utils/money'
+import { withFrom } from '@/utils/navigation'
 
 const periodDivisor: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1 }
 
@@ -73,7 +74,7 @@ export function Home() {
         <div className="px-4 pt-3">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate('/deal-watchlist')}
+              onClick={() => navigate('/deal-watchlist', withFrom('/home'))}
               className="flex h-10 w-10 items-center justify-center rounded-full active:bg-line/40"
             >
               <Telescope size={24} />
@@ -83,7 +84,7 @@ export function Home() {
             </p>
             <button
               className="relative flex h-10 w-10 items-center justify-center rounded-full active:bg-line/40"
-              onClick={() => navigate('/notifications')}
+              onClick={() => navigate('/notifications', withFrom('/home'))}
             >
               <Bell size={24} className="text-ink" />
               <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red ring-2 ring-bg" />
@@ -121,7 +122,7 @@ export function Home() {
             {formatMoneyShort(spent)} of {formatMoneyShort(limit)}
           </p>
           <button
-            onClick={() => navigate('/spending-breakdown')}
+            onClick={() => navigate('/spending-breakdown', withFrom('/home'))}
             className="flex items-center gap-0.5 text-[13px] font-bold text-primary active:opacity-70"
           >
             Report

@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus, Edit2, Trash2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
-import { SelectRow } from '@/components/ui/SelectRow'
+import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
 import type { RecurringTransaction } from '@/types'
 
@@ -20,7 +19,6 @@ const FREQUENCIES = [
 ]
 
 export function RecurringTransactions() {
-  const navigate = useNavigate()
   const recurringTransactions = useStore((s) => s.recurringTransactions)
   const categories = useStore((s) => s.categories)
   const addRecurringTransaction = useStore((s) => s.addRecurringTransaction)
@@ -36,16 +34,12 @@ export function RecurringTransactions() {
   const [dayOfMonth, setDayOfMonth] = useState('1')
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '')
   const [notes, setNotes] = useState('')
-  const [enabled, setEnabled] = useState(true)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
-  const selectedCategory = categories.find((c) => c.id === categoryId)
-  const frequencyLabel = FREQUENCIES.find((f) => f.value === frequency)?.label || 'Monthly'
+  const isValid = merchant.trim() !== '' && amount.trim() !== '' && !!categoryId
 
   const handleAddOrUpdate = () => {
-    if (!merchant || !amount || !categoryId) {
-      alert('Please fill in merchant, amount, and category')
-      return
-    }
+    if (!isValid) return
 
     const transactionData: Partial<RecurringTransaction> = {
       frequency: frequency as any,
@@ -79,12 +73,6 @@ export function RecurringTransactions() {
     setShowForm(true)
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this recurring transaction?')) {
-      deleteRecurringTransaction(id)
-    }
-  }
-
   const resetForm = () => {
     setMerchant('')
     setAmount('')
@@ -92,7 +80,6 @@ export function RecurringTransactions() {
     setDayOfMonth('1')
     setCategoryId(categories[0]?.id || '')
     setNotes('')
-    setEnabled(true)
     setShowForm(false)
     setEditingId(null)
   }
@@ -130,46 +117,36 @@ export function RecurringTransactions() {
           />
 
           {/* Category Selection */}
-          <SelectRow
-            label="Category"
-            value={selectedCategory?.name || 'Select category'}
-            left={<span>{selectedCategory?.icon}</span>}
-            onClick={() => {
-              /* toggle category selector */
-            }}
-          />
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
-          >
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-muted">Category</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
+            >
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Frequency Selection */}
-          <SelectRow
-            label="Frequency"
-            value={frequencyLabel}
-            left={<span>📅</span>}
-            onClick={() => {
-              /* toggle frequency selector */
-            }}
-          />
-          <select
-            value={frequency}
-            onChange={(e) => setFrequency(e.target.value)}
-            className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
-          >
-            {FREQUENCIES.map((freq) => (
-              <option key={freq.value} value={freq.value}>
-                {freq.label}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-muted">Frequency</label>
+            <select
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
+            >
+              {FREQUENCIES.map((freq) => (
+                <option key={freq.value} value={freq.value}>
+                  {freq.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Day of Month (for monthly) */}
           {frequency === 'monthly' && (
@@ -196,10 +173,16 @@ export function RecurringTransactions() {
           </div>
 
           {/* Action Buttons */}
+          {!isValid && (
+            <p className="text-[13px] font-semibold text-muted">
+              Fill in merchant, amount, and category to continue.
+            </p>
+          )}
           <div className="flex gap-2 pt-2">
             <ActionButton
               variant="primary"
               onClick={handleAddOrUpdate}
+              disabled={!isValid}
               className="flex-1"
             >
               {editingId ? 'Update' : 'Add'}
@@ -250,7 +233,7 @@ export function RecurringTransactions() {
                       <Edit2 size={16} />
                     </button>
                     <button
-                      onClick={() => handleDelete(transaction.id)}
+                      onClick={() => setConfirmDeleteId(transaction.id)}
                       className="flex h-9 w-9 items-center justify-center rounded-lg bg-surfaceSoft text-muted hover:bg-red/10 transition"
                       aria-label="Delete"
                     >
@@ -265,6 +248,29 @@ export function RecurringTransactions() {
       )}
 
       <div className="h-4" />
+
+      <Modal
+        open={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        title="Delete recurring transaction?"
+        variant="center"
+      >
+        <p className="text-[15px] text-muted">This will stop future automatic entries. Past expenses are kept.</p>
+        <div className="mt-5 flex gap-3">
+          <ActionButton variant="ghost" onClick={() => setConfirmDeleteId(null)}>
+            Cancel
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            onClick={() => {
+              if (confirmDeleteId) deleteRecurringTransaction(confirmDeleteId)
+              setConfirmDeleteId(null)
+            }}
+          >
+            Delete
+          </ActionButton>
+        </div>
+      </Modal>
     </AppShell>
   )
 }

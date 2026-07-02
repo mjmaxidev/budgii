@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { CalendarClock, Wallet, AlertTriangle, PieChart, Bell, BellRing, LineChart, ChevronDown } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -16,8 +16,6 @@ import { useLookups } from '@/store/lookups'
 
 export function BudgetSetup() {
   const navigate = useNavigate()
-  const [params] = useSearchParams()
-  const mode = params.get('mode')
   const budget = useStore((s) => s.budget)
   const updateBudget = useStore((s) => s.updateBudget)
   const { categories } = useLookups()
@@ -88,12 +86,6 @@ export function BudgetSetup() {
 
   return (
     <AppShell topBar={<TopBar title="Set Up Budget" showBack />}>
-      {mode && (
-        <div className="mb-3 rounded-input bg-primarySoft px-4 py-2 text-[13px] font-semibold text-primary">
-          {mode === 'next' ? 'Adjusting next month’s budget' : 'Adjusting this month’s budget'}
-        </div>
-      )}
-
       {/* Budget period */}
       <Card className="flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-greenSoft">

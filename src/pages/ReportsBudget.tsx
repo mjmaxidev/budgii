@@ -13,6 +13,7 @@ import { dailyTotalsThisMonth, expensesInPeriod, sumExpenses } from '@/store/sel
 import { getBudgetStatus, statusColor } from '@/utils/budget'
 import { formatMoneyShort } from '@/utils/money'
 import type { Period } from '@/types'
+import { withFrom } from '@/utils/navigation'
 import { useLookups } from '@/store/lookups'
 
 const periodDivisor: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1 }
@@ -36,7 +37,20 @@ export function ReportsBudget() {
   return (
     <AppShell
       showBottomNav
-      topBar={<TopBar title="Reports & Budget" showBack right={<Bell size={22} className="text-ink" />} />}
+      topBar={
+        <TopBar
+          title="Reports & Budget"
+          right={
+            <button
+              onClick={() => navigate('/notifications', withFrom('/reports'))}
+              aria-label="Notifications"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40"
+            >
+              <Bell size={22} />
+            </button>
+          }
+        />
+      }
     >
       <SegmentedControl
         value={period}
@@ -51,7 +65,7 @@ export function ReportsBudget() {
       {/* Spending overview chart */}
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Spending Overview</h2>
-        <button onClick={() => navigate('/spending-breakdown')} className="text-[14px] font-bold text-green">
+        <button onClick={() => navigate('/spending-breakdown', withFrom('/reports'))} className="text-[14px] font-bold text-green">
           View Report
         </button>
       </div>
@@ -74,7 +88,7 @@ export function ReportsBudget() {
       {/* Budget settings summary */}
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Budget Settings</h2>
-        <button onClick={() => navigate('/budget-setup')} className="text-[14px] font-bold text-primary">
+        <button onClick={() => navigate('/budget-setup', withFrom('/reports'))} className="text-[14px] font-bold text-primary">
           Adjust Budget
         </button>
       </div>
@@ -107,7 +121,7 @@ export function ReportsBudget() {
             </div>
           </div>
           <div className="mt-3">
-            <ActionButton size="md" variant="outline" fullWidth onClick={() => navigate('/budget-setup?mode=next')}>
+            <ActionButton size="md" variant="outline" fullWidth onClick={() => navigate('/budget-next-month')}>
               Adjust Next Month
             </ActionButton>
           </div>
@@ -115,7 +129,7 @@ export function ReportsBudget() {
       )}
 
       {status !== 'over' && (
-        <ActionButton size="md" variant="outline" className="mt-4" onClick={() => navigate('/budget-setup?mode=next')}>
+        <ActionButton size="md" variant="outline" className="mt-4" onClick={() => navigate('/budget-next-month')}>
           Adjust Next Month
         </ActionButton>
       )}

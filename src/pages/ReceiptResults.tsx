@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { MoreVertical, Plus, Sparkles } from 'lucide-react'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { Image, MoreVertical, Plus, Sparkles, Trash2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -10,12 +10,14 @@ import { ReceiptItemCreateForm } from '@/components/receipts/ReceiptItemCreateFo
 import { ReceiptItemEditor } from '@/components/receipts/ReceiptItemEditor'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { withFrom } from '@/utils/navigation'
 import { useStore } from '@/store/appStore'
 import { formatDateTime } from '@/utils/dates'
 
 export function ReceiptResults() {
   const { receiptId = '' } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const receipt = useStore((s) => s.receipts.find((r) => r.id === receiptId))
   // Select the base array (stable reference) and derive the filtered list in render.
   // Returning `.filter(...)` straight from the selector creates a new array every
@@ -27,10 +29,13 @@ export function ReceiptResults() {
     [allReceiptItems, receiptId],
   )
   const confirmReceiptItems = useStore((s) => s.confirmReceiptItems)
+  const deleteReceipt = useStore((s) => s.deleteReceipt)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [addItemOpen, setAddItemOpen] = useState(false)
   const [matchHelpOpen, setMatchHelpOpen] = useState(false)
   const [matchHelpConfidence, setMatchHelpConfidence] = useState<number | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (!receipt) {
     return (
@@ -65,7 +70,11 @@ export function ReceiptResults() {
           title="Receipt Results"
           showBack
           right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40">
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Receipt options"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40"
+            >
               <MoreVertical size={20} />
             </button>
           }
@@ -160,6 +169,49 @@ export function ReceiptResults() {
 
       <Modal open={!!editingId} onClose={() => setEditingId(null)} title="Edit Item">
         {editingId && <ReceiptItemEditor itemId={editingId} onDone={() => setEditingId(null)} />}
+      </Modal>
+
+      <Modal open={menuOpen} onClose={() => setMenuOpen(false)} title="Receipt Options" variant="center">
+        <div className="space-y-2">
+          <button
+            onClick={() => {
+              setMenuOpen(false)
+              navigate(`/receipt-viewer/${receiptId}`, withFrom(location.pathname))
+            }}
+            className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left text-[15px] font-bold text-ink active:bg-line/40"
+          >
+            <Image size={18} className="text-green" /> View receipt image
+          </button>
+          <button
+            onClick={() => {
+              setMenuOpen(false)
+              setConfirmDelete(true)
+            }}
+            className="flex w-full items-center gap-3 rounded-input border border-red/40 bg-surface p-3 text-left text-[15px] font-bold text-red active:bg-redSoft"
+          >
+            <Trash2 size={18} /> Delete receipt
+          </button>
+        </div>
+      </Modal>
+
+      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete receipt?" variant="center">
+        <p className="text-[15px] text-muted">
+          This will remove the receipt and all {items.length} scanned item{items.length === 1 ? '' : 's'}.
+        </p>
+        <div className="mt-5 flex gap-3">
+          <ActionButton variant="ghost" onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            onClick={() => {
+              deleteReceipt(receiptId)
+              navigate('/home')
+            }}
+          >
+            Delete
+          </ActionButton>
+        </div>
       </Modal>
     </AppShell>
   )

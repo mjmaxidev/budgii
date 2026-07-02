@@ -69,7 +69,7 @@ export function CategoriesTags() {
         {categories.map((c) => (
           <button
             key={c.id}
-            onClick={() => (editCats ? openEditCat(c.id) : openEditCat(c.id))}
+            onClick={() => openEditCat(c.id)}
             className="relative flex flex-col items-center gap-2 rounded-card border border-line/60 bg-surface py-5 shadow-card active:bg-surfaceSoft"
           >
             <CategoryIcon icon={c.icon} color={c.color} size={48} className="rounded-2xl text-2xl" />

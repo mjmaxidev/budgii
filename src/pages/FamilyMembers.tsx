@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Info, Tag, Wand2, Users, Trash2, Copy, Check, Link as LinkIcon } from 'lucide-react'
+import { Plus, Info, Tag, Wand2, Users, Trash2, Link as LinkIcon } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -9,6 +9,7 @@ import { ToggleRow } from '@/components/ui/ToggleRow'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
+import { withFrom } from '@/utils/navigation'
 
 const AVATARS = ['👩', '👨', '👧', '👦', '🧒', '👶', '🧑', '🧓']
 
@@ -18,17 +19,13 @@ export function FamilyMembers() {
   const addFamilyMember = useStore((s) => s.addFamilyMember)
   const deleteFamilyMember = useStore((s) => s.deleteFamilyMember)
   const settings = useStore((s) => s.settings)
-  const createFamilyInvite = useStore((s) => s.createFamilyInvite)
-  const getUnusedInvites = useStore((s) => s.getUnusedInvites)
+  const updateSettings = useStore((s) => s.updateSettings)
 
   const [edit, setEdit] = useState(false)
   const [modal, setModal] = useState(false)
   const [name, setName] = useState('')
   const [relationship, setRelationship] = useState('')
   const [avatar, setAvatar] = useState(AVATARS[6])
-  const [showInvite, setShowInvite] = useState(false)
-  const [inviteCode, setInviteCode] = useState('')
-  const [copied, setCopied] = useState(false)
 
   function save() {
     if (!name.trim()) return
@@ -43,14 +40,7 @@ export function FamilyMembers() {
       <p className="mb-4 text-center text-[15px] text-muted">Assign expenses to each family member.</p>
 
       {/* Generate Invitation Link */}
-      <ActionButton
-        onClick={() => {
-          const code = createFamilyInvite()
-          setInviteCode(code)
-          setShowInvite(true)
-        }}
-        className="mb-4"
-      >
+      <ActionButton onClick={() => navigate('/family-invitation', withFrom('/family-members'))} className="mb-4">
         <LinkIcon size={18} /> Generate Invitation Link
       </ActionButton>
 
@@ -116,9 +106,7 @@ export function FamilyMembers() {
           title="Use members as expense tags"
           description="Show members when adding expenses."
           checked={settings.useMembersAsTags}
-          onChange={() => {
-            // TODO: Implement updateSettings in store
-          }}
+          onChange={(v) => updateSettings({ useMembersAsTags: v })}
         />
         <div className="h-px bg-line/70" />
         <ToggleRow
@@ -126,9 +114,7 @@ export function FamilyMembers() {
           title="Suggest member based on receipt history"
           description="We'll suggest the best match automatically."
           checked={settings.suggestMemberFromHistory}
-          onChange={() => {
-            // TODO: Implement updateSettings in store
-          }}
+          onChange={(v) => updateSettings({ suggestMemberFromHistory: v })}
         />
       </Card>
 
@@ -152,7 +138,7 @@ export function FamilyMembers() {
       </div>
 
       <ActionButton className="mt-4" onClick={() => navigate('/settings')}>
-        Save Members
+        Done
       </ActionButton>
 
       <Modal open={modal} onClose={() => setModal(false)} title="Add Member">
@@ -187,41 +173,6 @@ export function FamilyMembers() {
         </ActionButton>
       </Modal>
 
-      {/* Invite Link Modal */}
-      <Modal open={showInvite} onClose={() => setShowInvite(false)} title="Invite Family Member">
-        <div className="rounded-card bg-surfaceSoft p-4">
-          <p className="mb-3 text-center text-[14px] font-semibold text-muted">Share this code:</p>
-          <div className="rounded-input border-2 border-primary bg-white p-4 text-center">
-            <p className="text-[28px] font-extrabold tracking-wider text-primary">{inviteCode}</p>
-          </div>
-          <p className="mt-3 text-center text-[13px] text-muted">Family members can use this code to join your household.</p>
-
-          {/* Simple ASCII QR placeholder */}
-          <div className="mt-4 flex justify-center">
-            <div className="rounded-input border border-line bg-white p-3 font-mono text-[10px] leading-tight text-ink">
-              <div>████████████████████</div>
-              <div>█ {inviteCode.substring(0, 10)} █</div>
-              <div>████████████████████</div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(inviteCode)
-              setCopied(true)
-              setTimeout(() => setCopied(false), 2000)
-            }}
-            className={`mt-4 w-full rounded-input px-4 py-3 text-[15px] font-bold transition-colors ${
-              copied
-                ? 'bg-green text-white'
-                : 'bg-primarySoft text-primary active:bg-primary active:text-white'
-            }`}
-          >
-            {copied ? <Check size={18} className="mr-2" /> : <Copy size={18} className="mr-2" />}
-            {copied ? 'Copied!' : 'Copy Code'}
-          </button>
-        </div>
-      </Modal>
     </AppShell>
   )
 }

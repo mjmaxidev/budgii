@@ -22,7 +22,7 @@ export function CategoryCreation() {
 
   function save() {
     if (!name.trim()) return
-    const id = addCategory(name.trim(), selectedIcon, selectedColor)
+    addCategory(name.trim(), selectedIcon, selectedColor)
     navigate('/categories-tags')
   }
 

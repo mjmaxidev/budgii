@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { withFrom } from '@/utils/navigation'
 import { Camera, ChevronRight, PenLine, Sparkles } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -14,7 +15,7 @@ export function AddExpenseChoice() {
       </p>
 
       <div className="space-y-3">
-        <button type="button" onClick={() => navigate('/add-expense')} className="w-full text-left">
+        <button type="button" onClick={() => navigate('/add-expense', withFrom('/add-expense-choice'))} className="w-full text-left">
           <Card className="flex items-center gap-4 py-4 active:bg-surfaceSoft">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primarySoft text-primary">
               <PenLine size={22} />
@@ -29,7 +30,7 @@ export function AddExpenseChoice() {
           </Card>
         </button>
 
-        <button type="button" onClick={() => navigate('/scan-receipt')} className="w-full text-left">
+        <button type="button" onClick={() => navigate('/scan-receipt', withFrom('/add-expense-choice'))} className="w-full text-left">
           <Card className="flex items-center gap-4 py-4 active:bg-surfaceSoft">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-greenSoft text-green">
               <Camera size={22} />

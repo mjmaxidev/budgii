@@ -1,8 +1,23 @@
+import { useState } from 'react'
 import { Bell, TrendingDown, AlertTriangle, Gift, Check } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
+
+const READ_KEY = 'budgii-notifications-read'
+
+function loadReadIds(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(READ_KEY) ?? '[]') as string[])
+  } catch {
+    return new Set()
+  }
+}
+
+function saveReadIds(ids: Set<string>) {
+  localStorage.setItem(READ_KEY, JSON.stringify([...ids]))
+}
 
 type Notification = {
   id: string
@@ -92,7 +107,25 @@ const getTypeBadgeColor = (type: string) => {
 }
 
 export function Notifications() {
-  const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length
+  const [readIds, setReadIds] = useState<Set<string>>(loadReadIds)
+
+  const isRead = (n: Notification) => n.read || readIds.has(n.id)
+  const unreadCount = NOTIFICATIONS.filter((n) => !isRead(n)).length
+
+  function markRead(id: string) {
+    setReadIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      saveReadIds(next)
+      return next
+    })
+  }
+
+  function markAllRead() {
+    const next = new Set(NOTIFICATIONS.map((n) => n.id))
+    saveReadIds(next)
+    setReadIds(next)
+  }
 
   return (
     <AppShell
@@ -109,40 +142,48 @@ export function Notifications() {
               </div>
               <div className="flex-1">
                 <p className="font-bold text-ink">{unreadCount} new notification{unreadCount > 1 ? 's' : ''}</p>
-                <p className="text-sm text-muted">Check your activity updates</p>
+                <p className="text-sm text-muted">Tap a notification to mark it read</p>
               </div>
+              <button
+                onClick={markAllRead}
+                className="inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-[12px] font-bold text-white active:opacity-80"
+              >
+                <Check size={13} /> Mark all read
+              </button>
             </div>
           </Card>
         )}
 
         {/* Notifications list */}
         <div className="space-y-2">
-          {NOTIFICATIONS.map((notif) => (
-            <Card
-              key={notif.id}
-              className={cn(
-                'transition-colors',
-                notif.read ? 'opacity-75' : 'bg-surfaceSoft',
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-1 shrink-0">{getIconComponent(notif.icon)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-ink">{notif.title}</p>
-                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold', getTypeBadgeColor(notif.type))}>
-                      {notif.type.replace('_', ' ').toUpperCase()}
-                    </span>
+          {NOTIFICATIONS.map((notif) => {
+            const read = isRead(notif)
+            return (
+              <Card
+                key={notif.id}
+                className={cn('transition-colors', read ? 'opacity-75' : 'bg-surfaceSoft')}
+              >
+                <button
+                  onClick={() => markRead(notif.id)}
+                  className="flex w-full items-start gap-3 text-left"
+                  disabled={read}
+                >
+                  <div className="mt-1 shrink-0">{getIconComponent(notif.icon)}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-ink">{notif.title}</p>
+                      <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold', getTypeBadgeColor(notif.type))}>
+                        {notif.type.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-muted">{notif.description}</p>
+                    <p className="mt-2 text-xs text-muted">{notif.timestamp}</p>
                   </div>
-                  <p className="mt-1 text-sm text-muted">{notif.description}</p>
-                  <p className="mt-2 text-xs text-muted">{notif.timestamp}</p>
-                </div>
-                {!notif.read && (
-                  <div className="shrink-0 h-2 w-2 rounded-full bg-primary mt-2" />
-                )}
-              </div>
-            </Card>
-          ))}
+                  {!read && <div className="shrink-0 h-2 w-2 rounded-full bg-primary mt-2" />}
+                </button>
+              </Card>
+            )
+          })}
         </div>
 
         {/* Empty state */}

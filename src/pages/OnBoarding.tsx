@@ -7,6 +7,7 @@ import {
   PieChart, Receipt, Camera,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { withFrom } from '@/utils/navigation'
 import { useStore } from '@/store/appStore'
 
 type Step = 1 | 2 | 3 | 4
@@ -265,7 +266,8 @@ export function OnBoarding() {
           family: '/family-members',
           explore: '/home',
         }
-        navigate(routes[action] ?? '/home')
+        const target = routes[action] ?? '/home'
+        navigate(target, action === 'budget' ? withFrom('/home') : undefined)
       }}
     />
   )
@@ -394,6 +396,7 @@ function Step2Verify({
 }) {
   const isPhone = contactMethod === 'phone'
   const otpComplete = otp.replace(/\s/g, '').length === 6
+  const [resent, setResent] = useState(false)
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col bg-bg">
@@ -446,7 +449,17 @@ function Step2Verify({
             Verify and continue
           </button>
 
-          <ResendTimer onResend={() => {}} />
+          <ResendTimer
+            onResend={() => {
+              setResent(true)
+              setTimeout(() => setResent(false), 3000)
+            }}
+          />
+          {resent && (
+            <p className="text-center text-[13px] font-semibold text-green">
+              A new code was sent to {contact}
+            </p>
+          )}
 
           <div className="flex justify-center">
             <button onClick={onChangeContact} className="text-[14px] font-semibold" style={{ color: '#1A3B2E' }}>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SlidersHorizontal, Calendar, TrendingUp, User } from 'lucide-react'
+import { Calendar, TrendingUp, User } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -39,17 +39,7 @@ export function SpendingBreakdown() {
 
   return (
     <AppShell
-      topBar={
-        <TopBar
-          title="Spending Breakdown"
-          showBack
-          right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40">
-              <SlidersHorizontal size={20} />
-            </button>
-          }
-        />
-      }
+      topBar={<TopBar title="Spending Breakdown" showBack />}
     >
       <SegmentedControl
         value={period}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { MoreVertical, Trash2, Sparkles, FileText, Plus, X, Maximize2 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { useAppBack } from '@/hooks/useAppBack'
+import { Trash2, Sparkles, FileText, Plus, Check } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -16,13 +17,15 @@ import { formatDateTime } from '@/utils/dates'
 
 export function ItemDetail() {
   const { itemId = '' } = useParams()
-  const navigate = useNavigate()
+  const goBack = useAppBack()
   const item = useStore((s) => s.receiptItems.find((i) => i.id === itemId))
   const receipt = useStore((s) => s.receipts.find((r) => r.id === item?.receiptId))
   const removeReceiptItem = useStore((s) => s.removeReceiptItem)
-  const { category, tag } = useLookups()
+  const updateReceiptItem = useStore((s) => s.updateReceiptItem)
+  const { category, tag, tags } = useLookups()
   const [openReceipt, setOpenReceipt] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  const [tagPickerOpen, setTagPickerOpen] = useState(false)
 
   if (!item) {
     return (
@@ -36,19 +39,7 @@ export function ItemDetail() {
   const confidence = Math.round(item.aiConfidence * 100)
 
   return (
-    <AppShell
-      topBar={
-        <TopBar
-          title="Item Detail"
-          showBack
-          right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40">
-              <MoreVertical size={20} />
-            </button>
-          }
-        />
-      }
-    >
+    <AppShell topBar={<TopBar title="Item Detail" showBack />}>
       <div className="flex items-center gap-4 py-2">
         <CategoryIcon icon={cat?.icon ?? '🧾'} color={cat?.color ?? '#16A34A'} size={88} className="rounded-full text-4xl" />
         <div>
@@ -74,7 +65,11 @@ export function ItemDetail() {
               const t = tag(id)
               return t ? <Chip key={id} color={t.color}>{t.name}</Chip> : null
             })}
-            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-line/40 text-muted">
+            <button
+              onClick={() => setTagPickerOpen(true)}
+              aria-label="Edit tags"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-line/40 text-muted active:bg-line/70"
+            >
               <Plus size={16} />
             </button>
           </div>
@@ -113,6 +108,41 @@ export function ItemDetail() {
         )}
       </Modal>
 
+      {/* Tag picker */}
+      <Modal open={tagPickerOpen} onClose={() => setTagPickerOpen(false)} title="Edit Tags" variant="center">
+        {tags.length === 0 ? (
+          <p className="text-center text-[14px] text-muted">No tags yet — create some in Categories & Tags.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((t) => {
+              const active = item.tagIds.includes(t.id)
+              return (
+                <button
+                  key={t.id}
+                  onClick={() =>
+                    updateReceiptItem(item.id, {
+                      tagIds: active
+                        ? item.tagIds.filter((id) => id !== t.id)
+                        : [...item.tagIds, t.id],
+                    })
+                  }
+                  className={`inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-[13px] font-semibold transition ${
+                    active ? 'border-transparent text-white' : 'border-line bg-surface text-ink'
+                  }`}
+                  style={active ? { backgroundColor: t.color } : undefined}
+                >
+                  {active && <Check size={13} />}
+                  {t.name}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        <ActionButton className="mt-5" onClick={() => setTagPickerOpen(false)}>
+          Done
+        </ActionButton>
+      </Modal>
+
       {/* Confirm remove */}
       <Modal open={confirmRemove} onClose={() => setConfirmRemove(false)} title="Remove item?" variant="center">
         <p className="text-[15px] text-muted">This will remove “{item.name}” from the receipt.</p>
@@ -124,7 +154,7 @@ export function ItemDetail() {
             variant="danger"
             onClick={() => {
               removeReceiptItem(item.id)
-              navigate(-1)
+              goBack()
             }}
           >
             Remove

@@ -179,6 +179,8 @@ export type FamilyInvite = {
   createdAt: string
   usedAt?: string
   usedBy?: string
+  sentToContact?: string
+  sentAt?: string
 }
 
 export type AppLockState = {

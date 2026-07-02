@@ -10,6 +10,7 @@ import { useStore } from '@/store/appStore'
 import { breakdownByCategory, sumExpenses } from '@/store/selectors'
 import { formatMoney, formatMoneyShort, percent } from '@/utils/money'
 import { sumOngoingIncome } from '@/utils/income'
+import { withFrom } from '@/utils/navigation'
 import { useLookups } from '@/store/lookups'
 
 export function MonthlySummary() {
@@ -68,7 +69,7 @@ export function MonthlySummary() {
   return (
     <AppShell
       showBottomNav
-      topBar={<TopBar title="Monthly Summary" showBack onBack={() => navigate(-1)} />}
+      topBar={<TopBar title="Monthly Summary" showBack />}
     >
       {/* Month Selector */}
       <div className="flex items-center justify-between px-4 py-4">
@@ -166,7 +167,7 @@ export function MonthlySummary() {
                 <Card
                   key={breakdown.id}
                   className="flex cursor-pointer items-center justify-between py-3 hover:bg-line/20"
-                  onClick={() => navigate('/spending-breakdown')}
+                  onClick={() => navigate('/spending-breakdown', withFrom('/monthly-summary'))}
                 >
                   <div className="flex items-center gap-3">
                     {cat && (

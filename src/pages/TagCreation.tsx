@@ -18,10 +18,7 @@ export function TagCreation() {
   const [isSaved, setIsSaved] = useState(false)
 
   const handleSave = () => {
-    if (!tagName.trim()) {
-      alert('Please enter a tag name')
-      return
-    }
+    if (!tagName.trim()) return
 
     addTag(tagName, selectedColor)
     setIsSaved(true)
@@ -68,7 +65,12 @@ export function TagCreation() {
       </Card>
 
       <div className="space-y-2.5">
-        <ActionButton variant="primary" onClick={handleSave} className={isSaved ? 'bg-green' : ''}>
+        <ActionButton
+          variant="primary"
+          onClick={handleSave}
+          disabled={!tagName.trim() || isSaved}
+          className={isSaved ? 'bg-green' : ''}
+        >
           {isSaved ? '✓ Tag Created' : 'Create Tag'}
         </ActionButton>
         <ActionButton variant="outline" onClick={() => navigate('/categories-tags')}>

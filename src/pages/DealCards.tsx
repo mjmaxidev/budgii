@@ -4,6 +4,7 @@ import { Info, X, Binoculars, Check, ShoppingCart, PartyPopper } from 'lucide-re
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { Modal } from '@/components/ui/Modal'
 import { DealSwipeCard } from '@/components/deals/DealSwipeCard'
 import { useStore } from '@/store/appStore'
 
@@ -14,6 +15,7 @@ export function DealCards() {
   const keepWatchingDeal = useStore((s) => s.keepWatchingDeal)
   const addDealToShoppingList = useStore((s) => s.addDealToShoppingList)
   const [index, setIndex] = useState(0)
+  const [showInfo, setShowInfo] = useState(false)
 
   const total = deals.length
   const current = deals[index]
@@ -30,7 +32,11 @@ export function DealCards() {
           title="Deal Cards"
           showBack
           right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted">
+            <button
+              onClick={() => setShowInfo(true)}
+              aria-label="How deal cards work"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted active:bg-line/40"
+            >
               <Info size={18} />
             </button>
           }
@@ -116,6 +122,23 @@ export function DealCards() {
           </div>
         </>
       )}
+
+      <Modal open={showInfo} onClose={() => setShowInfo(false)} title="How deal cards work" variant="center">
+        <div className="space-y-3 text-[14px] leading-snug text-muted">
+          <p>
+            Each card is a deal found on an item from your watchlist. Review them one at a time:
+          </p>
+          <p>
+            <span className="font-bold text-[#EF4444]">Skip</span> — not interested, hide this deal.
+          </p>
+          <p>
+            <span className="font-bold text-[#6B7280]">Keep Watching</span> — not yet, keep tracking the price.
+          </p>
+          <p>
+            <span className="font-bold text-green">Add to List</span> — good deal, add it to your shopping list.
+          </p>
+        </div>
+      </Modal>
     </AppShell>
   )
 }

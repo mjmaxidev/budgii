@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ChevronLeft } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useAppBack } from '@/hooks/useAppBack'
 import { cn } from '@/utils/cn'
 
 type Props = {
@@ -13,13 +13,14 @@ type Props = {
 }
 
 export function TopBar({ title, showBack, onBack, right, left, className }: Props) {
-  const navigate = useNavigate()
+  const goBack = useAppBack()
+
   return (
     <header className={cn('flex items-center gap-2 px-4 pt-2 pb-3', className)}>
       <div className="flex w-10 items-center">
         {showBack ? (
           <button
-            onClick={() => (onBack ? onBack() : navigate(-1))}
+            onClick={() => (onBack ? onBack() : goBack())}
             className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40"
             aria-label="Back"
           >

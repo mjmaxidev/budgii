@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SlidersHorizontal, TrendingUp, Clock, ArrowUp } from 'lucide-react'
+import { TrendingUp, Clock, ArrowUp } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -27,17 +27,7 @@ export function TodaysDealReport() {
 
   return (
     <AppShell
-      topBar={
-        <TopBar
-          title="Today's Deal Report"
-          showBack
-          right={
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-ink active:bg-line/40">
-              <SlidersHorizontal size={20} />
-            </button>
-          }
-        />
-      }
+      topBar={<TopBar title="Today's Deal Report" showBack />}
     >
       <SegmentedControl
         value={filter}
@@ -68,14 +58,14 @@ export function TodaysDealReport() {
       </Card>
 
       <div className="mt-4 space-y-3 pb-4">
-        {visible.map((deal, i) => (
+        {visible.map((deal) => (
           <DealReportRow
             key={deal.id}
             deal={deal}
             added={inList(deal.id)}
             onView={() => navigate('/deal-cards')}
-            onAdd={i % 2 === 0 ? () => addDealToShoppingList(deal.id) : undefined}
-            onSave={i % 2 === 0 ? undefined : () => keepWatchingDeal(deal.id)}
+            onAdd={() => addDealToShoppingList(deal.id)}
+            onSave={() => keepWatchingDeal(deal.id)}
           />
         ))}
         {visible.length === 0 && <p className="py-10 text-center text-muted">No deals in this filter.</p>}

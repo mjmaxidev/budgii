@@ -11,6 +11,7 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useStore } from '@/store/appStore'
 import { formatDate } from '@/utils/dates'
+import { withFrom } from '@/utils/navigation'
 
 export function ReceiptHistory() {
   const navigate = useNavigate()
@@ -44,7 +45,7 @@ export function ReceiptHistory() {
 
   const handleEditItem = (itemId: string) => {
     setSelectedReceiptId(null)
-    navigate(`/item/${itemId}`)
+    navigate(`/item/${itemId}`, withFrom('/receipt-history'))
   }
 
   return (

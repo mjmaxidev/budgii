@@ -17,12 +17,7 @@ export function SpendingAlerts() {
   const [newCategoryId, setNewCategoryId] = useState('')
   const [newThreshold, setNewThreshold] = useState('')
   const [newAlertType, setNewAlertType] = useState<'amount' | 'percentage'>('amount')
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'default'>('default')
-  const [categoryAlertTypes, setCategoryAlertTypes] = useState<Record<string, boolean>>({
-    amount: true,
-    percentage: true,
-  })
   const [error, setError] = useState('')
   const [catModal, setCatModal] = useState(false)
   const [catCreateModal, setCatCreateModal] = useState(false)
@@ -34,6 +29,9 @@ export function SpendingAlerts() {
   const deleteCategory = useStore((s) => s.deleteCategory)
   const updateExpense = useStore((s) => s.updateExpense)
   const expenses = useStore((s) => s.expenses)
+  const settings = useStore((s) => s.settings)
+  const updateSettings = useStore((s) => s.updateSettings)
+  const notificationsEnabled = settings.notificationsEnabled
   const { categories } = useLookups()
 
   const [editMode, setEditMode] = useState(false)
@@ -85,11 +83,15 @@ export function SpendingAlerts() {
     setCatCreateModal(false)
   }
 
-  // Check notification permissions on mount
+  // Check notification permissions on mount; sync the saved toggle with reality
   useEffect(() => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission)
+      if (Notification.permission !== 'granted' && settings.notificationsEnabled) {
+        updateSettings({ notificationsEnabled: false })
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Request notification permission
@@ -101,7 +103,7 @@ export function SpendingAlerts() {
 
     if (Notification.permission === 'granted') {
       setNotificationPermission('granted')
-      setNotificationsEnabled(true)
+      updateSettings({ notificationsEnabled: true })
       testNotification()
       return
     }
@@ -111,7 +113,7 @@ export function SpendingAlerts() {
         const permission = await Notification.requestPermission()
         setNotificationPermission(permission)
         if (permission === 'granted') {
-          setNotificationsEnabled(true)
+          updateSettings({ notificationsEnabled: true })
           testNotification()
         }
       } catch (err) {
@@ -167,13 +169,6 @@ export function SpendingAlerts() {
     setError('')
   }
 
-  // Toggle alert type
-  const toggleAlertType = (type: 'amount' | 'percentage') => {
-    setCategoryAlertTypes((prev) => ({
-      ...prev,
-      [type]: !prev[type],
-    }))
-  }
 
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name ?? 'Unknown'
@@ -223,7 +218,7 @@ export function SpendingAlerts() {
               if (!notificationsEnabled) {
                 requestNotificationPermission()
               } else {
-                setNotificationsEnabled(false)
+                updateSettings({ notificationsEnabled: false })
               }
             }}
             iconBg="#EAF8ED"
@@ -252,16 +247,16 @@ export function SpendingAlerts() {
             icon="💰"
             title="Fixed Amount Alerts"
             description="Alert when category hits a specific amount"
-            checked={categoryAlertTypes.amount}
-            onChange={() => toggleAlertType('amount')}
+            checked={settings.alertTypeAmount}
+            onChange={(v) => updateSettings({ alertTypeAmount: v })}
             iconBg="#FFE5CC"
           />
           <ToggleRow
             icon="📊"
             title="Budget Percentage Alerts"
             description="Alert when category reaches 80% of budget"
-            checked={categoryAlertTypes.percentage}
-            onChange={() => toggleAlertType('percentage')}
+            checked={settings.alertTypePercentage}
+            onChange={(v) => updateSettings({ alertTypePercentage: v })}
             iconBg="#E0F2FE"
           />
         </Card>

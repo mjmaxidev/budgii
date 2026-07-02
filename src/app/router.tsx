@@ -15,6 +15,7 @@ import { Transactions } from '@/pages/Transactions'
 import { ReportsBudget } from '@/pages/ReportsBudget'
 import { SpendingBreakdown } from '@/pages/SpendingBreakdown'
 import { BudgetSetup } from '@/pages/BudgetSetup'
+import { BudgetNextMonth } from '@/pages/BudgetNextMonth'
 import { CategoriesTags } from '@/pages/CategoriesTags'
 import { CategoryCreation } from '@/pages/CategoryCreation'
 import { TagCreation } from '@/pages/TagCreation'
@@ -25,6 +26,7 @@ import { TodaysDealReport } from '@/pages/TodaysDealReport'
 import { DealCards } from '@/pages/DealCards'
 import { ShoppingList } from '@/pages/ShoppingList'
 import { FamilyInvitation } from '@/pages/FamilyInvitation'
+import { FamilyJoin } from '@/pages/FamilyJoin'
 import { AccountSettings } from '@/pages/AccountSettings'
 import { Preferences } from '@/pages/Preferences'
 import { IncomeTracking } from '@/pages/IncomeTracking'
@@ -61,6 +63,7 @@ export const appRoutes: RouteWithMeta[] = [
   { path: '/reports', element: <ReportsBudget />, meta: { label: 'Reports', description: 'Budget charts', section: 'app' } },
   { path: '/spending-breakdown', element: <SpendingBreakdown />, meta: { label: 'Breakdown', description: 'Category details', section: 'app' } },
   { path: '/budget-setup', element: <BudgetSetup />, meta: { label: 'Budget Setup', description: 'Budget form', section: 'app' } },
+  { path: '/budget-next-month', element: <BudgetNextMonth />, meta: { label: 'Plan Next Month', description: 'Forward budget planning', section: 'app' } },
   { path: '/categories-tags', element: <CategoriesTags />, meta: { label: 'Categories', description: 'Tags setup', section: 'app' } },
   { path: '/family-members', element: <FamilyMembers />, meta: { label: 'Family', description: 'Member tags', section: 'app' } },
   { path: '/settings', element: <Settings />, meta: { label: 'Settings', description: 'Account groups', section: 'app' } },
@@ -75,6 +78,7 @@ export const appRoutes: RouteWithMeta[] = [
   { path: '/recurring-transactions', element: <RecurringTransactions />, meta: { label: 'Recurring', description: 'Scheduled items', section: 'app' } },
   { path: '/spending-alerts', element: <SpendingAlerts />, meta: { label: 'Alerts', description: 'Budget notifications', section: 'app' } },
   { path: '/family-invitation', element: <FamilyInvitation />, meta: { hidden: true } },
+  { path: '/join-family', element: <FamilyJoin />, meta: { label: 'Join Family', description: 'Redeem invite code', section: 'app' } },
   { path: '/monthly-summary', element: <MonthlySummary />, meta: { label: 'Monthly Summary', description: 'Month overview', section: 'app' } },
   { path: '/receipt-history', element: <ReceiptHistory />, meta: { label: 'Receipt History', description: 'Past receipts', section: 'app' } },
   { path: '/receipt-viewer/:receiptId', element: <ReceiptImageViewer />, meta: { hidden: true } },

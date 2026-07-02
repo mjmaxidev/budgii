@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { useStore } from '@/store/appStore'
 import { cn } from '@/utils/cn'
+import { withFrom } from '@/utils/navigation'
 
 export function DealWatchlist() {
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ export function DealWatchlist() {
           title="Deal Watchlist"
           showBack
           right={
-            <button className="relative" onClick={() => navigate('/notifications')}>
+            <button className="relative" onClick={() => navigate('/notifications', withFrom('/deal-watchlist'))}>
               <Bell size={22} className="text-ink" />
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-bg" />
             </button>
@@ -96,7 +97,7 @@ export function DealWatchlist() {
           </p>
         </div>
         <button
-          onClick={() => navigate('/todays-deal-report')}
+          onClick={() => navigate('/todays-deal-report', withFrom('/deal-watchlist'))}
           className="flex h-11 w-11 items-center justify-center rounded-2xl bg-greenSoft text-green"
         >
           <LineChart size={22} />
@@ -148,7 +149,7 @@ export function DealWatchlist() {
             item={item}
             selectable={edit}
             selected={selected.has(item.id)}
-            onClick={edit ? () => toggleSelect(item.id) : () => navigate('/deal-cards')}
+            onClick={edit ? () => toggleSelect(item.id) : () => navigate('/deal-cards', withFrom('/deal-watchlist'))}
           />
         ))}
         {items.length === 0 && (

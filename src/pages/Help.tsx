@@ -34,7 +34,7 @@ const faqItems: FAQItem[] = [
     id: 'invite-family',
     icon: Users,
     question: 'How do I invite family members?',
-    answer: 'Go to Family Members in Settings. Tap "Add Family Member" and enter their email address or invite code. They\'ll receive an invitation to join your shared budget. Once they accept, you can track expenses across the household and see individual spending breakdown.',
+    answer: 'Ask your household admin for an invite code from Family Members → Generate Invitation Link. On your device, open Budgii, tap "Have an invite code?" on the login screen (or go to Join Family), enter the code and your name, then tap Join Household.',
   },
   {
     id: 'budget-alerts',
@@ -132,11 +132,9 @@ function FAQAccordion({
   const Icon = item.icon
 
   return (
-    <Card
-      className="overflow-hidden p-0 transition-all duration-200"
-      onClick={onToggle}
-    >
+    <Card className="overflow-hidden p-0 transition-all duration-200">
       <button
+        onClick={onToggle}
         className="flex w-full items-start gap-3 p-4 text-left active:bg-surfaceSoft"
         aria-expanded={isExpanded}
       >

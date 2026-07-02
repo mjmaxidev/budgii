@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Lock } from 'lucide-react'
 import { PinPad } from '@/components/security/PinPad'
 import { useStore } from '@/store/appStore'
+import budgiiLogo from '@/assets/budgii-logo.png'
 
 type Props = {
   onUnlock: () => void
@@ -32,9 +32,7 @@ export function PinLockOverlay({ onUnlock }: Props) {
   return (
     <div className="absolute inset-0 z-[100] flex flex-col bg-bg px-6 pt-16 pb-10">
       <div className="flex flex-1 flex-col items-center justify-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primarySoft">
-          <Lock size={30} className="text-primary" />
-        </div>
+        <img src={budgiiLogo} alt="Budgii" className="mb-6 w-[min(280px,85vw)] object-contain" />
         <h1 className="text-[24px] font-extrabold text-ink">Welcome back</h1>
         <p className="mt-2 text-center text-[15px] text-muted">
           {userName ? `Hi ${userName.split(' ')[0]}, enter your PIN` : 'Enter your PIN to continue'}

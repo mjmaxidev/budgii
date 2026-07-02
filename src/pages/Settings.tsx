@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { withFrom } from '@/utils/navigation'
 import {
   User, SlidersHorizontal, Wallet, TrendingUp, Repeat, Tags, Users,
   CalendarDays, BarChart3, Bell, ScanLine, Gift, Sparkles,
@@ -73,7 +74,7 @@ export function Settings() {
   ]
 
   return (
-    <AppShell showBottomNav topBar={<TopBar title="Settings" showBack />}>
+    <AppShell showBottomNav topBar={<TopBar title="Settings" />}>
       {/* Profile header → account & profile settings */}
       <button onClick={() => navigate('/account-settings')} className="w-full text-left">
         <Card className="flex items-center gap-3">
@@ -101,7 +102,7 @@ export function Settings() {
               return (
                 <button
                   key={it.label}
-                  onClick={() => (it.action ? it.action() : it.to ? navigate(it.to) : undefined)}
+                  onClick={() => (it.action ? it.action() : it.to ? navigate(it.to, withFrom('/settings')) : undefined)}
                   className="flex w-full items-center gap-3 py-3.5 text-left active:bg-surfaceSoft"
                 >
                   <Icon size={20} className={it.danger ? 'text-red' : 'text-muted'} />

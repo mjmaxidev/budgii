@@ -39,6 +39,7 @@ import {
 } from '@/utils/mockAi'
 import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
 import { sumOngoingIncome } from '@/utils/income'
+import { normalizeInviteCode } from '@/utils/familyInvite'
 
 const TAG_PALETTE = ['#FB8500', '#16A34A', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
@@ -86,6 +87,8 @@ export type FamilyInvite = {
   createdAt: string
   usedAt?: string
   usedBy?: string
+  sentToContact?: string
+  sentAt?: string
 }
 
 export type AppStore = {
@@ -106,6 +109,9 @@ export type AppStore = {
     defaultReportView: 'daily' | 'weekly' | 'monthly'
     /** Family members shown on Income Tracking — does not delete household members */
     incomeMemberIds: string[]
+    notificationsEnabled: boolean
+    alertTypeAmount: boolean
+    alertTypePercentage: boolean
   }
 
   // Extended store state
@@ -156,6 +162,9 @@ export type AppStore = {
 
   addMemberToIncomePicker: (id: string) => void
   removeMembersFromIncomePicker: (ids: string[]) => void
+
+  // Settings
+  updateSettings: (patch: Partial<AppStore['settings']>) => void
 
   // Watchlist & Deals
   addWatchlistItem: (item: Partial<WatchlistItem>) => void
@@ -221,8 +230,10 @@ export type AppStore = {
   // Family Invites
   createFamilyInvite: () => string
   useFamilyInvite: (code: string, usedBy: string) => boolean
+  findFamilyInvite: (code: string) => FamilyInvite | undefined
   getFamilyInvites: () => FamilyInvite[]
   getUnusedInvites: () => FamilyInvite[]
+  sendFamilyInvite: (code: string, contact: string) => void
 
   // App lock (PIN)
   setAppPin: (pin: string) => Promise<void>
@@ -254,6 +265,9 @@ export const useStore = create<AppStore>()(
         currency: 'USD',
         defaultReportView: 'monthly',
         incomeMemberIds: seedFamilyMembers.map((m) => m.id),
+        notificationsEnabled: false,
+        alertTypeAmount: true,
+        alertTypePercentage: true,
       },
 
       // Initialize extended state
@@ -516,6 +530,9 @@ export const useStore = create<AppStore>()(
             incomeMemberIds: s.settings.incomeMemberIds.filter((mid) => !ids.includes(mid)),
           },
         })),
+
+      updateSettings: (patch) =>
+        set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       addWatchlistItem: (item) => {
         const id = uid('wl')
@@ -851,7 +868,10 @@ export const useStore = create<AppStore>()(
       },
 
       useFamilyInvite: (code, usedBy) => {
-        const invite = get().familyInvites.find((fi) => fi.code === code && !fi.usedAt)
+        const normalized = normalizeInviteCode(code)
+        const invite = get().familyInvites.find(
+          (fi) => normalizeInviteCode(fi.code) === normalized && !fi.usedAt,
+        )
         if (!invite) return false
         set((s) => ({
           familyInvites: s.familyInvites.map((fi) =>
@@ -861,12 +881,27 @@ export const useStore = create<AppStore>()(
         return true
       },
 
+      findFamilyInvite: (code) => {
+        const normalized = normalizeInviteCode(code)
+        return get().familyInvites.find((fi) => normalizeInviteCode(fi.code) === normalized)
+      },
+
       getFamilyInvites: () => {
         return get().familyInvites
       },
 
       getUnusedInvites: () => {
         return get().familyInvites.filter((fi) => !fi.usedAt)
+      },
+
+      sendFamilyInvite: (code, contact) => {
+        const trimmed = contact.trim()
+        const normalized = trimmed.includes('@') ? trimmed.toLowerCase() : trimmed
+        set((s) => ({
+          familyInvites: s.familyInvites.map((fi) =>
+            fi.code === code ? { ...fi, sentToContact: normalized, sentAt: todayISO() } : fi,
+          ),
+        }))
       },
 
       setAppPin: async (pin) => {
@@ -946,7 +981,7 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: 'budgii',
-      version: 11,
+      version: 12,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -1030,6 +1065,14 @@ export const useStore = create<AppStore>()(
         if (version < 11) {
           state.incomeItems = []
           state.ongoingIncomes = []
+        }
+        if (version < 12) {
+          const settings = state.settings as Record<string, unknown> | undefined
+          if (settings) {
+            settings.notificationsEnabled = settings.notificationsEnabled ?? false
+            settings.alertTypeAmount = settings.alertTypeAmount ?? true
+            settings.alertTypePercentage = settings.alertTypePercentage ?? true
+          }
         }
         return state as AppStore
       },

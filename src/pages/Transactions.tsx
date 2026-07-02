@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { useStore } from '@/store/appStore'
 import { formatDate } from '@/utils/dates'
+import { withFrom } from '@/utils/navigation'
 
 export function Transactions() {
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ export function Transactions() {
   }, [filtered])
 
   return (
-    <AppShell showBottomNav topBar={<TopBar title="Transactions" showBack />}>
+    <AppShell showBottomNav topBar={<TopBar title="Transactions" />}>
       <div className="flex items-center gap-2 rounded-input border border-line bg-surface px-4 min-h-[50px]">
         <Search size={18} className="text-muted" />
         <input
@@ -50,10 +51,10 @@ export function Transactions() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <ActionButton size="md" leftIcon={<Plus size={18} />} onClick={() => navigate('/add-expense')}>
+        <ActionButton size="md" leftIcon={<Plus size={18} />} onClick={() => navigate('/add-expense', withFrom('/transactions'))}>
           Add Expense
         </ActionButton>
-        <ActionButton size="md" variant="green" leftIcon={<ScanLine size={18} />} onClick={() => navigate('/scan-receipt')}>
+        <ActionButton size="md" variant="green" leftIcon={<ScanLine size={18} />} onClick={() => navigate('/scan-receipt', withFrom('/transactions'))}>
           Scan Receipt
         </ActionButton>
       </div>
