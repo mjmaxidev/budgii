@@ -13,12 +13,17 @@ class JoinHouseholdRequest(BaseModel):
 
 class SendInviteRequest(BaseModel):
     contact: str = Field(min_length=3, max_length=120)
+    household_id: str | None = None
 
 
 class HouseholdResponse(BaseModel):
     id: str
     name: str
     role: str
+
+
+class HouseholdListResponse(BaseModel):
+    households: list[HouseholdResponse]
 
 
 class InviteResponse(BaseModel):

@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     google_client_id: str = ""
 
     invite_link_base: str = "https://budgii.app/join"
+    receipt_storage_path: str = "/app/uploads"
 
 
 @lru_cache

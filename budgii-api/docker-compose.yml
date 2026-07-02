@@ -26,6 +26,8 @@ services:
       DATABASE_URL: postgresql+asyncpg://budgii:budgii@db:5432/budgii
       JWT_SECRET: dev-docker-secret-change-me
       INVITE_LINK_BASE: https://budgii.app/join
+    volumes:
+      - receipt_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -38,3 +40,4 @@ services:
 
 volumes:
   postgres_data:
+  receipt_uploads:
