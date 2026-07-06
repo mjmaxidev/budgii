@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { PinSetupModal } from '@/components/security/PinSetupModal'
+import { logout } from '@/api/auth'
 import { useStore } from '@/store/appStore'
 
 const EMOJI_AVATARS = ['👤', '👨', '👩', '🧑', '😊', '😎', '🧔', '👵', '🧓', '👶', '💼', '🎨']
@@ -51,6 +52,11 @@ export function AccountSettings() {
     setConfirmPw('')
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
   }
 
   return (
@@ -183,7 +189,7 @@ export function AccountSettings() {
       </div>
 
       <button
-        onClick={() => navigate('/login')}
+        onClick={handleLogout}
         className="mt-3 w-full py-3 text-center text-[15px] font-bold text-red"
       >
         Log Out
