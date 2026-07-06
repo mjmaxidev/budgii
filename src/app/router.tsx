@@ -1,5 +1,6 @@
 import { createHashRouter, Navigate, RouteObject } from 'react-router-dom'
 import { AppLayout } from './AppLayout'
+import { AuthGate } from '@/components/auth/AuthGate'
 import { Login } from '@/pages/Login'
 import { Verification } from '@/pages/Verification'
 import { OnBoarding } from '@/pages/OnBoarding'
@@ -95,7 +96,11 @@ export const appRoutes: RouteWithMeta[] = [
 
 export const router = createHashRouter([
   {
-    element: <AppLayout />,
+    element: (
+      <AppLayout>
+        <AuthGate />
+      </AppLayout>
+    ),
     children: appRoutes as RouteObject[],
   },
 ])

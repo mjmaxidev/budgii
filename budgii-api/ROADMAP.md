@@ -59,8 +59,8 @@ receipt_uploads             ← file metadata (bytes on Docker volume at /app/up
 | Gap | Notes |
 |-----|-------|
 | No frontend API client | `src/` has zero `fetch` to backend |
-| No invite list/revoke | Frontend shows unused invites locally |
-| No membership admin APIs | Can't PATCH role, remove member, transfer ownership |
+| No invite list/revoke | ~~Frontend shows unused invites locally~~ **Done** — `GET/DELETE /households/invites` |
+| No membership admin APIs | ~~Can't PATCH role, remove member~~ **Done** — `GET/PATCH/DELETE /households/{id}/members` |
 | No email delivery | `sent_to_contact` stored; nothing sent |
 | No OCR pipeline | Upload saves file; no link to sync `receipts[]` |
 | No tests | No pytest suite |
@@ -161,22 +161,24 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 | # | Task | API |
 |---|------|-----|
 | 1 | Commit persona/permissions slice | *(see §6)* |
-| 2 | Invite list + revoke | `GET /households/invites?household_id=`, `DELETE /households/invites/{id}` |
-| 3 | Membership admin | `GET /households/{id}/members`, `PATCH /households/{id}/members/{user_id}`, `DELETE` |
+| 2 | Invite list + revoke | ✅ `GET /households/invites?household_id=`, `DELETE /households/invites/{id}` |
+| 3 | Membership admin | ✅ `GET /households/{id}/members`, `PATCH`, `DELETE` |
 | 4 | Bootstrap (optional) | `GET /households/{id}/bootstrap` → household + personas + invites + sync snapshot |
 | 5 | Viewer pull filtering (optional) | Strip admin-only keys from snapshot for limited roles |
 
 #### Frontend tasks
 
-| # | Task |
-|---|------|
-| 1 | `src/api/client.ts` — base URL, Bearer, refresh on 401 |
-| 2 | `src/api/auth.ts`, `households.ts`, `sync.ts`, `personas.ts` |
-| 3 | Auth gate on login/register screens |
-| 4 | Map `PersonaResponse[]` → `familyMembers` on hydrate |
-| 5 | Sync middleware: debounced push after mutations; periodic pull |
-| 6 | Replace local invite/join with API |
-| 7 | `VITE_API_ENABLED` flag for offline dev fallback |
+| # | Task | Status |
+|---|------|--------|
+| 1 | `src/api/client.ts` — base URL, Bearer, refresh on 401 | ✅ |
+| 2 | `src/api/auth.ts`, `households.ts`, `sync.ts`, `personas.ts` | ✅ |
+| 3 | Auth gate on login/register screens | ✅ |
+| 4 | Map `PersonaResponse[]` → `familyMembers` on hydrate | ✅ |
+| 5 | Sync middleware: debounced push after mutations; periodic pull | ✅ |
+| 6 | Replace local invite/join with API | ✅ (when `VITE_API_ENABLED=true`) |
+| 7 | `VITE_API_ENABLED` flag for offline dev fallback | ✅ |
+
+**Remaining Phase 1 frontend:** OAuth (Apple/Google) wiring, Capacitor secure token storage, persona CRUD via API from `FamilyMembers.tsx`, invite list/revoke UI (blocked on backend endpoints), localStorage migration prompt UX, logout in Account Settings.
 
 #### Phase 1 API surface (complete target)
 
@@ -191,11 +193,11 @@ GET  /v1/households
 POST /v1/households
 POST /v1/households/join
 POST /v1/households/invites
-GET  /v1/households/invites?household_id=          ← Phase 1 add
-DELETE /v1/households/invites/{id}                 ← Phase 1 add
-GET  /v1/households/{id}/members                   ← Phase 1 add
-PATCH /v1/households/{id}/members/{user_id}        ← Phase 1 add
-DELETE /v1/households/{id}/members/{user_id}       ← Phase 1 add
+GET  /v1/households/invites?household_id=          ✅
+DELETE /v1/households/invites/{id}                 ✅
+GET  /v1/households/{id}/members                   ✅
+PATCH /v1/households/{id}/members/{user_id}        ✅
+DELETE /v1/households/{id}/members/{user_id}       ✅
 
 GET  /v1/personas?household_id=
 POST /v1/personas?household_id=
@@ -261,22 +263,30 @@ GET  /receipts/{id}/status
 
 ### Must sync (JSONB keys)
 
-- [ ] `categories`, `tags`, `expenses`, `receipts`, `receiptItems`
-- [ ] `budget`, `settings`, `incomeSources`, `incomeItems`, `ongoingIncomes`
-- [ ] `budgetGoals`, `recurringTransactions`, `spendingAlerts`
-- [ ] `watchlistItems`, `deals`, `shoppingList`
+- [x] `categories`, `tags`, `expenses`, `receipts`, `receiptItems`
+- [x] `budget`, `settings`, `incomeSources`, `incomeItems`, `ongoingIncomes`
+- [x] `budgetGoals`, `recurringTransactions`, `spendingAlerts`
+- [x] `watchlistItems`, `deals`, `shoppingList`
 
 ### Server-owned (API, not blob)
 
-- [ ] `familyMembers` → `GET /personas` mapped to store shape
-- [ ] `familyInvites` → invite endpoints
-- [ ] `userProfile.name/email/avatar` → `GET /users/me`
+- [x] `familyMembers` → `GET /personas` mapped to store shape
+- [x] `familyInvites` → invite endpoints (create; list/revoke pending backend)
+- [x] `userProfile.name/email/avatar` → `GET /users/me`
 
 ### Stay local (never sync)
 
-- [ ] `appLock` (PIN hash/salt)
-- [ ] `userProfile.preferences.theme`
-- [ ] QA annotations
+- [x] `appLock` (PIN hash/salt)
+- [x] `userProfile.preferences.theme`
+- [x] QA annotations
+
+### Auth flow
+
+- [x] Login/register → store tokens
+- [x] Create or join household on first use
+- [x] Pull sync snapshot → hydrate Zustand
+- [x] Push on mutation with `base_revision`
+- [x] On conflict: re-pull and merge (per-key LWW for v1)
 
 ### Persona ↔ FamilyMember mapping
 
@@ -287,14 +297,6 @@ GET  /receipts/{id}/status
 | `isAccountHolder` | `membership.is_account_holder` |
 | `hasAppAccess` | persona has linked membership |
 | `accessRole`, `editorLevel` | membership fields (if linked) |
-
-### Auth flow
-
-- [ ] Login/register → store tokens
-- [ ] Create or join household on first use
-- [ ] Pull sync snapshot → hydrate Zustand
-- [ ] Push on mutation with `base_revision`
-- [ ] On conflict: re-pull and merge (per-key LWW for v1)
 
 ---
 
@@ -325,9 +327,9 @@ Suggested message: *Add household personas, access roles, and permission-gated s
 
 Do **not** mix unrelated frontend changes (`ProgressRing.tsx`, `Home.tsx`, etc.) into this commit.
 
-**Commit 2:** Invite list/revoke + membership admin endpoints (Phase 1 backend gaps).
+**Commit 2:** Invite list/revoke + membership admin endpoints ✅
 
-**Commit 3:** Frontend API client + auth + sync layer.
+**Commit 3:** Frontend API client + auth + sync layer ✅
 
 ---
 

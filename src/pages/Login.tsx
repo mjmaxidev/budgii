@@ -1,20 +1,43 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
+import { isApiEnabled } from '@/api/config'
+import { loginAndBootstrap } from '@/api/bootstrap'
+import { ApiError } from '@/api/client'
 
 export function Login() {
   const navigate = useNavigate()
-  const [showPw, setShowPw] = useState(false)
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from ?? '/home'
 
-  function go() {
-    navigate('/home')
+  const [email, setEmail] = useState('dev@mjproductions.app')
+  const [password, setPassword] = useState('password')
+  const [showPw, setShowPw] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleLogin() {
+    if (!isApiEnabled()) {
+      navigate(from)
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    try {
+      await loginAndBootstrap(email.trim(), password)
+      navigate(from)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Login failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="no-scrollbar mx-auto flex h-full w-full max-w-[390px] flex-col overflow-y-auto bg-bg px-6 pb-8 pt-12">
-      {/* Brand logo */}
+    <div className="no-scrollbar mx-auto flex h-full w-full max-w-[390px] flex-col overflow-y-auto bg-bg px-6 pb-8 pt-6">
       <div className="mb-8 flex justify-center">
         <img
           src="/budgii-logo.png"
@@ -32,12 +55,21 @@ export function Login() {
       </p>
 
       <div className="mt-7 space-y-3">
-        <FormField type="email" placeholder="Email address" leftIcon={<Mail size={20} />} defaultValue="dev@mjproductions.app" />
+        <FormField
+          type="email"
+          placeholder="Email address"
+          leftIcon={<Mail size={20} />}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+        />
         <FormField
           type={showPw ? 'text' : 'password'}
           placeholder="Password"
           leftIcon={<Lock size={20} />}
-          defaultValue="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
           rightSlot={
             <button onClick={() => setShowPw((v) => !v)} className="text-muted" type="button">
               {showPw ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -46,8 +78,16 @@ export function Login() {
         />
       </div>
 
+      {error && (
+        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {error}
+        </p>
+      )}
+
       <div className="mt-5 space-y-3">
-        <ActionButton onClick={go}>Log In</ActionButton>
+        <ActionButton onClick={() => void handleLogin()} disabled={loading}>
+          {loading ? 'Signing in…' : 'Log In'}
+        </ActionButton>
         <ActionButton variant="outline" onClick={() => navigate('/onboarding')}>
           Create Account
         </ActionButton>
@@ -60,6 +100,12 @@ export function Login() {
         </button>
       </div>
 
+      {!isApiEnabled() && (
+        <p className="mt-4 text-center text-[12px] text-muted">
+          Offline mode — data stays in local storage.
+        </p>
+      )}
+
       <div className="my-5 flex items-center gap-3 text-[13px] text-muted">
         <span className="h-px flex-1 bg-line" />
         or continue with
@@ -68,14 +114,16 @@ export function Login() {
 
       <div className="space-y-3">
         <button
-          onClick={go}
-          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft"
+          onClick={() => !isApiEnabled() && navigate(from)}
+          disabled={isApiEnabled()}
+          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft disabled:opacity-50"
         >
           <Apple size={20} fill="currentColor" /> Continue with Apple
         </button>
         <button
-          onClick={go}
-          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft"
+          onClick={() => !isApiEnabled() && navigate(from)}
+          disabled={isApiEnabled()}
+          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft disabled:opacity-50"
         >
           <span className="text-[18px] font-extrabold text-[#4285F4]">G</span> Continue with Google
         </button>

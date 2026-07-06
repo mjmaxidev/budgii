@@ -8,8 +8,11 @@ import { FormField } from '@/components/ui/FormField'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { useStore } from '@/store/appStore'
 import { formatInviteCode, normalizeInviteCode } from '@/utils/familyInvite'
+import { isApiEnabled } from '@/api/config'
+import { joinHouseholdAndBootstrap } from '@/api/bootstrap'
+import { ApiError } from '@/api/client'
 
-type JoinError = 'invalid' | 'used' | ''
+type JoinError = 'invalid' | 'used' | 'expired' | ''
 
 export function FamilyJoin() {
   const navigate = useNavigate()
@@ -17,11 +20,14 @@ export function FamilyJoin() {
   const findFamilyInvite = useStore((s) => s.findFamilyInvite)
   const useFamilyInvite = useStore((s) => s.useFamilyInvite)
   const addFamilyMember = useStore((s) => s.addFamilyMember)
+  const userProfile = useStore((s) => s.userProfile)
 
   const [code, setCode] = useState('')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(userProfile.name || '')
   const [error, setError] = useState<JoinError>('')
+  const [apiError, setApiError] = useState('')
   const [joined, setJoined] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fromLink = params.get('code')
@@ -29,19 +35,44 @@ export function FamilyJoin() {
   }, [params])
 
   const normalizedCode = normalizeInviteCode(code)
-  const canJoin = normalizedCode.length >= 6 && name.trim().length >= 2
+  const canJoin = normalizedCode.length >= 4 && (!isApiEnabled() ? name.trim().length >= 2 : true)
 
   function handleCodeChange(value: string) {
     const clean = value.replace(/[^a-zA-Z0-9\s]/g, '').toUpperCase()
     const compact = clean.replace(/\s+/g, '').slice(0, 6)
     setCode(formatInviteCode(compact))
     if (error) setError('')
+    if (apiError) setApiError('')
   }
 
-  function handleJoin() {
-    const trimmedName = name.trim()
+  async function handleJoin() {
     if (!canJoin) return
 
+    if (isApiEnabled()) {
+      setLoading(true)
+      setApiError('')
+      try {
+        await joinHouseholdAndBootstrap(normalizedCode)
+        setJoined(true)
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.status === 410) {
+            setError('used')
+          } else if (err.status === 404) {
+            setError('invalid')
+          } else {
+            setApiError(err.message)
+          }
+        } else {
+          setApiError('Could not join household')
+        }
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    const trimmedName = name.trim()
     const invite = findFamilyInvite(normalizedCode)
     if (!invite) {
       setError('invalid')
@@ -79,7 +110,9 @@ export function FamilyJoin() {
           </div>
           <h2 className="mt-4 text-[20px] font-extrabold text-ink">You&apos;re in!</h2>
           <p className="mt-2 text-[14px] leading-snug text-muted">
-            Welcome, {name.trim()}. You&apos;ve joined the household and can start tracking expenses together.
+            {isApiEnabled()
+              ? 'You have joined the household and your budget data is syncing.'
+              : `Welcome, ${name.trim()}. You've joined the household and can start tracking expenses together.`}
           </p>
         </Card>
 
@@ -120,17 +153,19 @@ export function FamilyJoin() {
           autoComplete="one-time-code"
           inputMode="text"
         />
-        <FormField
-          label="Your name"
-          placeholder="How should we show you?"
-          leftIcon={<User size={18} />}
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value)
-            if (error) setError('')
-          }}
-          autoComplete="name"
-        />
+        {!isApiEnabled() && (
+          <FormField
+            label="Your name"
+            placeholder="How should we show you?"
+            leftIcon={<User size={18} />}
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (error) setError('')
+            }}
+            autoComplete="name"
+          />
+        )}
 
         {error === 'invalid' && (
           <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
@@ -142,9 +177,14 @@ export function FamilyJoin() {
             This code has already been used. Ask for a new invite.
           </p>
         )}
+        {apiError && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {apiError}
+          </p>
+        )}
 
-        <ActionButton onClick={handleJoin} disabled={!canJoin}>
-          Join Household
+        <ActionButton onClick={() => void handleJoin()} disabled={!canJoin || loading}>
+          {loading ? 'Joining…' : 'Join Household'}
         </ActionButton>
       </Card>
 

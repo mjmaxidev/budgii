@@ -12,8 +12,8 @@ const items = [
 export function BottomNav() {
   const navigate = useNavigate()
   return (
-    <nav className="sticky bottom-0 z-30 mt-auto border-t border-line bg-surface/95 backdrop-blur safe-bottom">
-      <div className="relative flex items-end justify-between px-4 pt-2 pb-2">
+    <nav className="sticky bottom-0 z-30 mt-auto border-t border-line bg-surface/95 backdrop-blur">
+      <div className="relative flex items-end justify-between px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
         {items.slice(0, 2).map((it) => (
           <NavItem key={it.to} {...it} />
         ))}

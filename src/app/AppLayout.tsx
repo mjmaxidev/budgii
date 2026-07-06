@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { AppLockProvider } from '@/components/security/AppLockProvider'
 
 /**
@@ -7,11 +8,11 @@ import { AppLockProvider } from '@/components/security/AppLockProvider'
  * width — so we constrain every route to a centered phone-width column. The body
  * background shows on either side like a device on a desk.
  */
-export function AppLayout() {
+export function AppLayout({ children }: { children?: ReactNode }) {
   return (
-    <div id="mobile-frame-root" className="relative mx-auto h-full w-full max-w-[390px] bg-bg">
+    <div id="mobile-frame-root" className="safe-top safe-x relative mx-auto h-full w-full max-w-[390px] bg-bg">
       <AppLockProvider>
-        <Outlet />
+        {children ?? <Outlet />}
       </AppLockProvider>
     </div>
   )

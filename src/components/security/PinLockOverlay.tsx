@@ -30,7 +30,7 @@ export function PinLockOverlay({ onUnlock }: Props) {
   }
 
   return (
-    <div className="absolute inset-0 z-[100] flex flex-col bg-bg px-6 pt-16 pb-10">
+    <div className="safe-top absolute inset-0 z-[100] flex flex-col bg-bg px-6 pt-10 pb-10">
       <div className="flex flex-1 flex-col items-center justify-center">
         <img src={budgiiLogo} alt="Budgii" className="mb-6 w-[min(280px,85vw)] object-contain" />
         <h1 className="text-[24px] font-extrabold text-ink">Welcome back</h1>

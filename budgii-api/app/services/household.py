@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.config import Settings
 from app.models import Household, HouseholdInvite, HouseholdMembership, User
 from app.models.access import DEFAULT_EDITOR_LEVEL, DEFAULT_INVITE_ROLE, AccessRole, EditorLevel
-from app.services.permissions import normalize_editor_level, require_admin
+from app.services.permissions import normalize_editor_level, require_admin, require_can_pull
 from app.services.persona import create_account_holder_persona, create_join_persona
 from app.services.seed import seed_household_sync
 from app.services.security import invite_code
@@ -120,6 +120,123 @@ async def create_invite(
 
 def invite_url(settings: Settings, code: str) -> str:
     return f"{settings.invite_link_base}?code={code}"
+
+
+def invite_response(invite: HouseholdInvite, settings: Settings) -> dict:
+    return {
+        "id": str(invite.id),
+        "code": invite.code,
+        "invite_url": invite_url(settings, invite.code),
+        "expires_at": invite.expires_at,
+        "access_role": invite.access_role,
+        "editor_level": invite.editor_level,
+        "sent_to_contact": invite.sent_to_contact,
+        "sent_at": invite.sent_at,
+        "used_at": invite.used_at,
+        "used_by": str(invite.used_by) if invite.used_by else None,
+    }
+
+
+async def list_invites(
+    session: AsyncSession,
+    user: User,
+    household_id: uuid.UUID,
+    settings: Settings,
+) -> list[dict]:
+    membership = await require_membership(session, user.id, household_id)
+    require_admin(membership)
+
+    result = await session.scalars(
+        select(HouseholdInvite)
+        .where(HouseholdInvite.household_id == household_id)
+        .order_by(HouseholdInvite.created_at.desc())
+    )
+    return [invite_response(invite, settings) for invite in result.all()]
+
+
+async def revoke_invite(
+    session: AsyncSession,
+    user: User,
+    invite_id: uuid.UUID,
+) -> None:
+    invite = await session.get(HouseholdInvite, invite_id)
+    if not invite:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invite not found")
+
+    membership = await require_membership(session, user.id, invite.household_id)
+    require_admin(membership)
+
+    if invite.used_at is not None:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invite already used")
+
+    await session.delete(invite)
+
+
+async def list_members(
+    session: AsyncSession,
+    user: User,
+    household_id: uuid.UUID,
+) -> list[tuple[HouseholdMembership, User]]:
+    membership = await require_membership(session, user.id, household_id)
+    require_can_pull(membership)
+
+    result = await session.execute(
+        select(HouseholdMembership, User)
+        .join(User, User.id == HouseholdMembership.user_id)
+        .where(HouseholdMembership.household_id == household_id)
+        .order_by(HouseholdMembership.joined_at)
+    )
+    return list(result.all())
+
+
+async def update_member(
+    session: AsyncSession,
+    actor: User,
+    household_id: uuid.UUID,
+    target_user_id: uuid.UUID,
+    access_role: AccessRole,
+    editor_level: EditorLevel | None,
+) -> HouseholdMembership:
+    actor_membership = await require_membership(session, actor.id, household_id)
+    require_admin(actor_membership)
+
+    if access_role == "admin":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot assign admin role")
+
+    target = await get_user_membership(session, target_user_id, household_id)
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+
+    if target.is_account_holder:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change account holder role")
+
+    target.access_role = access_role
+    target.editor_level = normalize_editor_level(access_role, editor_level)
+    await session.flush()
+    return target
+
+
+async def remove_member(
+    session: AsyncSession,
+    actor: User,
+    household_id: uuid.UUID,
+    target_user_id: uuid.UUID,
+) -> None:
+    actor_membership = await require_membership(session, actor.id, household_id)
+    require_admin(actor_membership)
+
+    target = await get_user_membership(session, target_user_id, household_id)
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+
+    if target.is_account_holder:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove account holder")
+
+    if target.user_id == actor.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove yourself")
+
+    target.persona_id = None
+    await session.delete(target)
 
 
 async def join_household(session: AsyncSession, user: User, code: str) -> tuple[Household, HouseholdMembership]:

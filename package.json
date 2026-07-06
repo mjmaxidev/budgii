@@ -15,9 +15,15 @@
     "electron:start:app": "node scripts/build-app-variant.cjs app start",
     "electron:start:qa": "node scripts/build-app-variant.cjs qa start",
     "electron:dist:app": "node scripts/build-app-variant.cjs app dist",
-    "electron:dist:qa": "node scripts/build-app-variant.cjs qa dist"
+    "electron:dist:qa": "node scripts/build-app-variant.cjs qa dist",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap open ios",
+    "cap:android": "cap open android",
+    "cap:build": "npm run build && cap sync"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.4.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.462.0",
     "react": "^18.3.1",
@@ -27,6 +33,9 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@types/node": "^25.9.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

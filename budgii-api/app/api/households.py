@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, parse_uuid
@@ -8,10 +8,14 @@ from app.models import User
 from app.schemas.household import (
     CreateHouseholdRequest,
     HouseholdListResponse,
+    HouseholdMemberListResponse,
+    HouseholdMemberResponse,
     HouseholdResponse,
+    InviteListResponse,
     InviteResponse,
     JoinHouseholdRequest,
     SendInviteRequest,
+    UpdateMemberRequest,
 )
 from app.services import household as household_service
 from app.services.permissions import normalize_editor_level
@@ -26,6 +30,20 @@ def household_response(household, membership) -> HouseholdResponse:
         access_role=membership.access_role,
         editor_level=membership.editor_level,
         is_account_holder=membership.is_account_holder,
+    )
+
+
+def member_response(membership, user) -> HouseholdMemberResponse:
+    return HouseholdMemberResponse(
+        user_id=str(user.id),
+        persona_id=str(membership.persona_id) if membership.persona_id else None,
+        name=user.name,
+        email=user.email,
+        avatar=user.avatar,
+        access_role=membership.access_role,
+        editor_level=membership.editor_level,
+        is_account_holder=membership.is_account_holder,
+        joined_at=membership.joined_at,
     )
 
 
@@ -60,6 +78,18 @@ async def join_household(
     return household_response(household, membership)
 
 
+@router.get("/invites", response_model=InviteListResponse)
+async def list_invites(
+    household_id: str = Query(min_length=1),
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> InviteListResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    invites = await household_service.list_invites(session, user, household_uuid, settings)
+    return InviteListResponse(invites=[InviteResponse(**invite) for invite in invites])
+
+
 @router.post("/invites", response_model=InviteResponse)
 async def create_invite(
     body: SendInviteRequest,
@@ -78,10 +108,64 @@ async def create_invite(
         access_role=body.access_role,
         editor_level=editor_level,
     )
-    return InviteResponse(
-        code=invite.code,
-        invite_url=household_service.invite_url(settings, invite.code),
-        expires_at=invite.expires_at,
-        access_role=invite.access_role,
-        editor_level=invite.editor_level,
+    return InviteResponse(**household_service.invite_response(invite, settings))
+
+
+@router.delete("/invites/{invite_id}", status_code=204)
+async def revoke_invite(
+    invite_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    invite_uuid = parse_uuid(invite_id, "invite_id")
+    await household_service.revoke_invite(session, user, invite_uuid)
+
+
+@router.get("/{household_id}/members", response_model=HouseholdMemberListResponse)
+async def list_members(
+    household_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> HouseholdMemberListResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    rows = await household_service.list_members(session, user, household_uuid)
+    return HouseholdMemberListResponse(
+        members=[member_response(membership, member_user) for membership, member_user in rows]
     )
+
+
+@router.patch("/{household_id}/members/{user_id}", response_model=HouseholdMemberResponse)
+async def update_member(
+    household_id: str,
+    user_id: str,
+    body: UpdateMemberRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> HouseholdMemberResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    target_uuid = parse_uuid(user_id, "user_id")
+    editor_level = normalize_editor_level(body.access_role, body.editor_level)
+    membership = await household_service.update_member(
+        session,
+        user,
+        household_uuid,
+        target_uuid,
+        body.access_role,
+        editor_level,
+    )
+    target_user = await session.get(User, target_uuid)
+    if not target_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return member_response(membership, target_user)
+
+
+@router.delete("/{household_id}/members/{user_id}", status_code=204)
+async def remove_member(
+    household_id: str,
+    user_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    household_uuid = parse_uuid(household_id, "household_id")
+    target_uuid = parse_uuid(user_id, "user_id")
+    await household_service.remove_member(session, user, household_uuid, target_uuid)

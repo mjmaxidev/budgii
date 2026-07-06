@@ -9,6 +9,9 @@ import {
 import { cn } from '@/utils/cn'
 import { withFrom } from '@/utils/navigation'
 import { useStore } from '@/store/appStore'
+import { isApiEnabled } from '@/api/config'
+import { registerAndCreateHousehold } from '@/api/bootstrap'
+import { ApiError } from '@/api/client'
 
 type Step = 1 | 2 | 3 | 4
 type ContactMethod = 'phone' | 'email' | 'apple' | 'google'
@@ -198,26 +201,64 @@ export function OnBoarding() {
   const [otp, setOtp] = useState('')
   const [managingFor, setManagingFor] = useState<ManagingFor>('household')
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   function goToVerify(method: ContactMethod, value: string) {
     setContactMethod(method)
     setContact(value)
     setOtp('')
+    if (isApiEnabled() && method === 'email') {
+      setStep(3)
+      return
+    }
     setStep(2)
   }
 
-  function completeProfile() {
-    if (name.trim()) {
-      addFamilyMember({
-        name: name.trim(),
-        relationship: 'You',
-        avatar: '👤',
-        isDefault: true,
-        isAccountHolder: true,
-        hasAppAccess: true,
-        accessRole: 'admin',
-      })
+  async function completeProfile() {
+    if (!name.trim()) return
+
+    if (isApiEnabled()) {
+      if (!contact.includes('@')) {
+        setSubmitError('API sign-up requires an email address.')
+        return
+      }
+      if (password.length < 8) {
+        setSubmitError('Password must be at least 8 characters.')
+        return
+      }
+
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const householdName =
+          managingFor === 'household' ? `${name.trim()}'s Household` : `${name.trim()}'s Budget`
+        await registerAndCreateHousehold(
+          contact.trim().toLowerCase(),
+          password,
+          name.trim(),
+          householdName,
+          true,
+        )
+        setStep(4)
+      } catch (err) {
+        setSubmitError(err instanceof ApiError ? err.message : 'Could not create account')
+      } finally {
+        setSubmitting(false)
+      }
+      return
     }
+
+    addFamilyMember({
+      name: name.trim(),
+      relationship: 'You',
+      avatar: '👤',
+      isDefault: true,
+      isAccountHolder: true,
+      hasAppAccess: true,
+      accessRole: 'admin',
+    })
     setStep(4)
   }
 
@@ -257,8 +298,13 @@ export function OnBoarding() {
         setManagingFor={setManagingFor}
         name={name}
         setName={setName}
-        onBack={() => setStep(2)}
-        onContinue={completeProfile}
+        password={password}
+        setPassword={setPassword}
+        showPassword={isApiEnabled()}
+        submitError={submitError}
+        submitting={submitting}
+        onBack={() => setStep(isApiEnabled() ? 1 : 2)}
+        onContinue={() => void completeProfile()}
       />
     )
   }
@@ -487,16 +533,22 @@ function Step2Verify({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Step3AboutYou({
-  managingFor, setManagingFor, name, setName, onBack, onContinue,
+  managingFor, setManagingFor, name, setName, password, setPassword, showPassword,
+  submitError, submitting, onBack, onContinue,
 }: {
   managingFor: ManagingFor
   setManagingFor: (v: ManagingFor) => void
   name: string
   setName: (v: string) => void
+  password?: string
+  setPassword?: (v: string) => void
+  showPassword?: boolean
+  submitError?: string
+  submitting?: boolean
   onBack: () => void
   onContinue: () => void
 }) {
-  const canContinue = name.trim().length > 0
+  const canContinue = name.trim().length > 0 && (!showPassword || (password?.length ?? 0) >= 8)
 
   return (
     <div className="mx-auto flex h-dvh w-full max-w-[390px] flex-col bg-bg">
@@ -560,19 +612,42 @@ function Step3AboutYou({
             />
           </div>
         </div>
+
+        {showPassword && setPassword && (
+          <div className="mt-5">
+            <p className="mb-2 text-[15px] font-bold text-ink">Create a password</p>
+            <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5">
+              <Shield size={18} className="shrink-0 text-muted" />
+              <input
+                type="password"
+                value={password ?? ''}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
+                autoComplete="new-password"
+              />
+            </div>
+          </div>
+        )}
+
+        {submitError && (
+          <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {submitError}
+          </p>
+        )}
       </div>
 
       {/* Bottom actions */}
       <div className="shrink-0 border-t border-line bg-surface px-5 py-4">
         <button
           onClick={onContinue}
-          disabled={!canContinue}
+          disabled={!canContinue || submitting}
           className={cn(
             'w-full rounded-2xl py-4 text-center text-[15px] font-bold text-white transition',
-            canContinue ? 'bg-primary active:bg-primary/90' : 'bg-primary/40',
+            canContinue && !submitting ? 'bg-primary active:bg-primary/90' : 'bg-primary/40',
           )}
         >
-          Continue
+          {submitting ? 'Creating account…' : 'Continue'}
         </button>
         <button onClick={onBack} className="mt-3 w-full py-1 text-center text-[15px] font-semibold text-muted">
           Back

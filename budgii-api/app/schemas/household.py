@@ -39,8 +39,38 @@ class HouseholdListResponse(BaseModel):
 
 
 class InviteResponse(BaseModel):
+    id: str | None = None
     code: str
     invite_url: str
     expires_at: datetime | None = None
+    access_role: AccessRole
+    editor_level: EditorLevel | None = None
+    sent_to_contact: str | None = None
+    sent_at: datetime | None = None
+    used_at: datetime | None = None
+    used_by: str | None = None
+
+
+class InviteListResponse(BaseModel):
+    invites: list[InviteResponse]
+
+
+class HouseholdMemberResponse(BaseModel):
+    user_id: str
+    persona_id: str | None = None
+    name: str
+    email: str
+    avatar: str | None = None
+    access_role: AccessRole
+    editor_level: EditorLevel | None = None
+    is_account_holder: bool = False
+    joined_at: datetime
+
+
+class HouseholdMemberListResponse(BaseModel):
+    members: list[HouseholdMemberResponse]
+
+
+class UpdateMemberRequest(BaseModel):
     access_role: AccessRole
     editor_level: EditorLevel | None = None
