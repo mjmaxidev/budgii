@@ -412,10 +412,11 @@ docker compose up --build
 ```
 
 If host port `5432` is already used by another local Postgres, use the dev override.
-It keeps Budgii Postgres internal to Docker while still exposing the API on `:8001`.
+It keeps Budgii Postgres internal to Docker while still exposing the API on `:8001`,
+and auto-seeds the default dev login if it is missing.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 ---
