@@ -59,6 +59,29 @@ export type PersonaListResponse = {
   personas: PersonaResponse[]
 }
 
+export type ExpenseResponse = {
+  id: string
+  household_id: string
+  persona_id: string | null
+  category_id: string
+  amount: number
+  date: string
+  merchant: string
+  tag_ids: string[]
+  notes: string | null
+  receipt_upload_id: string | null
+  source: 'manual' | 'receipt_ai' | string
+  created_at: string
+  updated_at: string
+}
+
+export type ExpenseListResponse = {
+  expenses: ExpenseResponse[]
+  limit: number
+  offset: number
+  total: number
+}
+
 export type SyncPullResponse = {
   household_id: string
   server_time: string

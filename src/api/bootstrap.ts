@@ -1,6 +1,7 @@
 import { getMe } from '@/api/auth'
 import { createHousehold, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
+import { apiExpensesToExpenses, listAllExpenses } from '@/api/expenses'
 import { pullSync, pushSync } from '@/api/sync'
 import { personasToFamilyMembers } from '@/api/personaMap'
 import { pickSyncSnapshot, SYNC_KEYS, type SyncKey } from '@/api/syncKeys'
@@ -107,7 +108,8 @@ export async function pullAndHydrate(
 
   const { personas } = await listPersonas(householdId)
   const familyMembers = personasToFamilyMembers(personas, isAccountHolder)
-  useStore.setState({ familyMembers })
+  const expenses = apiExpensesToExpenses(await listAllExpenses(householdId))
+  useStore.setState({ familyMembers, expenses })
 
   auth.setSyncMeta(pull.revision, pull.server_time)
 }

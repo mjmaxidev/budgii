@@ -57,9 +57,7 @@ def can_upload_receipts(membership: HouseholdMembership) -> bool:
 def can_manage_expenses(membership: HouseholdMembership) -> bool:
     if membership.access_role == "admin":
         return True
-    if membership.access_role != "editor":
-        return False
-    return (membership.editor_level or "standard") in ("full", "standard")
+    return membership.access_role == "editor"
 
 
 def require_can_pull(membership: HouseholdMembership) -> None:

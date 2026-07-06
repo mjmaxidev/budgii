@@ -1,13 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, FileText, Trash2 } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Chip } from '@/components/ui/Chip'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { apiExpenseToExpense, deleteExpense as apiDeleteExpense, updateExpense as apiUpdateExpense } from '@/api/expenses'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { withFrom } from '@/utils/navigation'
+import type { Expense } from '@/types'
 
 type Props = {
   expenseId: string
@@ -20,14 +25,89 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
   const receipt = useStore((s) => s.receipts.find((r) => r.id === expense?.receiptId))
   const updateExpense = useStore((s) => s.updateExpense)
   const deleteExpense = useStore((s) => s.deleteExpense)
+  const householdId = useAuthStore((s) => s.householdId)
   const { categories, tags, familyMembers } = useLookups()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [draft, setDraft] = useState<Expense | null>(expense ?? null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  if (!expense) return null
+  useEffect(() => {
+    if (expense && expense.id !== draft?.id) {
+      setDraft(expense)
+      setError('')
+    }
+  }, [draft?.id, expense])
+
+  const current = draft ?? expense
+
+  if (!current) return null
+
+  function patchDraft(patch: Partial<Expense>) {
+    setDraft((prev) => {
+      const base = prev ?? current
+      return base ? { ...base, ...patch } : prev
+    })
+  }
 
   function toggleTag(id: string) {
-    const next = expense!.tagIds.includes(id) ? expense!.tagIds.filter((t) => t !== id) : [...expense!.tagIds, id]
-    updateExpense(expenseId, { tagIds: next })
+    const next = current!.tagIds.includes(id) ? current!.tagIds.filter((t) => t !== id) : [...current!.tagIds, id]
+    patchDraft({ tagIds: next })
+  }
+
+  async function save() {
+    if (!draft) {
+      onDone()
+      return
+    }
+
+    if (!isApiEnabled()) {
+      updateExpense(expenseId, draft)
+      onDone()
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to update this expense.')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    try {
+      const saved = apiExpenseToExpense(await apiUpdateExpense(householdId, expenseId, draft))
+      updateExpense(expenseId, saved)
+      onDone()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not update expense')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function remove() {
+    if (!isApiEnabled()) {
+      deleteExpense(expenseId)
+      onDone()
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to delete this expense.')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    try {
+      await apiDeleteExpense(householdId, expenseId)
+      deleteExpense(expenseId)
+      onDone()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not delete expense')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -36,8 +116,8 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
         <label className="flex-1">
           <span className="mb-1 block text-[13px] font-semibold text-muted">Merchant</span>
           <input
-            value={expense.merchant}
-            onChange={(e) => updateExpense(expenseId, { merchant: e.target.value })}
+            value={current.merchant}
+            onChange={(e) => patchDraft({ merchant: e.target.value })}
             className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
           />
         </label>
@@ -45,8 +125,8 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
           <span className="mb-1 block text-[13px] font-semibold text-muted">Amount</span>
           <input
             inputMode="decimal"
-            value={expense.amount}
-            onChange={(e) => updateExpense(expenseId, { amount: parseFloat(e.target.value) || 0 })}
+            value={current.amount}
+            onChange={(e) => patchDraft({ amount: parseFloat(e.target.value) || 0 })}
             className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
           />
         </label>
@@ -56,8 +136,8 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
         <span className="mb-1 block text-[13px] font-semibold text-muted">Date</span>
         <input
           type="date"
-          value={expense.date.slice(0, 10)}
-          onChange={(e) => updateExpense(expenseId, { date: new Date(e.target.value).toISOString() })}
+          value={current.date.slice(0, 10)}
+          onChange={(e) => patchDraft({ date: new Date(e.target.value).toISOString() })}
           className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
         />
       </label>
@@ -89,9 +169,9 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
           {categories.map((c) => (
             <button
               key={c.id}
-              onClick={() => updateExpense(expenseId, { categoryId: c.id })}
+              onClick={() => patchDraft({ categoryId: c.id })}
               className={`flex flex-col items-center gap-1 rounded-2xl border p-2 ${
-                expense.categoryId === c.id ? 'border-primary bg-primarySoft' : 'border-line'
+                current.categoryId === c.id ? 'border-primary bg-primarySoft' : 'border-line'
               }`}
             >
               <CategoryIcon icon={c.icon} color={c.color} size={30} />
@@ -105,7 +185,7 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
         <span className="mb-2 block text-[13px] font-semibold text-muted">Tags</span>
         <div className="flex flex-wrap gap-2">
           {tags.map((t) => (
-            <Chip key={t.id} color={t.color} active={expense.tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
+            <Chip key={t.id} color={t.color} active={current.tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
               {t.name}
             </Chip>
           ))}
@@ -119,14 +199,20 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
             <Chip
               key={m.id}
               color="#FB8500"
-              active={expense.memberId === m.id}
-              onClick={() => updateExpense(expenseId, { memberId: expense.memberId === m.id ? undefined : m.id })}
+              active={current.memberId === m.id}
+              onClick={() => patchDraft({ memberId: current.memberId === m.id ? undefined : m.id })}
             >
               {m.avatar} {m.name}
             </Chip>
           ))}
         </div>
       </div>
+
+      {error && (
+        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {error}
+        </p>
+      )}
 
       {confirmDelete ? (
         <div className="rounded-input bg-redSoft p-3">
@@ -137,12 +223,10 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
             </ActionButton>
             <ActionButton
               variant="danger"
-              onClick={() => {
-                deleteExpense(expenseId)
-                onDone()
-              }}
+              onClick={() => void remove()}
+              disabled={saving}
             >
-              Delete
+              {saving ? 'Deleting…' : 'Delete'}
             </ActionButton>
           </div>
         </div>
@@ -150,11 +234,14 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
         <div className="flex gap-3 pt-1">
           <button
             onClick={() => setConfirmDelete(true)}
+            disabled={saving}
             className="flex min-h-[52px] items-center justify-center gap-2 rounded-input border border-red/40 px-5 text-[15px] font-bold text-red active:bg-redSoft"
           >
             <Trash2 size={18} /> Delete
           </button>
-          <ActionButton onClick={onDone}>Done</ActionButton>
+          <ActionButton onClick={() => void save()} disabled={saving || current.amount <= 0}>
+            {saving ? 'Saving…' : 'Done'}
+          </ActionButton>
         </div>
       )}
     </div>

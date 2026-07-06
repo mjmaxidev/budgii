@@ -11,6 +11,10 @@ import { ColorPickerField } from '@/components/ui/ColorPickerField'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryCreateModal, CategoryAddTile } from '@/components/finance/CategoryCreateModal'
 import { TAG_COLOR_CHOICES } from '@/constants/tagChoices'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { apiExpenseToExpense, createExpense } from '@/api/expenses'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 
@@ -19,6 +23,7 @@ export function AddExpense() {
   const addExpense = useStore((s) => s.addExpense)
   const addTag = useStore((s) => s.addTag)
   const addRecurringTransaction = useStore((s) => s.addRecurringTransaction)
+  const householdId = useAuthStore((s) => s.householdId)
   const { categories, tags, familyMembers } = useLookups()
 
   const [amount, setAmount] = useState('')
@@ -35,6 +40,8 @@ export function AddExpense() {
   const [newTagColor, setNewTagColor] = useState(TAG_COLOR_CHOICES[0])
   const [isRecurring, setIsRecurring] = useState(false)
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const cat = categories.find((c) => c.id === categoryId)
 
@@ -42,7 +49,7 @@ export function AddExpense() {
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
   }
 
-  function save() {
+  async function save() {
     const expenseData = {
       amount: parseFloat(amount) || 0,
       date: new Date(date).toISOString(),
@@ -53,7 +60,26 @@ export function AddExpense() {
       notes: notes || undefined,
       source: 'manual' as const,
     }
-    addExpense(expenseData)
+
+    if (isApiEnabled()) {
+      if (!householdId) {
+        setSubmitError('Sign in again to save this expense.')
+        return
+      }
+
+      setSubmitting(true)
+      setSubmitError('')
+      try {
+        const saved = apiExpenseToExpense(await createExpense(householdId, expenseData))
+        addExpense(saved)
+      } catch (err) {
+        setSubmitError(err instanceof ApiError ? err.message : 'Could not save expense')
+        setSubmitting(false)
+        return
+      }
+    } else {
+      addExpense(expenseData)
+    }
 
     // If recurring, also add to recurring transactions
     if (isRecurring) {
@@ -234,7 +260,14 @@ export function AddExpense() {
           </Card>
         )}
 
-        <ActionButton onClick={save}>Save Expense</ActionButton>
+        {submitError && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {submitError}
+          </p>
+        )}
+        <ActionButton onClick={() => void save()} disabled={submitting}>
+          {submitting ? 'Saving…' : 'Save Expense'}
+        </ActionButton>
       </div>
 
       {/* Category picker */}
