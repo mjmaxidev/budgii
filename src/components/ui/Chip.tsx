@@ -22,23 +22,30 @@ function hexToSoft(hex: string, alpha = 0.16): string {
 export function Chip({ children, color = '#E5A97A', active = false, onClick, className, size = 'md' }: Props) {
   const interactive = !!onClick
   const textColor = active ? (hexToHsl(color).l > 62 ? '#3D3229' : '#fff') : color
+  const style = active
+    ? { backgroundColor: color, color: textColor }
+    : { backgroundColor: hexToSoft(color), color }
+  const classes = cn(
+    'inline-flex items-center rounded-pill font-semibold whitespace-nowrap transition',
+    size === 'sm' ? 'px-2.5 py-1 text-[12px]' : 'px-3.5 py-1.5 text-[13px]',
+    interactive ? 'active:scale-95' : 'cursor-default',
+    className,
+  )
+
+  if (!interactive) {
+    return (
+      <span style={style} className={classes}>
+        {children}
+      </span>
+    )
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={!interactive}
-      style={
-        active
-          ? { backgroundColor: color, color: textColor }
-          : { backgroundColor: hexToSoft(color), color }
-      }
-      className={cn(
-        'inline-flex items-center rounded-pill font-semibold whitespace-nowrap transition',
-        size === 'sm' ? 'px-2.5 py-1 text-[12px]' : 'px-3.5 py-1.5 text-[13px]',
-        interactive && 'active:scale-95',
-        !interactive && 'cursor-default',
-        className,
-      )}
+      style={style}
+      className={classes}
     >
       {children}
     </button>
