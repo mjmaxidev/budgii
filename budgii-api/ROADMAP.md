@@ -411,6 +411,13 @@ docker compose up --build
 # Receipt files persist in Docker volume `receipt_uploads` → /app/uploads
 ```
 
+If host port `5432` is already used by another local Postgres, use the dev override.
+It keeps Budgii Postgres internal to Docker while still exposing the API on `:8001`.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
 ---
 
 *MJ Productions — dev@mjproductions.app*

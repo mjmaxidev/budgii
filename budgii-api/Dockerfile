@@ -13,9 +13,8 @@ COPY app ./app
 COPY scripts ./scripts
 COPY alembic ./alembic
 COPY alembic.ini .
-COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh && mkdir -p /app/uploads
+RUN chmod +x scripts/entrypoint.sh && mkdir -p /app/uploads
 
 EXPOSE 8000
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./scripts/entrypoint.sh"]
