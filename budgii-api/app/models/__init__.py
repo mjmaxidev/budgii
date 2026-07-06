@@ -3,7 +3,7 @@ from datetime import datetime
 
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,6 +60,7 @@ class Household(Base):
     memberships: Mapped[list["HouseholdMembership"]] = relationship(back_populates="household")
     personas: Mapped[list["HouseholdPersona"]] = relationship(back_populates="household")
     invites: Mapped[list["HouseholdInvite"]] = relationship(back_populates="household")
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="household")
     sync_meta: Mapped["HouseholdSyncMeta | None"] = relationship(back_populates="household", uselist=False)
     sync_chunks: Mapped[list["HouseholdSyncChunk"]] = relationship(back_populates="household")
 
@@ -83,6 +84,7 @@ class HouseholdPersona(Base):
 
     household: Mapped[Household] = relationship(back_populates="personas")
     membership: Mapped["HouseholdMembership | None"] = relationship(back_populates="persona", uselist=False)
+    expenses: Mapped[list["Expense"]] = relationship(back_populates="persona")
 
 
 class HouseholdMembership(Base):
@@ -152,6 +154,34 @@ class HouseholdSyncChunk(Base):
     )
 
     household: Mapped[Household] = relationship(back_populates="sync_chunks")
+
+
+class Expense(Base):
+    __tablename__ = "expenses"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    household_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"))
+    persona_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("household_personas.id", ondelete="SET NULL"), nullable=True
+    )
+    category_id: Mapped[str] = mapped_column(String(80))
+    amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    merchant: Mapped[str] = mapped_column(String(160), default="")
+    tag_ids: Mapped[Any] = mapped_column(JSONB, default=list)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    receipt_upload_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipt_uploads.id", ondelete="SET NULL"), nullable=True
+    )
+    source: Mapped[str] = mapped_column(String(32), default="manual")
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    household: Mapped[Household] = relationship(back_populates="expenses")
+    persona: Mapped[HouseholdPersona | None] = relationship(back_populates="expenses")
 
 
 class ReceiptUpload(Base):
