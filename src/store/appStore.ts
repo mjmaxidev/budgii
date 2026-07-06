@@ -238,6 +238,7 @@ export type AppStore = {
   findFamilyInvite: (code: string) => FamilyInvite | undefined
   getFamilyInvites: () => FamilyInvite[]
   getUnusedInvites: () => FamilyInvite[]
+  revokeFamilyInvite: (id: string) => void
   sendFamilyInvite: (code: string, contact: string) => void
   updateFamilyInvite: (code: string, patch: Partial<Pick<FamilyInvite, 'accessRole' | 'editorLevel'>>) => void
 
@@ -924,6 +925,10 @@ export const useStore = create<AppStore>()(
 
       getUnusedInvites: () => {
         return get().familyInvites.filter((fi) => !fi.usedAt)
+      },
+
+      revokeFamilyInvite: (id) => {
+        set((s) => ({ familyInvites: s.familyInvites.filter((fi) => fi.id !== id) }))
       },
 
       sendFamilyInvite: (code, contact) => {

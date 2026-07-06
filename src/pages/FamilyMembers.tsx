@@ -11,6 +11,11 @@ import { Modal } from '@/components/ui/Modal'
 import { FormField } from '@/components/ui/FormField'
 import { MemberAccessPicker } from '@/components/family/MemberAccessPicker'
 import { useStore } from '@/store/appStore'
+import { useAuthStore } from '@/store/authStore'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { createPersona, deletePersona, listPersonas, updatePersona } from '@/api/personas'
+import { personasToFamilyMembers } from '@/api/personaMap'
 import { withFrom } from '@/utils/navigation'
 import type { EditorLevel, FamilyMember, MemberAccessRole } from '@/types'
 import { defaultEditorLevel, formatMemberAccessLabel } from '@/utils/memberAccess'
@@ -34,6 +39,7 @@ export function FamilyMembers() {
   const sendFamilyInvite = useStore((s) => s.sendFamilyInvite)
   const settings = useStore((s) => s.settings)
   const updateSettings = useStore((s) => s.updateSettings)
+  const householdId = useAuthStore((s) => s.householdId)
 
   const [edit, setEdit] = useState(false)
   const [modal, setModal] = useState<'add' | 'edit' | null>(null)
@@ -46,10 +52,36 @@ export function FamilyMembers() {
   const [editorLevel, setEditorLevel] = useState<EditorLevel>(defaultEditorLevel())
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteEmailError, setInviteEmailError] = useState('')
+  const [apiError, setApiError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const editingMember = editingId ? members.find((m) => m.id === editingId) : undefined
   const trimmedInviteEmail = inviteEmail.trim()
   const willSendInvite = hasAppAccess && trimmedInviteEmail.length > 0
+  const apiOn = isApiEnabled()
+
+  function setApiMembersFromPersonas(personas: Awaited<ReturnType<typeof listPersonas>>['personas']) {
+    const currentById = new Map(useStore.getState().familyMembers.map((m) => [m.id, m]))
+    useStore.setState({
+      familyMembers: personasToFamilyMembers(personas).map((member) => {
+        const current = currentById.get(member.id)
+        return {
+          ...member,
+          isAccountHolder: current?.isAccountHolder ?? member.isAccountHolder,
+        }
+      }),
+    })
+  }
+
+  async function refreshApiMembers() {
+    if (!householdId) return
+    const { personas } = await listPersonas(householdId)
+    setApiMembersFromPersonas(personas)
+  }
+
+  function apiMessage(err: unknown, fallback: string) {
+    return err instanceof ApiError ? err.message : fallback
+  }
 
   function resetForm() {
     setName('')
@@ -84,9 +116,10 @@ export function FamilyMembers() {
     resetForm()
   }
 
-  function saveAdd() {
+  async function saveAdd() {
     if (!name.trim()) return
 
+    setApiError('')
     if (trimmedInviteEmail) {
       if (!hasAppAccess) {
         setInviteEmailError('Turn on app access to send an invite.')
@@ -96,6 +129,32 @@ export function FamilyMembers() {
         setInviteEmailError('Enter a valid email address.')
         return
       }
+    }
+
+    if (apiOn) {
+      if (!householdId) {
+        setApiError('No household selected. Sign in or create a household first.')
+        return
+      }
+
+      setSaving(true)
+      try {
+        await createPersona(householdId, {
+          name: name.trim(),
+          relationship: relationship.trim() || 'Family',
+          avatar,
+          active: true,
+          is_default: false,
+        })
+
+        await refreshApiMembers()
+        closeModal()
+      } catch (err) {
+        setApiError(apiMessage(err, 'Could not add member.'))
+      } finally {
+        setSaving(false)
+      }
+      return
     }
 
     addFamilyMember({
@@ -115,8 +174,35 @@ export function FamilyMembers() {
     closeModal()
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editingId || !name.trim()) return
+    setApiError('')
+
+    if (apiOn) {
+      if (!householdId) {
+        setApiError('No household selected. Sign in or create a household first.')
+        return
+      }
+
+      setSaving(true)
+      try {
+        await updatePersona(householdId, editingId, {
+          name: name.trim(),
+          relationship: relationship.trim() || 'Family',
+          avatar,
+          active: editingMember?.active ?? true,
+          is_default: editingMember?.isDefault ?? false,
+        })
+        await refreshApiMembers()
+        closeModal()
+      } catch (err) {
+        setApiError(apiMessage(err, 'Could not update member.'))
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
     const patch: Partial<FamilyMember> = {
       name: name.trim(),
       relationship: relationship.trim() || 'Family',
@@ -131,9 +217,38 @@ export function FamilyMembers() {
     closeModal()
   }
 
+  async function removeMember(member: FamilyMember) {
+    setApiError('')
+    if (apiOn) {
+      if (!householdId) {
+        setApiError('No household selected. Sign in or create a household first.')
+        return
+      }
+
+      setSaving(true)
+      try {
+        await deletePersona(householdId, member.id)
+        await refreshApiMembers()
+      } catch (err) {
+        setApiError(apiMessage(err, 'Could not delete member.'))
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+
+    deleteFamilyMember(member.id)
+  }
+
   return (
     <AppShell topBar={<TopBar title="Family Members" showBack />}>
       <p className="mb-4 text-center text-[15px] text-muted">Assign expenses to each family member.</p>
+
+      {apiError && (
+        <p className="mb-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {apiError}
+        </p>
+      )}
 
       <ActionButton onClick={() => navigate('/family-invitation', withFrom('/family-members'))} className="mb-4">
         <LinkIcon size={18} /> Generate Invitation Link
@@ -174,8 +289,9 @@ export function FamilyMembers() {
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  deleteFamilyMember(m.id)
+                  void removeMember(m)
                 }}
+                disabled={saving}
                 className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red text-white"
               >
                 <Trash2 size={13} />
@@ -254,50 +370,22 @@ export function FamilyMembers() {
           setRelationship={setRelationship}
           avatar={avatar}
           setAvatar={setAvatar}
-          inviteEmail={inviteEmail}
-          setInviteEmail={setInviteEmail}
-          inviteEmailError={inviteEmailError}
-          onInviteEmailChange={() => {
-            if (inviteEmailError) setInviteEmailError('')
-          }}
+          inviteEmail={apiOn ? undefined : inviteEmail}
+          setInviteEmail={apiOn ? undefined : setInviteEmail}
+          inviteEmailError={apiOn ? undefined : inviteEmailError}
+          onInviteEmailChange={
+            apiOn
+              ? undefined
+              : () => {
+                  if (inviteEmailError) setInviteEmailError('')
+                }
+          }
         />
-        <div className="mt-4">
-          <ToggleRow
-            title="Can access the app"
-            description="Allow this member to sign in and use the household."
-            checked={hasAppAccess}
-            onChange={setHasAppAccess}
-          />
-        </div>
-        {hasAppAccess && (
-          <div className="mt-4">
-            <MemberAccessPicker
-              accessRole={accessRole}
-              editorLevel={editorLevel}
-              onAccessRoleChange={setAccessRole}
-              onEditorLevelChange={setEditorLevel}
-            />
-          </div>
-        )}
-        <ActionButton className="mt-5" onClick={saveAdd}>
-          {willSendInvite ? 'Add Member & Send Invite' : 'Add Member'}
-        </ActionButton>
-      </Modal>
-
-      <Modal open={modal === 'edit'} onClose={closeModal} title="Edit Member">
-        <MemberFormFields
-          name={name}
-          setName={setName}
-          relationship={relationship}
-          setRelationship={setRelationship}
-          avatar={avatar}
-          setAvatar={setAvatar}
-        />
-        {editingMember?.isAccountHolder ? (
-          <Card className="mt-4 bg-redSoft/40">
-            <p className="text-[13px] font-bold text-ink">Household admin</p>
+        {apiOn ? (
+          <Card className="mt-4 bg-primarySoft/50">
+            <p className="text-[13px] font-bold text-ink">Tag-only member</p>
             <p className="mt-1 text-[12px] leading-snug text-muted">
-              This is the account creator and always has full admin access.
+              This creates an expense tag in your household. Use Generate Invitation Link to grant app access.
             </p>
           </Card>
         ) : (
@@ -322,8 +410,58 @@ export function FamilyMembers() {
             )}
           </>
         )}
-        <ActionButton className="mt-5" onClick={saveEdit}>
-          Save Changes
+        <ActionButton className="mt-5" onClick={() => void saveAdd()} disabled={saving}>
+          {saving ? 'Saving…' : apiOn ? 'Add Tag Member' : willSendInvite ? 'Add Member & Send Invite' : 'Add Member'}
+        </ActionButton>
+      </Modal>
+
+      <Modal open={modal === 'edit'} onClose={closeModal} title="Edit Member">
+        <MemberFormFields
+          name={name}
+          setName={setName}
+          relationship={relationship}
+          setRelationship={setRelationship}
+          avatar={avatar}
+          setAvatar={setAvatar}
+        />
+        {editingMember?.isAccountHolder ? (
+          <Card className="mt-4 bg-redSoft/40">
+            <p className="text-[13px] font-bold text-ink">Household admin</p>
+            <p className="mt-1 text-[12px] leading-snug text-muted">
+              This is the account creator and always has full admin access.
+            </p>
+          </Card>
+        ) : apiOn ? (
+          <Card className="mt-4 bg-primarySoft/50">
+            <p className="text-[13px] font-bold text-ink">App access is invite-based</p>
+            <p className="mt-1 text-[12px] leading-snug text-muted">
+              Edit this member's tag details here. Use Generate Invitation Link to grant app access.
+            </p>
+          </Card>
+        ) : (
+          <>
+            <div className="mt-4">
+              <ToggleRow
+                title="Can access the app"
+                description="Allow this member to sign in and use the household."
+                checked={hasAppAccess}
+                onChange={setHasAppAccess}
+              />
+            </div>
+            {hasAppAccess && (
+              <div className="mt-4">
+                <MemberAccessPicker
+                  accessRole={accessRole}
+                  editorLevel={editorLevel}
+                  onAccessRoleChange={setAccessRole}
+                  onEditorLevelChange={setEditorLevel}
+                />
+              </div>
+            )}
+          </>
+        )}
+        <ActionButton className="mt-5" onClick={() => void saveEdit()} disabled={saving}>
+          {saving ? 'Saving…' : 'Save Changes'}
         </ActionButton>
       </Modal>
     </AppShell>

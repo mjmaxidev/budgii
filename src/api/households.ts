@@ -2,6 +2,7 @@ import { apiRequest } from '@/api/client'
 import type {
   HouseholdListResponse,
   HouseholdResponse,
+  InviteListResponse,
   InviteResponse,
 } from '@/api/types'
 import type { EditorLevel, MemberAccessRole } from '@/types'
@@ -38,5 +39,16 @@ export async function createInvite(
       access_role: accessRole,
       editor_level: editorLevel,
     },
+  })
+}
+
+export async function listInvites(householdId: string): Promise<InviteListResponse> {
+  const params = new URLSearchParams({ household_id: householdId })
+  return apiRequest<InviteListResponse>(`/households/invites?${params.toString()}`)
+}
+
+export async function revokeInvite(inviteId: string): Promise<void> {
+  await apiRequest<void>(`/households/invites/${inviteId}`, {
+    method: 'DELETE',
   })
 }

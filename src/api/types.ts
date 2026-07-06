@@ -27,11 +27,20 @@ export type HouseholdListResponse = {
 }
 
 export type InviteResponse = {
+  id: string | null
   code: string
   invite_url: string
   expires_at: string | null
   access_role: MemberAccessRole
   editor_level: EditorLevel | null
+  sent_to_contact: string | null
+  sent_at: string | null
+  used_at: string | null
+  used_by: string | null
+}
+
+export type InviteListResponse = {
+  invites: InviteResponse[]
 }
 
 export type PersonaResponse = {
