@@ -177,6 +177,10 @@ export async function createReceipt(householdId: string, input: ReceiptInput): P
   })
 }
 
+export async function getReceipt(householdId: string, receiptId: string): Promise<ReceiptResponse> {
+  return apiRequest<ReceiptResponse>(`/households/${householdId}/receipts/${receiptId}`)
+}
+
 export async function updateReceipt(
   householdId: string,
   receiptId: string,

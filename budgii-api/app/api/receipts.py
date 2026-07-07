@@ -200,6 +200,21 @@ async def list_receipts(
     )
 
 
+@household_router.get("/{household_id}/receipts/{receipt_id}", response_model=ReceiptResponse)
+async def get_receipt(
+    household_id: str,
+    receipt_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> ReceiptResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    receipt_uuid = parse_uuid(receipt_id, "receipt_id")
+    membership = await require_membership(session, user.id, household_uuid)
+    require_receipt_upload(membership)
+    receipt = await receipt_service.get_receipt(session, household_uuid, receipt_uuid)
+    return receipt_response(receipt)
+
+
 @household_router.post("/{household_id}/receipts", response_model=ReceiptResponse)
 async def create_receipt(
     household_id: str,

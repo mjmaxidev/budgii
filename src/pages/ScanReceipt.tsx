@@ -12,12 +12,20 @@ import {
   apiReceiptItemToReceiptItem,
   apiReceiptToReceipt,
   createReceipt,
+  getReceipt,
+  getReceiptStatus,
+  listReceiptItems,
   uploadReceipt,
 } from '@/api/receipts'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { withFrom } from '@/utils/navigation'
 import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
+import type { ReceiptItemResponse, ReceiptResponse } from '@/api/types'
+
+function isAnalysisComplete(status: string): boolean {
+  return status === 'needs_review' || status === 'processed' || status === 'failed'
+}
 
 export function ScanReceipt() {
   const navigate = useNavigate()
@@ -99,20 +107,52 @@ export function ScanReceipt() {
         defaultCategoryId: categories[0]?.id,
         defaultMemberId: defaultMember,
       })
-      const receipt = apiReceiptToReceipt(analysis.receipt)
-      const savedItems = analysis.items.map(apiReceiptItemToReceiptItem)
-      useStore.setState((state) => ({
-        receipts: state.receipts.map((r) =>
-          r.id === receiptId ? { ...receipt, itemIds: savedItems.map((item) => item.id) } : r,
-        ),
-        receiptItems: [...savedItems, ...state.receiptItems.filter((item) => item.receiptId !== receiptId)],
-      }))
+      if (isAnalysisComplete(analysis.receipt.status)) {
+        hydrateApiAnalysis(receiptId, analysis.receipt, analysis.items)
+      } else {
+        await waitForApiAnalysis(receiptId)
+      }
       setAnalyzing(false)
       navigate(`/receipt-results/${receiptId}`, withFrom('/scan-receipt'))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not analyze receipt')
       setAnalyzing(false)
     }
+  }
+
+  function hydrateApiAnalysis(
+    receiptId: string,
+    receiptResponse: ReceiptResponse,
+    itemResponses: ReceiptItemResponse[],
+  ) {
+    const receipt = apiReceiptToReceipt(receiptResponse)
+    const savedItems = itemResponses.map(apiReceiptItemToReceiptItem)
+    useStore.setState((state) => ({
+      receipts: state.receipts.map((r) =>
+        r.id === receiptId ? { ...receipt, itemIds: savedItems.map((item) => item.id) } : r,
+      ),
+      receiptItems: [...savedItems, ...state.receiptItems.filter((item) => item.receiptId !== receiptId)],
+    }))
+  }
+
+  async function waitForApiAnalysis(receiptId: string) {
+    if (!householdId) return
+
+    const maxAttempts = 18
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 700))
+      const status = await getReceiptStatus(householdId, receiptId)
+      if (isAnalysisComplete(status.status)) {
+        const [receipt, items] = await Promise.all([
+          getReceipt(householdId, receiptId),
+          listReceiptItems(householdId, receiptId),
+        ])
+        hydrateApiAnalysis(receiptId, receipt, items.items)
+        return
+      }
+    }
+
+    throw new Error('Receipt analysis is taking longer than expected')
   }
 
   return (
