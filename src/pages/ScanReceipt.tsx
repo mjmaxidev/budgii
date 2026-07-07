@@ -54,7 +54,7 @@ export function ScanReceipt() {
     } catch (err) {
       const message = err instanceof Error ? err.message.toLowerCase() : ''
       if (message.includes('cancel')) return
-      cameraRef.current?.click()
+      setError('Camera is not available here. Use Upload Photo, or test camera capture on a physical iPhone.')
     }
   }
 
