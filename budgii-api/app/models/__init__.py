@@ -61,6 +61,7 @@ class Household(Base):
     personas: Mapped[list["HouseholdPersona"]] = relationship(back_populates="household")
     invites: Mapped[list["HouseholdInvite"]] = relationship(back_populates="household")
     expenses: Mapped[list["Expense"]] = relationship(back_populates="household")
+    receipts: Mapped[list["Receipt"]] = relationship(back_populates="household")
     sync_meta: Mapped["HouseholdSyncMeta | None"] = relationship(back_populates="household", uselist=False)
     sync_chunks: Mapped[list["HouseholdSyncChunk"]] = relationship(back_populates="household")
 
@@ -85,6 +86,7 @@ class HouseholdPersona(Base):
     household: Mapped[Household] = relationship(back_populates="personas")
     membership: Mapped["HouseholdMembership | None"] = relationship(back_populates="persona", uselist=False)
     expenses: Mapped[list["Expense"]] = relationship(back_populates="persona")
+    receipt_items: Mapped[list["ReceiptItem"]] = relationship(back_populates="persona")
 
 
 class HouseholdMembership(Base):
@@ -195,3 +197,54 @@ class ReceiptUpload(Base):
     storage_path: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(32), default="uploaded")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    receipt: Mapped["Receipt | None"] = relationship(back_populates="upload", uselist=False)
+
+
+class Receipt(Base):
+    __tablename__ = "receipts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    household_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"))
+    upload_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipt_uploads.id", ondelete="SET NULL"), nullable=True
+    )
+    merchant: Mapped[str] = mapped_column(String(160), default="")
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    total: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ocr_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="uploaded")
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    household: Mapped[Household] = relationship(back_populates="receipts")
+    upload: Mapped[ReceiptUpload | None] = relationship(back_populates="receipt")
+    items: Mapped[list["ReceiptItem"]] = relationship(back_populates="receipt", cascade="all, delete-orphan")
+
+
+class ReceiptItem(Base):
+    __tablename__ = "receipt_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    receipt_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("receipts.id", ondelete="CASCADE"))
+    household_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"))
+    persona_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("household_personas.id", ondelete="SET NULL"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(160))
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    category_id: Mapped[str] = mapped_column(String(80))
+    tag_ids: Mapped[Any] = mapped_column(JSONB, default=list)
+    ai_confidence: Mapped[float] = mapped_column(Numeric(5, 4), default=0)
+    manually_edited: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    receipt: Mapped[Receipt] = relationship(back_populates="items")
+    persona: Mapped[HouseholdPersona | None] = relationship(back_populates="receipt_items")
