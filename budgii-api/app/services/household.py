@@ -109,7 +109,7 @@ async def create_invite(
         created_by=user.id,
         access_role=access_role,
         editor_level=normalized_level,
-        sent_to_contact=contact.strip(),
+        sent_to_contact=str(contact).strip().lower(),
         sent_at=datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(days=7),
     )

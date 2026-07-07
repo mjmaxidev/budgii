@@ -1,6 +1,6 @@
 import { apiRequest } from '@/api/client'
 import { clearStoredAuthTokens, loadStoredAuthTokens, saveStoredAuthTokens } from '@/api/authStorage'
-import type { TokenResponse, UserResponse } from '@/api/types'
+import type { TokenResponse, UpdateUserInput, UserResponse } from '@/api/types'
 import { useAuthStore } from '@/store/authStore'
 
 export async function register(email: string, password: string, name: string): Promise<TokenResponse> {
@@ -43,6 +43,25 @@ export async function refreshTokens(): Promise<TokenResponse> {
 
 export async function getMe(): Promise<UserResponse> {
   return apiRequest<UserResponse>('/users/me')
+}
+
+export async function updateMe(input: UpdateUserInput): Promise<UserResponse> {
+  const user = await apiRequest<UserResponse>('/users/me', {
+    method: 'PATCH',
+    body: input,
+  })
+  useAuthStore.getState().setUser(user)
+  return user
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiRequest<void>('/users/me/password', {
+    method: 'POST',
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword,
+    },
+  })
 }
 
 export async function restoreAuthTokens(): Promise<boolean> {

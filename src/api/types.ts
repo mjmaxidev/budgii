@@ -14,6 +14,12 @@ export type UserResponse = {
   auth_provider: string
 }
 
+export type UpdateUserInput = {
+  email?: string
+  name?: string
+  avatar?: string | null
+}
+
 export type HouseholdResponse = {
   id: string
   name: string

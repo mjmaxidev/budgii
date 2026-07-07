@@ -32,3 +32,14 @@ class UserResponse(BaseModel):
     name: str
     avatar: str | None = None
     auth_provider: str
+
+
+class UpdateUserRequest(BaseModel):
+    email: EmailStr | None = None
+    name: str | None = Field(default=None, max_length=120)
+    avatar: str | None = Field(default=None, max_length=512)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=8)

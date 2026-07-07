@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from app.schemas.access import AccessRole, EditorLevel
 from app.schemas.persona import PersonaResponse
@@ -22,7 +22,7 @@ class JoinHouseholdRequest(BaseModel):
 
 
 class SendInviteRequest(BaseModel):
-    contact: str = Field(min_length=3, max_length=120)
+    contact: EmailStr
     household_id: str | None = None
     access_role: AccessRole = "editor"
     editor_level: EditorLevel | None = "standard"

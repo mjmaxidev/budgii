@@ -25,6 +25,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://budgii:budgii@db:5432/budgii
       JWT_SECRET: ${JWT_SECRET:-dev-docker-secret-change-me}
       INVITE_LINK_BASE: https://budgii.app/join
+      INVITE_EMAIL_PROVIDER: ${INVITE_EMAIL_PROVIDER:-log}
+      INVITE_EMAIL_FROM: ${INVITE_EMAIL_FROM:-}
+      INVITE_EMAIL_API_KEY: ${INVITE_EMAIL_API_KEY:-}
       RECEIPT_STORAGE_PATH: /app/uploads
       RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-deterministic}
       RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}

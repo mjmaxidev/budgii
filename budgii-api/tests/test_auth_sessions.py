@@ -70,6 +70,61 @@ def test_refresh_token_rotates_and_old_token_cannot_be_reused(client: TestClient
     assert me_response.json()["email"] == tokens["email"]
 
 
+def test_update_profile_and_email(client: TestClient) -> None:
+    tokens = register_user(client, "profile")
+    new_email = unique_email("profile-new")
+
+    response = client.patch(
+        "/v1/users/me",
+        json={"name": "Updated User", "email": new_email, "avatar": "🧑"},
+        headers=auth_headers(tokens),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["name"] == "Updated User"
+    assert body["email"] == new_email
+    assert body["avatar"] == "🧑"
+
+    login_response = login_email(client, new_email)
+    assert login_response.status_code == 200, login_response.text
+
+
+def test_update_profile_rejects_duplicate_email(client: TestClient) -> None:
+    first = register_user(client, "duplicate-first")
+    second = register_user(client, "duplicate-second")
+
+    response = client.patch(
+        "/v1/users/me",
+        json={"email": second["email"]},
+        headers=auth_headers(first),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Email already registered"
+
+
+def test_change_password(client: TestClient) -> None:
+    tokens = register_user(client, "password")
+
+    wrong_response = client.post(
+        "/v1/users/me/password",
+        json={"current_password": "wrongpass", "new_password": "newpassword123"},
+        headers=auth_headers(tokens),
+    )
+    assert wrong_response.status_code == 401
+
+    response = client.post(
+        "/v1/users/me/password",
+        json={"current_password": PASSWORD, "new_password": "newpassword123"},
+        headers=auth_headers(tokens),
+    )
+
+    assert response.status_code == 204
+    assert login_email(client, tokens["email"], PASSWORD).status_code == 401
+    assert login_email(client, tokens["email"], "newpassword123").status_code == 200
+
+
 def test_delete_account_invalidates_user_and_refresh_tokens(client: TestClient) -> None:
     tokens = register_user(client, "delete")
     create_household(client, tokens, "Delete Account")

@@ -7,7 +7,10 @@ import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { PinSetupModal } from '@/components/security/PinSetupModal'
-import { logout } from '@/api/auth'
+import { ApiError } from '@/api/client'
+import { changePassword, logout, updateMe } from '@/api/auth'
+import { isApiEnabled } from '@/api/config'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 
 const EMOJI_AVATARS = ['👤', '👨', '👩', '🧑', '😊', '😎', '🧔', '👵', '🧓', '👶', '💼', '🎨']
@@ -20,10 +23,13 @@ export function AccountSettings() {
   const userProfile = useStore((s) => s.userProfile)
   const setUserProfile = useStore((s) => s.setUserProfile)
   const hasPin = useStore((s) => !!s.appLock.pinHash)
+  const apiUser = useAuthStore((s) => s.user)
+  const apiOn = isApiEnabled()
 
-  const [name, setName] = useState(userProfile.name || 'Alex Johnson')
-  const [email, setEmail] = useState(userProfile.email || 'dev@mjproductions.app')
-  const [avatar, setAvatar] = useState(userProfile.avatar || '🧑')
+  const [name, setName] = useState(apiUser?.name || userProfile.name || 'Alex Johnson')
+  const [email, setEmail] = useState(apiUser?.email || userProfile.email || 'dev@mjproductions.app')
+  const [avatar, setAvatar] = useState(apiUser?.avatar || userProfile.avatar || '🧑')
+  const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
 
@@ -31,6 +37,7 @@ export function AccountSettings() {
   const [pinModal, setPinModal] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -41,17 +48,55 @@ export function AccountSettings() {
     reader.readAsDataURL(file)
   }
 
-  function handleSave() {
+  async function handleSave() {
+    if (saving) return
     if ((newPw || confirmPw) && newPw !== confirmPw) {
       setError('Passwords do not match')
       return
     }
+    if (apiOn && newPw && !currentPw) {
+      setError('Enter your current password to change it.')
+      return
+    }
+    if (apiOn && isImage(avatar) && avatar.startsWith('data:')) {
+      setError('Photo upload is not synced yet. Choose an emoji avatar for now.')
+      return
+    }
+
     setError('')
-    setUserProfile({ name, email, avatar })
-    setNewPw('')
-    setConfirmPw('')
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setSaving(true)
+
+    try {
+      if (apiOn) {
+        const user = await updateMe({
+          name,
+          email,
+          avatar,
+        })
+
+        if (newPw) {
+          await changePassword(currentPw, newPw)
+        }
+
+        setUserProfile({
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar ?? undefined,
+        })
+      } else {
+        setUserProfile({ name, email, avatar })
+      }
+
+      setCurrentPw('')
+      setNewPw('')
+      setConfirmPw('')
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save account changes.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleLogout() {
@@ -161,6 +206,16 @@ export function AccountSettings() {
       <div className="mt-5">
         <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Email &amp; Password</h2>
         <Card className="space-y-3">
+          {apiOn && (
+            <FormField
+              label="Current Password"
+              type="password"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              placeholder="Required to change password"
+              leftIcon={<Lock size={18} />}
+            />
+          )}
           <FormField
             label="New Password"
             type="password"
@@ -183,8 +238,8 @@ export function AccountSettings() {
 
       {/* Save */}
       <div className="mt-6">
-        <ActionButton variant="primary" onClick={handleSave} className={saved ? 'bg-green' : ''}>
-          {saved ? '✓ Saved' : 'Save Changes'}
+        <ActionButton variant="primary" onClick={handleSave} disabled={saving} className={saved ? 'bg-green' : ''}>
+          {saving ? 'Saving...' : saved ? 'Saved' : 'Save Changes'}
         </ActionButton>
       </div>
 

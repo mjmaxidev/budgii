@@ -31,3 +31,31 @@ def test_cors_origins_are_trimmed() -> None:
     settings = Settings(cors_origins=" https://budgii.app, capacitor://localhost ,,")
 
     assert settings.cors_origin_list == ["https://budgii.app", "capacitor://localhost"]
+
+
+def test_production_requires_email_key_when_provider_enabled() -> None:
+    settings = Settings(
+        app_env="production",
+        app_debug=False,
+        cors_origins="https://budgii.app",
+        jwt_secret="a" * 32,
+        invite_email_provider="resend",
+        invite_email_from="Budgii <invites@budgii.app>",
+        invite_email_api_key="",
+    )
+
+    with pytest.raises(RuntimeError, match="INVITE_EMAIL_API_KEY"):
+        settings.validate_runtime()
+
+
+def test_production_rejects_unknown_email_provider() -> None:
+    settings = Settings(
+        app_env="production",
+        app_debug=False,
+        cors_origins="https://budgii.app",
+        jwt_secret="a" * 32,
+        invite_email_provider="smtp",
+    )
+
+    with pytest.raises(RuntimeError, match="INVITE_EMAIL_PROVIDER"):
+        settings.validate_runtime()

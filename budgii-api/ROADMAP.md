@@ -61,8 +61,9 @@ receipt_items
 | No frontend API client | **Done** — API client, auth gate, bootstrap, sync, personas, invites, normalized finance |
 | No invite list/revoke | **Done** — API-backed pending invite list and revoke UI |
 | No membership admin APIs | **Done** — role update and removal endpoints plus Family Members UI |
-| No email delivery | `sent_to_contact` stored; nothing sent |
+| No email delivery | **Done** — dev logs invite links; production supports Resend/SendGrid via env |
 | No real OCR provider | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; receipt failure logging/status visibility is in place; real-receipt QA remains Phase 2 |
+| Account settings local-only | **Done** — `PATCH /users/me` updates profile/email and `POST /users/me/password` changes email-account passwords |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
 | OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
 
@@ -262,7 +263,7 @@ GET  /receipts/{id}/file                                        ✅
 | API hosting | Fly.io / Railway / ECS (Dockerfile ready) |
 | Database | Managed Postgres |
 | Receipt storage | **Keep local volume** on single-host deploy; mount persistent disk on the API container. Move to MinIO or S3/R2 only if you need multi-replica APIs, CDN delivery, or presigned direct uploads |
-| Email invites | Resend / SendGrid (`INVITE_EMAIL_FROM`) |
+| Email invites | ✅ Resend / SendGrid-ready provider (`INVITE_EMAIL_PROVIDER`, `INVITE_EMAIL_FROM`, `INVITE_EMAIL_API_KEY`) |
 | OCR | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split) |
 | Monitoring | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy |
 | Mobile | Capacitor → `https://api.budgii.app/v1` |

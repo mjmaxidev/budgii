@@ -23,6 +23,7 @@ from app.schemas.persona import PersonaResponse
 from app.services import household as household_service
 from app.services import persona as persona_service
 from app.services import sync as sync_service
+from app.services.email import EmailDeliveryError, InviteEmail, send_invite_email
 from app.services.permissions import normalize_editor_level, require_can_pull
 
 router = APIRouter()
@@ -128,6 +129,24 @@ async def create_invite(
         access_role=body.access_role,
         editor_level=editor_level,
     )
+    household = await session.get(Household, invite.household_id)
+    if not household:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Household not found")
+
+    try:
+        await send_invite_email(
+            settings,
+            InviteEmail(
+                to_email=invite.sent_to_contact or str(body.contact),
+                household_name=household.name,
+                inviter_name=user.name or user.email,
+                invite_url=household_service.invite_url(settings, invite.code),
+                access_label=household_service.membership_label(invite),
+            ),
+        )
+    except EmailDeliveryError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
     return InviteResponse(**household_service.invite_response(invite, settings))
 
 

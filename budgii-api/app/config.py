@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
 
     invite_link_base: str = "https://budgii.app/join"
+    invite_email_provider: str = "log"
+    invite_email_from: str = ""
+    invite_email_api_key: str = ""
     receipt_storage_path: str = "/app/uploads"
     receipt_ocr_provider: str = "deterministic"
     receipt_openai_model: str = "gpt-5.5"
@@ -48,6 +51,14 @@ class Settings(BaseSettings):
             raise RuntimeError("JWT_SECRET must be at least 32 characters in production")
         if not self.cors_origin_list:
             raise RuntimeError("CORS_ORIGINS must include the production frontend origin")
+        invite_provider = self.invite_email_provider.strip().lower()
+        if invite_provider not in {"log", "none", "resend", "sendgrid"}:
+            raise RuntimeError("INVITE_EMAIL_PROVIDER must be log, none, resend, or sendgrid")
+        if invite_provider not in {"log", "none"}:
+            if not self.invite_email_from:
+                raise RuntimeError("INVITE_EMAIL_FROM is required when invite email delivery is enabled")
+            if not self.invite_email_api_key:
+                raise RuntimeError("INVITE_EMAIL_API_KEY is required when invite email delivery is enabled")
 
 
 @lru_cache
