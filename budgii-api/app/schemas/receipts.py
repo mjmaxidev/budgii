@@ -49,6 +49,26 @@ class ReceiptItemListResponse(BaseModel):
     items: list[ReceiptItemResponse]
 
 
+class ReceiptAnalyzeRequest(BaseModel):
+    household_id: str
+    category_ids: dict[str, str] = Field(default_factory=dict)
+    default_category_id: str | None = None
+    default_persona_id: str | None = None
+    default_tag_ids: list[str] = Field(default_factory=list)
+
+
+class ReceiptAnalyzeResponse(BaseModel):
+    receipt: ReceiptResponse
+    items: list[ReceiptItemResponse]
+
+
+class ReceiptStatusResponse(BaseModel):
+    id: str
+    status: str
+    item_count: int
+    updated_at: datetime
+
+
 class CreateReceiptRequest(BaseModel):
     id: str | None = None
     upload_id: str | None = None

@@ -8,28 +8,22 @@ import { Modal } from '@/components/ui/Modal'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
 import {
+  analyzeReceipt as apiAnalyzeReceipt,
   apiReceiptItemToReceiptItem,
   apiReceiptToReceipt,
   createReceipt,
-  createReceiptItem,
-  updateReceipt as apiUpdateReceipt,
   uploadReceipt,
 } from '@/api/receipts'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { withFrom } from '@/utils/navigation'
-import {
-  mockExtractReceiptItems,
-  MOCK_RECEIPT_MERCHANT,
-  MOCK_RECEIPT_OCR,
-  MOCK_RECEIPT_TOTAL,
-} from '@/utils/mockAi'
+import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
 
 export function ScanReceipt() {
   const navigate = useNavigate()
   const addReceipt = useStore((s) => s.addReceipt)
   const updateReceipt = useStore((s) => s.updateReceipt)
-  const analyzeReceipt = useStore((s) => s.analyzeReceipt)
+  const analyzeLocalReceipt = useStore((s) => s.analyzeReceipt)
   const householdId = useAuthStore((s) => s.householdId)
   const categories = useStore((s) => s.categories)
   const familyMembers = useStore((s) => s.familyMembers)
@@ -70,14 +64,13 @@ export function ScanReceipt() {
             date: today,
             total: MOCK_RECEIPT_TOTAL,
             imageUrl,
-            ocrText: MOCK_RECEIPT_OCR,
-            status: 'analyzing',
+            status: 'uploaded',
           }),
         )
         useStore.setState((state) => ({ receipts: [created, ...state.receipts] }))
 
         window.setTimeout(() => {
-          void finishApiAnalysis(created.id, imageUrl)
+          void finishApiAnalysis(created.id)
         }, 1200)
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Could not save receipt')
@@ -90,45 +83,25 @@ export function ScanReceipt() {
 
     window.setTimeout(() => {
       if (imageUrl) updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
-      analyzeReceipt(id)
+      analyzeLocalReceipt(id)
       setAnalyzing(false)
       navigate(`/receipt-results/${id}`, withFrom('/scan-receipt'))
     }, 1200)
   }
 
-  async function finishApiAnalysis(receiptId: string, imageUrl: string) {
+  async function finishApiAnalysis(receiptId: string) {
     if (!householdId) return
 
     try {
-      const receipt = apiReceiptToReceipt(
-        await apiUpdateReceipt(householdId, receiptId, {
-          merchant: MOCK_RECEIPT_MERCHANT,
-          total: MOCK_RECEIPT_TOTAL,
-          imageUrl,
-          ocrText: MOCK_RECEIPT_OCR,
-          status: 'needs_review',
-        }),
-      )
-      const resolveCategoryId = (name: string) => {
-        const match = categories.find((c) => c.name.toLowerCase() === name.toLowerCase())
-        return match?.id ?? categories[0]?.id ?? ''
-      }
+      const categoryIds = Object.fromEntries(categories.map((category) => [category.name, category.id]))
       const defaultMember = familyMembers.find((m) => m.isDefault)?.id
-      const mockItems = mockExtractReceiptItems({ receiptId, resolveCategoryId, defaultMemberId: defaultMember })
-      const items = await Promise.all(
-        mockItems.map((item) =>
-          createReceiptItem(householdId, receiptId, {
-            name: item.name,
-            amount: item.amount,
-            categoryId: item.categoryId,
-            tagIds: item.tagIds,
-            memberId: item.memberId,
-            aiConfidence: item.aiConfidence,
-            manuallyEdited: item.manuallyEdited,
-          }),
-        ),
-      )
-      const savedItems = items.map(apiReceiptItemToReceiptItem)
+      const analysis = await apiAnalyzeReceipt(householdId, receiptId, {
+        categoryIds,
+        defaultCategoryId: categories[0]?.id,
+        defaultMemberId: defaultMember,
+      })
+      const receipt = apiReceiptToReceipt(analysis.receipt)
+      const savedItems = analysis.items.map(apiReceiptItemToReceiptItem)
       useStore.setState((state) => ({
         receipts: state.receipts.map((r) =>
           r.id === receiptId ? { ...receipt, itemIds: savedItems.map((item) => item.id) } : r,

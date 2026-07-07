@@ -12,10 +12,13 @@ from app.models import Receipt, ReceiptItem, ReceiptUpload, User
 from app.schemas.receipts import (
     CreateReceiptItemRequest,
     CreateReceiptRequest,
+    ReceiptAnalyzeRequest,
+    ReceiptAnalyzeResponse,
     ReceiptItemListResponse,
     ReceiptItemResponse,
     ReceiptListResponse,
     ReceiptResponse,
+    ReceiptStatusResponse,
     ReceiptUploadResponse,
     UpdateReceiptItemRequest,
     UpdateReceiptRequest,
@@ -103,6 +106,51 @@ async def upload_receipt(
     await session.flush()
 
     return ReceiptUploadResponse(id=str(record.id), status=record.status, filename=record.filename)
+
+
+@router.post("/{receipt_id}/analyze", response_model=ReceiptAnalyzeResponse)
+async def analyze_receipt(
+    receipt_id: str,
+    body: ReceiptAnalyzeRequest,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> ReceiptAnalyzeResponse:
+    household_uuid = parse_uuid(body.household_id, "household_id")
+    receipt_uuid = parse_uuid(receipt_id, "receipt_id")
+    membership = await require_membership(session, user.id, household_uuid)
+    receipt, items = await receipt_service.analyze_receipt(
+        session,
+        membership,
+        receipt_uuid,
+        category_ids=body.category_ids,
+        default_category_id=body.default_category_id,
+        default_persona_id=parse_optional_uuid(body.default_persona_id, "default_persona_id"),
+        default_tag_ids=body.default_tag_ids,
+    )
+    return ReceiptAnalyzeResponse(
+        receipt=receipt_response(receipt),
+        items=[receipt_item_response(item) for item in items],
+    )
+
+
+@router.get("/{receipt_id}/status", response_model=ReceiptStatusResponse)
+async def get_receipt_status(
+    receipt_id: str,
+    household_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> ReceiptStatusResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    receipt_uuid = parse_uuid(receipt_id, "receipt_id")
+    membership = await require_membership(session, user.id, household_uuid)
+    require_receipt_upload(membership)
+    receipt = await receipt_service.get_receipt(session, household_uuid, receipt_uuid)
+    return ReceiptStatusResponse(
+        id=str(receipt.id),
+        status=receipt.status,
+        item_count=len(receipt.items),
+        updated_at=receipt.updated_at,
+    )
 
 
 @household_router.get("/{household_id}/receipts", response_model=ReceiptListResponse)

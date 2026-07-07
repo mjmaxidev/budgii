@@ -1,9 +1,11 @@
 import { apiRequest, apiUpload } from '@/api/client'
 import type {
+  ReceiptAnalyzeResponse,
   ReceiptItemListResponse,
   ReceiptItemResponse,
   ReceiptListResponse,
   ReceiptResponse,
+  ReceiptStatusResponse,
   ReceiptUploadResponse,
 } from '@/api/types'
 import type { Receipt, ReceiptItem } from '@/types'
@@ -33,6 +35,13 @@ type ReceiptItemInput = {
 }
 
 type ReceiptItemPatch = Partial<ReceiptItemInput>
+
+type AnalyzeReceiptInput = {
+  categoryIds: Record<string, string>
+  defaultCategoryId?: string
+  defaultMemberId?: string
+  defaultTagIds?: string[]
+}
 
 function receiptBody(input: ReceiptInput | ReceiptPatch): Record<string, unknown> {
   const body: Record<string, unknown> = {}
@@ -104,6 +113,29 @@ export async function uploadReceipt(householdId: string, file: File): Promise<Re
   form.set('household_id', householdId)
   form.set('file', file)
   return apiUpload<ReceiptUploadResponse>('/receipts/upload', form)
+}
+
+export async function analyzeReceipt(
+  householdId: string,
+  receiptId: string,
+  input: AnalyzeReceiptInput,
+): Promise<ReceiptAnalyzeResponse> {
+  return apiRequest<ReceiptAnalyzeResponse>(`/receipts/${receiptId}/analyze`, {
+    method: 'POST',
+    body: {
+      household_id: householdId,
+      category_ids: input.categoryIds,
+      default_category_id: input.defaultCategoryId ?? null,
+      default_persona_id: input.defaultMemberId ?? null,
+      default_tag_ids: input.defaultTagIds ?? [],
+    },
+  })
+}
+
+export async function getReceiptStatus(householdId: string, receiptId: string): Promise<ReceiptStatusResponse> {
+  return apiRequest<ReceiptStatusResponse>(
+    `/receipts/${receiptId}/status?household_id=${encodeURIComponent(householdId)}`,
+  )
 }
 
 export async function listReceipts(

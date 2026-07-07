@@ -10,6 +10,41 @@ from app.models import HouseholdMembership, HouseholdPersona, Receipt, ReceiptIt
 from app.services.permissions import require_receipt_upload
 
 
+MOCK_RECEIPT_MERCHANT = "Whole Foods Market"
+MOCK_RECEIPT_TOTAL = 39.54
+MOCK_RECEIPT_OCR = """WHOLE FOODS MARKET
+365 5th Ave, New York, NY 10016
+(212) 555-0195
+--------------------------------
+Milk 1%               $3.49
+Organic Bananas       $2.38
+Greek Yogurt          $1.99
+Whole Grain Bread     $3.79
+Coffee Beans          $8.99
+Uber Trip            $18.90
+--------------------------------
+Total                $39.54
+Thank you for shopping!"""
+
+MOCK_RECEIPT_LINES = [
+    ("Milk 1%", 3.49),
+    ("Organic Bananas", 2.38),
+    ("Greek Yogurt", 1.99),
+    ("Whole Grain Bread", 3.79),
+    ("Coffee Beans", 8.99),
+    ("Uber Trip", 18.90),
+]
+
+
+def category_name_for_item(name: str) -> tuple[str, float]:
+    normalized = name.lower()
+    if any(term in normalized for term in ("uber", "trip", "taxi", "lyft", "fuel", "gas")):
+        return "Transport", 0.99
+    if any(term in normalized for term in ("coffee", "latte", "espresso", "beans", "dining", "restaurant")):
+        return "Dining", 0.90
+    return "Groceries", min(0.99, 0.90 + min(0.09, len(normalized) / 200))
+
+
 async def list_receipts(
     session: AsyncSession,
     household_id: uuid.UUID,
@@ -229,6 +264,68 @@ async def create_receipt_item(
     await session.flush()
     await session.refresh(item)
     return item
+
+
+async def analyze_receipt(
+    session: AsyncSession,
+    membership: HouseholdMembership,
+    receipt_id: uuid.UUID,
+    *,
+    category_ids: dict[str, str],
+    default_category_id: str | None,
+    default_persona_id: uuid.UUID | None,
+    default_tag_ids: list[str],
+) -> tuple[Receipt, list[ReceiptItem]]:
+    require_receipt_upload(membership)
+    await ensure_persona(session, membership.household_id, default_persona_id)
+    receipt = await get_receipt(session, membership.household_id, receipt_id)
+    receipt.status = "analyzing"
+    await session.flush()
+
+    existing_items = await session.scalars(
+        select(ReceiptItem).where(
+            ReceiptItem.household_id == membership.household_id,
+            ReceiptItem.receipt_id == receipt_id,
+        )
+    )
+    for item in existing_items.all():
+        await session.delete(item)
+    await session.flush()
+
+    saved_items: list[ReceiptItem] = []
+    for name, amount in MOCK_RECEIPT_LINES:
+        category_name, confidence = category_name_for_item(name)
+        category_id = category_ids.get(category_name) or default_category_id
+        if not category_id:
+            receipt.status = "failed"
+            await session.flush()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A default category is required")
+
+        item = ReceiptItem(
+            id=uuid.uuid4(),
+            receipt_id=receipt_id,
+            household_id=membership.household_id,
+            persona_id=default_persona_id,
+            name=name,
+            amount=amount,
+            category_id=category_id,
+            tag_ids=default_tag_ids,
+            ai_confidence=round(confidence, 2),
+            manually_edited=False,
+        )
+        session.add(item)
+        saved_items.append(item)
+
+    receipt.merchant = MOCK_RECEIPT_MERCHANT
+    receipt.total = MOCK_RECEIPT_TOTAL
+    receipt.ocr_text = MOCK_RECEIPT_OCR
+    receipt.status = "needs_review"
+    await session.flush()
+    await session.refresh(receipt)
+    for item in saved_items:
+        await session.refresh(item)
+
+    return await get_receipt(session, membership.household_id, receipt_id), saved_items
 
 
 async def update_receipt_item(

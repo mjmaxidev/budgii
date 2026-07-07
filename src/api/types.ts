@@ -129,6 +129,18 @@ export type ReceiptItemListResponse = {
   items: ReceiptItemResponse[]
 }
 
+export type ReceiptAnalyzeResponse = {
+  receipt: ReceiptResponse
+  items: ReceiptItemResponse[]
+}
+
+export type ReceiptStatusResponse = {
+  id: string
+  status: 'uploaded' | 'analyzing' | 'needs_review' | 'processed' | 'failed' | string
+  item_count: number
+  updated_at: string
+}
+
 export type SyncPullResponse = {
   household_id: string
   server_time: string
