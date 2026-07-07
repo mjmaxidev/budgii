@@ -43,6 +43,7 @@ export function ScanReceipt() {
   const cameraRef = useRef<HTMLInputElement>(null)
 
   async function handleCameraCapture() {
+    setError('')
     if (!canUseNativeCamera()) {
       cameraRef.current?.click()
       return
