@@ -264,6 +264,102 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
     assert viewer_apply_response.status_code == 403
 
 
+def test_evaluate_spending_alerts_from_normalized_expenses(client: TestClient) -> None:
+    admin = register_user(client, "alerts-admin")
+    household = create_household(client, admin, "Alert Evaluate")
+    bootstrap_response = bootstrap(client, admin, household["id"])
+    assert bootstrap_response.status_code == 200
+    revision = bootstrap_response.json()["revision"]
+
+    push_response = client.post(
+        "/v1/sync",
+        json={
+            "household_id": household["id"],
+            "client_time": "2026-07-07T00:00:00Z",
+            "base_revision": revision,
+            "changes": {
+                "spendingAlerts": [
+                    {
+                        "id": "sa-amount",
+                        "categoryId": "cat-groceries",
+                        "threshold": 50,
+                        "alertType": "amount",
+                    },
+                    {
+                        "id": "sa-percent",
+                        "categoryId": "cat-dining",
+                        "threshold": 50,
+                        "alertType": "percentage",
+                    },
+                    {
+                        "id": "sa-inactive",
+                        "categoryId": "cat-bills",
+                        "threshold": 90,
+                        "alertType": "percentage",
+                    },
+                ],
+            },
+        },
+        headers=auth_headers(admin),
+    )
+    assert push_response.status_code == 200, push_response.text
+    assert push_response.json()["accepted"] is True
+
+    create_expense(
+        client,
+        admin,
+        household["id"],
+        amount=55,
+        merchant="Groceries",
+        category_id="cat-groceries",
+        date="2026-07-07T00:00:00Z",
+    )
+    create_expense(
+        client,
+        admin,
+        household["id"],
+        amount=80,
+        merchant="Dining",
+        category_id="cat-dining",
+        date="2026-07-07T00:00:00Z",
+    )
+    create_expense(
+        client,
+        admin,
+        household["id"],
+        amount=500,
+        merchant="Old Groceries",
+        category_id="cat-groceries",
+        date="2026-06-07T00:00:00Z",
+    )
+
+    evaluate_response = client.post(
+        f"/v1/households/{household['id']}/spending-alerts/evaluate",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(admin),
+    )
+    assert evaluate_response.status_code == 200, evaluate_response.text
+    result = evaluate_response.json()
+    assert result["active_count"] == 2
+    alerts = {alert["id"]: alert for alert in result["alerts"]}
+    assert alerts["sa-amount"]["active"] is True
+    assert alerts["sa-amount"]["spent"] == 55
+    assert alerts["sa-percent"]["active"] is True
+    assert alerts["sa-percent"]["limit"] == 150
+    assert alerts["sa-inactive"]["active"] is False
+
+    viewer_invite = create_invite(client, admin, household["id"], "viewer")
+    viewer = register_user(client, "alerts-viewer")
+    join_household(client, viewer, viewer_invite["code"])
+    viewer_response = client.post(
+        f"/v1/households/{household['id']}/spending-alerts/evaluate",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(viewer),
+    )
+    assert viewer_response.status_code == 200
+    assert viewer_response.json()["active_count"] == 2
+
+
 def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) -> None:
     admin = register_user(client, "admin")
     household = create_household(client, admin, "Receipt Lifecycle")

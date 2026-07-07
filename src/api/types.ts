@@ -99,6 +99,24 @@ export type ExpenseListResponse = {
   total: number
 }
 
+export type SpendingAlertEvaluation = {
+  id: string
+  category_id: string
+  alert_type: 'amount' | 'percentage' | string
+  threshold: number
+  spent: number
+  limit: number | null
+  progress: number
+  active: boolean
+}
+
+export type SpendingAlertEvaluationResponse = {
+  period_start: string
+  period_end: string
+  active_count: number
+  alerts: SpendingAlertEvaluation[]
+}
+
 export type ApplyRecurringResponse = {
   expenses: ExpenseResponse[]
   applied_count: number

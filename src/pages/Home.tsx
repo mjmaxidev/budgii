@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Telescope, Bell, ChevronRight } from 'lucide-react'
 import { cn } from '@/utils/cn'
@@ -17,6 +17,10 @@ import type { Period } from '@/types'
 import { useLookups } from '@/store/lookups'
 import { formatMoneyShort } from '@/utils/money'
 import { withFrom } from '@/utils/navigation'
+import { isApiEnabled } from '@/api/config'
+import { evaluateSpendingAlerts } from '@/api/alerts'
+import { useAuthStore } from '@/store/authStore'
+import type { SpendingAlertEvaluation } from '@/api/types'
 
 const periodDivisor: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1 }
 
@@ -38,7 +42,9 @@ export function Home() {
   const expenses = useStore((s) => s.expenses)
   const budget = useStore((s) => s.budget)
   const getTotalIncome = useStore((s) => s.getTotalIncome)
+  const householdId = useAuthStore((s) => s.householdId)
   const { category } = useLookups()
+  const [activeAlerts, setActiveAlerts] = useState<SpendingAlertEvaluation[]>([])
 
   const periodExpenses = expensesInPeriod(expenses, period)
   const spent = sumExpenses(periodExpenses)
@@ -73,6 +79,21 @@ export function Home() {
   const recent = [...periodExpenses]
     .sort((a, b) => +new Date(b.date) - +new Date(a.date))
     .slice(0, 4)
+
+  useEffect(() => {
+    if (!isApiEnabled() || !householdId) return
+    let cancelled = false
+    evaluateSpendingAlerts(householdId)
+      .then((result) => {
+        if (!cancelled) setActiveAlerts(result.alerts.filter((alert) => alert.active))
+      })
+      .catch(() => {
+        if (!cancelled) setActiveAlerts([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, expenses])
 
   return (
     <AppShell
@@ -137,6 +158,25 @@ export function Home() {
           </button>
         </div>
       </Card>
+
+      {activeAlerts.length > 0 && (
+        <Card className="mt-3 border-red/30 bg-redSoft py-3">
+          <button
+            onClick={() => navigate('/spending-alerts', withFrom('/home'))}
+            className="flex w-full items-center justify-between gap-3 text-left"
+          >
+            <div>
+              <p className="text-[14px] font-extrabold text-ink">
+                {activeAlerts.length} spending {activeAlerts.length === 1 ? 'alert' : 'alerts'} active
+              </p>
+              <p className="text-[12px] font-semibold text-red">
+                {category(activeAlerts[0].category_id)?.name ?? 'Category'} reached its alert threshold.
+              </p>
+            </div>
+            <ChevronRight size={18} className="shrink-0 text-red" />
+          </button>
+        </Card>
+      )}
 
       {/* Budget ring */}
       <div className="mt-6 flex items-center justify-between">

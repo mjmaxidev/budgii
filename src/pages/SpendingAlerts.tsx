@@ -11,6 +11,10 @@ import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { formatMoney } from '@/utils/money'
+import { isApiEnabled } from '@/api/config'
+import { evaluateSpendingAlerts } from '@/api/alerts'
+import { useAuthStore } from '@/store/authStore'
+import type { SpendingAlertEvaluation } from '@/api/types'
 import type { SpendingAlert } from '@/types'
 
 export function SpendingAlerts() {
@@ -31,8 +35,10 @@ export function SpendingAlerts() {
   const expenses = useStore((s) => s.expenses)
   const settings = useStore((s) => s.settings)
   const updateSettings = useStore((s) => s.updateSettings)
+  const householdId = useAuthStore((s) => s.householdId)
   const notificationsEnabled = settings.notificationsEnabled
   const { categories } = useLookups()
+  const [evaluatedAlerts, setEvaluatedAlerts] = useState<SpendingAlertEvaluation[]>([])
 
   const [editMode, setEditMode] = useState(false)
   const [toDelete, setToDelete] = useState<Set<string>>(new Set())
@@ -93,6 +99,21 @@ export function SpendingAlerts() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!isApiEnabled() || !householdId) return
+    let cancelled = false
+    evaluateSpendingAlerts(householdId)
+      .then((result) => {
+        if (!cancelled) setEvaluatedAlerts(result.alerts)
+      })
+      .catch(() => {
+        if (!cancelled) setEvaluatedAlerts([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [householdId, spendingAlerts, expenses])
 
   // Request notification permission
   const requestNotificationPermission = async () => {
@@ -187,6 +208,7 @@ export function SpendingAlerts() {
     category: cat,
     alerts: spendingAlerts.filter((a) => a.categoryId === cat.id),
   }))
+  const activeEvaluations = evaluatedAlerts.filter((alert) => alert.active)
 
   return (
     <AppShell showBottomNav topBar={<TopBar title="Spending Alerts" showBack />}>
@@ -195,6 +217,32 @@ export function SpendingAlerts() {
           <div className="flex gap-2">
             <AlertCircle size={20} className="mt-0.5 shrink-0 text-red" />
             <p className="text-[13px] font-semibold text-ink">{error}</p>
+          </div>
+        </Card>
+      )}
+
+      {activeEvaluations.length > 0 && (
+        <Card className="mt-4 border-red/30 bg-redSoft p-4">
+          <div className="flex gap-3">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-red" />
+            <div>
+              <p className="text-[14px] font-extrabold text-ink">
+                {activeEvaluations.length} alert {activeEvaluations.length === 1 ? 'is' : 'are'} firing
+              </p>
+              <div className="mt-2 space-y-1">
+                {activeEvaluations.slice(0, 3).map((alert) => {
+                  const cat = categories.find((category) => category.id === alert.category_id)
+                  return (
+                    <p key={alert.id} className="text-[12px] font-semibold text-red">
+                      {cat?.name ?? 'Category'}: {formatMoney(alert.spent)} spent
+                      {alert.alert_type === 'percentage' && alert.limit
+                        ? ` of ${formatMoney(alert.limit)}`
+                        : ` of ${formatMoney(alert.threshold)}`}
+                    </p>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </Card>
       )}
