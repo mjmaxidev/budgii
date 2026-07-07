@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,6 +27,7 @@ from app.schemas.receipts import (
 from app.services import receipt as receipt_service
 from app.services.household import require_membership
 from app.services.permissions import require_receipt_upload
+from app.workers.receipt_analysis import run_receipt_analysis
 
 router = APIRouter()
 household_router = APIRouter()
@@ -113,24 +114,34 @@ async def upload_receipt(
 async def analyze_receipt(
     receipt_id: str,
     body: ReceiptAnalyzeRequest,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ) -> ReceiptAnalyzeResponse:
     household_uuid = parse_uuid(body.household_id, "household_id")
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
-    receipt, items = await receipt_service.analyze_receipt(
+    require_receipt_upload(membership)
+    await receipt_service.ensure_persona(
         session,
-        membership,
+        household_uuid,
+        parse_optional_uuid(body.default_persona_id, "default_persona_id"),
+    )
+    receipt = await receipt_service.get_receipt(session, household_uuid, receipt_uuid)
+    background_tasks.add_task(
+        run_receipt_analysis,
+        user.id,
+        household_uuid,
         receipt_uuid,
         category_ids=body.category_ids,
         default_category_id=body.default_category_id,
         default_persona_id=parse_optional_uuid(body.default_persona_id, "default_persona_id"),
         default_tag_ids=body.default_tag_ids,
     )
+    queued_receipt = receipt_response(receipt).model_copy(update={"status": "analyzing"})
     return ReceiptAnalyzeResponse(
-        receipt=receipt_response(receipt),
-        items=[receipt_item_response(item) for item in items],
+        receipt=queued_receipt,
+        items=[],
     )
 
 

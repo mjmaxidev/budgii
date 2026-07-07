@@ -206,11 +206,33 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
         headers=auth_headers(admin),
     )
     assert analyze_response.status_code == 200, analyze_response.text
-    analyzed = analyze_response.json()
-    assert analyzed["receipt"]["status"] == "needs_review"
-    assert analyzed["receipt"]["merchant"] == "Whole Foods Market"
-    assert len(analyzed["items"]) == 6
-    assert {row["persona_id"] for row in analyzed["items"]} == {persona_id}
+    queued = analyze_response.json()
+    assert queued["receipt"]["status"] == "analyzing"
+    assert queued["items"] == []
+
+    status_response = client.get(
+        f"/v1/receipts/{receipt['id']}/status?household_id={household['id']}",
+        headers=auth_headers(admin),
+    )
+    assert status_response.status_code == 200
+    assert status_response.json()["status"] == "needs_review"
+    assert status_response.json()["item_count"] == 6
+
+    analyzed_receipt_response = client.get(
+        f"/v1/households/{household['id']}/receipts/{receipt['id']}",
+        headers=auth_headers(admin),
+    )
+    assert analyzed_receipt_response.status_code == 200
+    assert analyzed_receipt_response.json()["merchant"] == "Whole Foods Market"
+
+    analyzed_items_response = client.get(
+        f"/v1/households/{household['id']}/receipts/{receipt['id']}/items",
+        headers=auth_headers(admin),
+    )
+    assert analyzed_items_response.status_code == 200
+    analyzed_items = analyzed_items_response.json()["items"]
+    assert len(analyzed_items) == 6
+    assert {row["persona_id"] for row in analyzed_items} == {persona_id}
 
     linked_expense = create_expense(
         client,
