@@ -48,7 +48,9 @@ def test_viewer_bootstrap_hides_invites_and_sync_push_is_read_only(client: TestC
     assert len(body["members"]) == 2
     assert len(body["personas"]) == 2
     assert body["invites"] == []
-    assert "expenses" in body["snapshot"]
+    assert "expenses" not in body["snapshot"]
+    assert "receipts" not in body["snapshot"]
+    assert "receiptItems" not in body["snapshot"]
 
     push_response = client.post(
         "/v1/sync",
@@ -56,7 +58,7 @@ def test_viewer_bootstrap_hides_invites_and_sync_push_is_read_only(client: TestC
             "household_id": household["id"],
             "client_time": "2026-07-07T00:00:00Z",
             "base_revision": body["revision"],
-            "changes": {"expenses": []},
+            "changes": {"settings": {"currency": "AUD"}},
         },
         headers=auth_headers(viewer),
     )

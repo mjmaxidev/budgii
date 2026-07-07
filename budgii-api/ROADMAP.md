@@ -10,7 +10,7 @@
 
 Budgii's backend is a FastAPI service with JWT auth, household tenancy, and document-level JSONB sync that mirrors the existing Zustand store. Uncommitted work adds **personas** (tag-only family members), **access roles** (admin / editor / viewer with editor levels), and **permission-gated sync** — this slice should land before any frontend wiring.
 
-The path forward is three phases: **wire the React app to the API** (Phase 1), **normalize expenses and receipts into relational tables** when reporting and OCR need SQL (Phase 2), then **production deploy** with managed Postgres, email invites, and async workers (Phase 3). Receipt images stay on a **local Docker volume** through Phases 1–2; object storage (S3/R2/MinIO) is deferred to Phase 3+ only if scale requires it.
+The path forward is three phases: **wire the React app to the API** (Phase 1), **normalize expenses and receipts into relational tables** for reporting and OCR (Phase 2, now in progress), then **production deploy** with managed Postgres, email invites, OAuth polish, and async workers (Phase 3). Receipt images stay on a **local Docker volume** through Phases 1–2; object storage (S3/R2/MinIO) is deferred to Phase 3+ only if scale requires it.
 
 ---
 
@@ -25,20 +25,17 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 | Users | ✅ | `GET /v1/users/me`, `DELETE /v1/users/me` |
 | Households | ✅ | `GET/POST /v1/households`, `POST /v1/households/join`, `POST /v1/households/invites` |
 | Sync | ✅ (v1) | `GET/POST /v1/sync` — document pull/push with revision conflicts |
-| Receipts | ✅ (local volume) | `POST /v1/receipts/upload` — Docker volume at `/app/uploads`, no OCR |
+| Expenses | ✅ (Phase 2) | `GET/POST/PATCH/DELETE /v1/households/{id}/expenses` |
+| Receipts | ✅ (Phase 2, local volume) | Upload, CRUD, item CRUD, deterministic analyze/status/file endpoints |
 | Docker | ✅ | Postgres + API on `:8001`, Alembic on boot; `receipt_uploads` volume → `/app/uploads` |
 
-### Uncommitted (ready to commit)
+### Current working tree
 
 | Area | Files | What changed |
 |------|-------|--------------|
-| Access roles | `models/access.py`, `schemas/access.py` | `admin` / `editor` / `viewer` + `full` / `standard` / `limited` editor levels |
-| Personas | `models/__init__.py`, `api/personas.py`, `services/persona.py` | `household_personas` table; CRUD for tag-only members |
-| Permissions | `services/permissions.py` | Role gates on sync push/pull, admin, persona CRUD, receipt upload |
-| Memberships | `services/household.py`, `api/households.py` | `access_role`, `editor_level`, `persona_id`, `is_account_holder` on memberships |
-| Invites | `schemas/household.py`, `services/household.py` | Invites carry `access_role` + `editor_level`; join grants them |
-| Sync | `services/sync.py`, `services/seed.py` | Push filtered by role; `familyMembers` removed from JSONB blob |
-| Migration | `alembic/versions/001_initial.py` | Full schema including personas |
+| Membership admin UI | `src/pages/FamilyMembers.tsx`, `src/api/households.ts`, `src/api/types.ts` | Family Members can list app-access users, update roles, and remove non-owner access |
+| Phase 2 sync ownership | `services/seed.py`, `models/access.py`, `tests/test_household_bootstrap.py` | Finance records removed from document sync defaults/permissions |
+| Roadmap | `ROADMAP.md` | OAuth deferred; Phase 2 marked in progress |
 
 ### Database tables
 
@@ -50,21 +47,24 @@ household_personas          ← tag-only members (kids, etc.)
 household_memberships       ← access_role, editor_level, persona_id, is_account_holder
 household_invites           ← access_role, editor_level, code, expiry
 household_sync_meta           ← revision counter + updated_at
-household_sync_chunks         ← one JSONB row per sync key (categories, expenses, …)
+household_sync_chunks         ← one JSONB row per config/document sync key
 receipt_uploads             ← file metadata (bytes on Docker volume at /app/uploads)
+expenses
+receipts
+receipt_items
 ```
 
 ### Gaps (not built yet)
 
 | Gap | Notes |
 |-----|-------|
-| No frontend API client | `src/` has zero `fetch` to backend |
-| No invite list/revoke | ~~Frontend shows unused invites locally~~ **Done** — `GET/DELETE /households/invites` |
-| No membership admin APIs | ~~Can't PATCH role, remove member~~ **Done** — `GET/PATCH/DELETE /households/{id}/members` |
+| No frontend API client | **Done** — API client, auth gate, bootstrap, sync, personas, invites, normalized finance |
+| No invite list/revoke | **Done** — API-backed pending invite list and revoke UI |
+| No membership admin APIs | **Done** — role update and removal endpoints plus Family Members UI |
 | No email delivery | `sent_to_contact` stored; nothing sent |
-| No OCR pipeline | Upload saves file; no link to sync `receipts[]` |
+| No async OCR pipeline | Deterministic analyzer exists; real OCR worker remains Phase 2 |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
-| OAuth needs config | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` empty in `.env` |
+| OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
 
 ---
 
@@ -75,13 +75,13 @@ receipt_uploads             ← file metadata (bytes on Docker volume at /app/up
 | Relational (server enforces rules) | JSONB sync chunks (bulk sync via merged API) |
 |------------------------------------|----------------------------------------|
 | Users, refresh tokens | Categories, tags, budget, settings |
-| Households, memberships | Expenses, receipts, receiptItems *(Phase 1)* |
-| Personas, invites | Income, goals, alerts, shopping/watchlist/deals |
-| Receipt upload metadata | |
+| Households, memberships | Income config, goals, alerts |
+| Personas, invites | Shopping, watchlist, deals |
+| Receipt upload metadata, expenses, receipts, receipt items | Recurring transactions |
 
 **Why hybrid:** The app is one persisted Zustand object today. Document sync ships multi-device backup fast without rewriting 40+ store actions. Normalize expenses/receipts when the server needs SQL (reporting, OCR, search).
 
-**Server-owned (not in sync blob):** `familyMembers` → `/personas`; `familyInvites` → invite endpoints.
+**Server-owned (not in sync blob):** `familyMembers` → `/personas`; `familyInvites` → invite endpoints; `expenses`, `receipts`, and `receiptItems` → normalized finance endpoints.
 
 ### Permissions
 
@@ -89,10 +89,10 @@ Enforced at the API layer via `services/permissions.py`:
 
 | Role | Pull sync | Push sync keys | Admin actions |
 |------|-----------|----------------|---------------|
-| Admin | All | All 15 keys | Members, invites, personas |
-| Editor · full | All | All 15 keys | — |
-| Editor · standard | All | expenses, receipts, lists, income, recurring | — |
-| Editor · limited | All | expenses only | — |
+| Admin | All | All document-sync keys | Members, invites, personas |
+| Editor · full | All | All document-sync keys | — |
+| Editor · standard | All | lists, income, recurring | — |
+| Editor · limited | All | ❌ none; expenses use normalized API | — |
 | Viewer | All | ❌ blocked | — |
 
 Invites cannot grant `admin`. Household creator gets `admin` + `is_account_holder=True`.
@@ -177,8 +177,9 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 | 5 | Sync middleware: debounced push after mutations; periodic pull | ✅ |
 | 6 | Replace local invite/join with API | ✅ (when `VITE_API_ENABLED=true`) |
 | 7 | `VITE_API_ENABLED` flag for offline dev fallback | ✅ |
+| 8 | Membership admin UI | ✅ |
 
-**Remaining Phase 1 frontend:** OAuth (Apple/Google) wiring, persona CRUD via API from `FamilyMembers.tsx`, invite list/revoke UI, logout in Account Settings.
+**Remaining Phase 1 frontend:** Complete enough to move into Phase 2. OAuth (Apple/Google) is intentionally deferred to the end.
 
 #### Phase 1 API surface (complete target)
 
@@ -222,25 +223,27 @@ POST /v1/receipts/upload
 #### New tables
 
 ```sql
-expenses (id, household_id, persona_id, category_id, amount, date, merchant, …)
-receipts (id, household_id, upload_id, merchant, total, status, image_url, …)
-receipt_items (id, receipt_id, name, amount, category_id, persona_id, …)
+expenses (id, household_id, persona_id, category_id, amount, date, merchant, …)      ✅
+receipts (id, household_id, upload_id, merchant, total, status, image_url, …)        ✅
+receipt_items (id, receipt_id, name, amount, category_id, persona_id, …)             ✅
 ```
 
 #### API additions
 
 ```
-GET/POST/PATCH/DELETE /households/{id}/expenses?page=&since=
-GET/POST/PATCH/DELETE /households/{id}/receipts
-POST /receipts/{id}/analyze          → queue OCR job
-GET  /receipts/{id}/status
+GET/POST/PATCH/DELETE /households/{id}/expenses?page=&since=       ✅
+GET/POST/PATCH/DELETE /households/{id}/receipts                    ✅
+GET/POST/PATCH/DELETE /households/{id}/receipts/{id}/items         ✅
+POST /receipts/{id}/analyze          → deterministic analyzer      ✅
+GET  /receipts/{id}/status                                      ✅
+GET  /receipts/{id}/file                                        ✅
 ```
 
-**JSONB shrinks to:** categories, tags, budget, settings, income config, goals, alerts, shopping/watchlist/deals.
+**JSONB shrinks to:** categories, tags, budget, settings, income config, goals, alerts, shopping/watchlist/deals. Expenses, receipts, and receipt items are server-owned via normalized APIs.
 
-**Sync evolution:** Config via document sync; expenses via paginated API + local IndexedDB cache.
+**Sync evolution:** Config via document sync; expenses/receipts via paginated API + local cache.
 
-**Workers:** Celery/RQ for OCR (Textract or GPT-4V), recurring transaction application, spending alert evaluation. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
+**Remaining Phase 2:** replace deterministic receipt analysis with an async OCR worker, add recurring transaction application, evaluate spending alerts server-side, and add richer finance pagination/cache UX as data volume grows. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
 
 ---
 
@@ -264,7 +267,7 @@ GET  /receipts/{id}/status
 
 ### Must sync (JSONB keys)
 
-- [x] `categories`, `tags`, `expenses`, `receipts`, `receiptItems`
+- [x] `categories`, `tags`
 - [x] `budget`, `settings`, `incomeSources`, `incomeItems`, `ongoingIncomes`
 - [x] `budgetGoals`, `recurringTransactions`, `spendingAlerts`
 - [x] `watchlistItems`, `deals`, `shoppingList`
@@ -274,6 +277,7 @@ GET  /receipts/{id}/status
 - [x] `familyMembers` → `GET /personas` mapped to store shape
 - [x] `familyInvites` → invite endpoints (create; list/revoke pending backend)
 - [x] `userProfile.name/email/avatar` → `GET /users/me`
+- [x] `expenses`, `receipts`, `receiptItems` → normalized finance endpoints
 
 ### Stay local (never sync)
 
@@ -285,6 +289,7 @@ GET  /receipts/{id}/status
 
 - [x] Login/register → store tokens
 - [x] Capacitor secure token storage
+- [x] Logout in Account Settings clears auth state and stored tokens
 - [x] Create or join household on first use
 - [x] Pull sync snapshot → hydrate Zustand
 - [x] Push on mutation with `base_revision`

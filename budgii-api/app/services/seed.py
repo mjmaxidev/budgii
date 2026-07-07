@@ -18,9 +18,6 @@ DEFAULT_DOCUMENT: dict = {
         {"id": "cat-travel", "name": "Travel", "icon": "✈️", "color": "#06B6D4"},
     ],
     "tags": [],
-    "expenses": [],
-    "receipts": [],
-    "receiptItems": [],
     "budget": {
         "id": "budget-1",
         "period": "monthly",

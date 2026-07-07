@@ -10,13 +10,11 @@ DEFAULT_EDITOR_LEVEL: EditorLevel = "standard"
 DEFAULT_INVITE_ROLE: AccessRole = "editor"
 
 # Sync document keys the client may push — familyMembers and familyInvites are server-owned.
+# Phase 2 finance records are server-owned through normalized expenses/receipts APIs.
 ADMIN_SYNC_KEYS = frozenset(
     {
         "categories",
         "tags",
-        "expenses",
-        "receipts",
-        "receiptItems",
         "budget",
         "watchlistItems",
         "deals",
@@ -35,9 +33,6 @@ EDITOR_FULL_KEYS = ADMIN_SYNC_KEYS
 
 EDITOR_STANDARD_KEYS = frozenset(
     {
-        "expenses",
-        "receipts",
-        "receiptItems",
         "shoppingList",
         "watchlistItems",
         "deals",
@@ -47,4 +42,4 @@ EDITOR_STANDARD_KEYS = frozenset(
     }
 )
 
-EDITOR_LIMITED_KEYS = frozenset({"expenses"})
+EDITOR_LIMITED_KEYS = frozenset()

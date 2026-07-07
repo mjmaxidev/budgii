@@ -2,6 +2,8 @@ import { apiRequest } from '@/api/client'
 import type {
   HouseholdBootstrapResponse,
   HouseholdListResponse,
+  HouseholdMemberListResponse,
+  HouseholdMemberResponse,
   HouseholdResponse,
   InviteListResponse,
   InviteResponse,
@@ -54,6 +56,31 @@ export async function listInvites(householdId: string): Promise<InviteListRespon
 
 export async function revokeInvite(inviteId: string): Promise<void> {
   await apiRequest<void>(`/households/invites/${inviteId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function listHouseholdMembers(householdId: string): Promise<HouseholdMemberListResponse> {
+  return apiRequest<HouseholdMemberListResponse>(`/households/${householdId}/members`)
+}
+
+export async function updateHouseholdMember(
+  householdId: string,
+  userId: string,
+  accessRole: Exclude<MemberAccessRole, 'admin'>,
+  editorLevel?: EditorLevel,
+): Promise<HouseholdMemberResponse> {
+  return apiRequest<HouseholdMemberResponse>(`/households/${householdId}/members/${userId}`, {
+    method: 'PATCH',
+    body: {
+      access_role: accessRole,
+      editor_level: editorLevel,
+    },
+  })
+}
+
+export async function removeHouseholdMember(householdId: string, userId: string): Promise<void> {
+  await apiRequest<void>(`/households/${householdId}/members/${userId}`, {
     method: 'DELETE',
   })
 }

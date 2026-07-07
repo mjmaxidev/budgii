@@ -38,6 +38,10 @@ export type HouseholdMemberResponse = {
   joined_at: string
 }
 
+export type HouseholdMemberListResponse = {
+  members: HouseholdMemberResponse[]
+}
+
 export type InviteResponse = {
   id: string | null
   code: string

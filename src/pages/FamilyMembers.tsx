@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Info, Tag, Wand2, Users, Trash2, Link as LinkIcon, Shield, Mail } from 'lucide-react'
+import { Plus, Info, Tag, Wand2, Users, Trash2, Link as LinkIcon, Shield, Mail, UserMinus } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -14,10 +14,12 @@ import { useStore } from '@/store/appStore'
 import { useAuthStore } from '@/store/authStore'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
+import { listHouseholdMembers, removeHouseholdMember, updateHouseholdMember } from '@/api/households'
 import { createPersona, deletePersona, listPersonas, updatePersona } from '@/api/personas'
 import { personasToFamilyMembers } from '@/api/personaMap'
 import { withFrom } from '@/utils/navigation'
 import type { EditorLevel, FamilyMember, MemberAccessRole } from '@/types'
+import type { HouseholdMemberResponse } from '@/api/types'
 import { defaultEditorLevel, formatMemberAccessLabel } from '@/utils/memberAccess'
 import { isValidInviteEmail } from '@/utils/familyInvite'
 
@@ -40,9 +42,11 @@ export function FamilyMembers() {
   const settings = useStore((s) => s.settings)
   const updateSettings = useStore((s) => s.updateSettings)
   const householdId = useAuthStore((s) => s.householdId)
+  const currentUserId = useAuthStore((s) => s.user?.id)
 
   const [edit, setEdit] = useState(false)
   const [modal, setModal] = useState<'add' | 'edit' | null>(null)
+  const [memberModal, setMemberModal] = useState<HouseholdMemberResponse | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [relationship, setRelationship] = useState('')
@@ -54,6 +58,11 @@ export function FamilyMembers() {
   const [inviteEmailError, setInviteEmailError] = useState('')
   const [apiError, setApiError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [appMembers, setAppMembers] = useState<HouseholdMemberResponse[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [memberSavingId, setMemberSavingId] = useState('')
+  const [memberAccessRole, setMemberAccessRole] = useState<Exclude<MemberAccessRole, 'admin'>>('viewer')
+  const [memberEditorLevel, setMemberEditorLevel] = useState<EditorLevel>(defaultEditorLevel())
 
   const editingMember = editingId ? members.find((m) => m.id === editingId) : undefined
   const trimmedInviteEmail = inviteEmail.trim()
@@ -78,6 +87,30 @@ export function FamilyMembers() {
     const { personas } = await listPersonas(householdId)
     setApiMembersFromPersonas(personas)
   }
+
+  async function refreshHouseholdMembers() {
+    if (!householdId) return
+    setMembersLoading(true)
+    setApiError('')
+    try {
+      const { members: nextMembers } = await listHouseholdMembers(householdId)
+      setAppMembers(nextMembers)
+    } catch (err) {
+      setApiError(apiMessage(err, 'Could not load app access members.'))
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!apiOn || !householdId) {
+      setAppMembers([])
+      return
+    }
+
+    void refreshHouseholdMembers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiOn, householdId])
 
   function apiMessage(err: unknown, fallback: string) {
     return err instanceof ApiError ? err.message : fallback
@@ -114,6 +147,55 @@ export function FamilyMembers() {
   function closeModal() {
     setModal(null)
     resetForm()
+  }
+
+  function openMemberAccess(member: HouseholdMemberResponse) {
+    if (member.is_account_holder || member.access_role === 'admin') return
+    setMemberModal(member)
+    setMemberAccessRole(member.access_role)
+    setMemberEditorLevel(member.editor_level ?? defaultEditorLevel())
+  }
+
+  function closeMemberAccess() {
+    setMemberModal(null)
+    setMemberAccessRole('viewer')
+    setMemberEditorLevel(defaultEditorLevel())
+  }
+
+  async function saveMemberAccess() {
+    if (!apiOn || !householdId || !memberModal) return
+
+    setApiError('')
+    setMemberSavingId(memberModal.user_id)
+    try {
+      await updateHouseholdMember(householdId, memberModal.user_id, memberAccessRole, memberEditorLevel)
+      await refreshHouseholdMembers()
+      await refreshApiMembers()
+      closeMemberAccess()
+    } catch (err) {
+      setApiError(apiMessage(err, 'Could not update member access.'))
+    } finally {
+      setMemberSavingId('')
+    }
+  }
+
+  async function removeAppMember(member: HouseholdMemberResponse) {
+    if (!apiOn || !householdId || member.is_account_holder || member.user_id === currentUserId) return
+
+    const confirmed = window.confirm(`Remove ${member.name}'s app access?`)
+    if (!confirmed) return
+
+    setApiError('')
+    setMemberSavingId(member.user_id)
+    try {
+      await removeHouseholdMember(householdId, member.user_id)
+      await refreshHouseholdMembers()
+      await refreshApiMembers()
+    } catch (err) {
+      setApiError(apiMessage(err, 'Could not remove member access.'))
+    } finally {
+      setMemberSavingId('')
+    }
   }
 
   async function saveAdd() {
@@ -321,6 +403,62 @@ export function FamilyMembers() {
         </div>
       </Card>
 
+      {apiOn && (
+        <>
+          <h2 className="mt-6 text-[17px] font-extrabold text-ink">App Access</h2>
+          <Card className="mt-2 space-y-3">
+            {membersLoading && appMembers.length === 0 ? (
+              <p className="text-[13px] text-muted">Loading app members...</p>
+            ) : appMembers.length === 0 ? (
+              <p className="text-[13px] text-muted">No app-access members yet.</p>
+            ) : (
+              appMembers.map((member) => {
+                const locked = member.is_account_holder || member.access_role === 'admin'
+                const canRemove = !member.is_account_holder && member.user_id !== currentUserId
+                return (
+                  <div key={member.user_id} className="flex items-center gap-3 rounded-input bg-surfaceSoft px-3 py-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl">
+                      {member.avatar || '👤'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-extrabold text-ink">{member.name}</p>
+                      <p className="truncate text-[12px] text-muted">{member.email}</p>
+                      <span
+                        className={`mt-1 inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-[11px] font-bold ${roleBadgeClass(member.access_role)}`}
+                      >
+                        {member.is_account_holder && <Shield size={10} />}
+                        {formatMemberAccessLabel(member.access_role, member.editor_level ?? undefined)}
+                      </span>
+                    </div>
+                    {!locked && (
+                      <button
+                        type="button"
+                        onClick={() => openMemberAccess(member)}
+                        disabled={memberSavingId === member.user_id}
+                        className="rounded-pill bg-primarySoft px-3 py-1.5 text-[12px] font-bold text-primary disabled:opacity-50"
+                      >
+                        Role
+                      </button>
+                    )}
+                    {canRemove && (
+                      <button
+                        type="button"
+                        onClick={() => void removeAppMember(member)}
+                        disabled={memberSavingId === member.user_id}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-redSoft text-red disabled:opacity-50"
+                        aria-label="Remove app access"
+                      >
+                        <UserMinus size={15} />
+                      </button>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </Card>
+        </>
+      )}
+
       <h2 className="mt-6 text-[17px] font-extrabold text-ink">Member Tag Settings</h2>
       <Card className="mt-2 space-y-2">
         <ToggleRow
@@ -463,6 +601,32 @@ export function FamilyMembers() {
         <ActionButton className="mt-5" onClick={() => void saveEdit()} disabled={saving}>
           {saving ? 'Saving…' : 'Save Changes'}
         </ActionButton>
+      </Modal>
+
+      <Modal open={!!memberModal} onClose={closeMemberAccess} title="Member Access">
+        {memberModal && (
+          <>
+            <div className="mb-4 rounded-input bg-surfaceSoft px-4 py-3">
+              <p className="truncate text-[14px] font-extrabold text-ink">{memberModal.name}</p>
+              <p className="truncate text-[12px] text-muted">{memberModal.email}</p>
+            </div>
+            <MemberAccessPicker
+              accessRole={memberAccessRole}
+              editorLevel={memberEditorLevel}
+              onAccessRoleChange={(role) => {
+                if (role !== 'admin') setMemberAccessRole(role)
+              }}
+              onEditorLevelChange={setMemberEditorLevel}
+            />
+            <ActionButton
+              className="mt-5"
+              onClick={() => void saveMemberAccess()}
+              disabled={memberSavingId === memberModal.user_id}
+            >
+              {memberSavingId === memberModal.user_id ? 'Saving…' : 'Save Access'}
+            </ActionButton>
+          </>
+        )}
       </Modal>
     </AppShell>
   )
