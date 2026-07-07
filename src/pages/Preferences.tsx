@@ -5,6 +5,8 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { SelectRow } from '@/components/ui/SelectRow'
 import { ToggleRow } from '@/components/ui/ToggleRow'
+import { isApiEnabled } from '@/api/config'
+import { flushSyncNow } from '@/api/syncEngine'
 import { useStore } from '@/store/appStore'
 
 const CURRENCIES = [
@@ -27,26 +29,47 @@ const LANGUAGES = [
 
 export function Preferences() {
   const prefs = useStore((s) => s.userProfile.preferences)
+  const settings = useStore((s) => s.settings)
   const updatePrefs = useStore((s) => s.updateUserPreferences)
+  const updateSettings = useStore((s) => s.updateSettings)
 
-  // Draft state — nothing is applied until the user taps Save.
-  const [currency, setCurrency] = useState(prefs.currency)
+  const [currency, setCurrency] = useState(settings.currency || prefs.currency)
   const [language, setLanguage] = useState(prefs.language)
-  const [notifications, setNotifications] = useState(prefs.notifications)
+  const [notifications, setNotifications] = useState(settings.notificationsEnabled)
 
   const [openCurrency, setOpenCurrency] = useState(false)
   const [openLanguage, setOpenLanguage] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const savedCurrency = settings.currency || prefs.currency
+  const savedNotifications = settings.notificationsEnabled
 
   const currencyLabel = CURRENCIES.find((c) => c.code === currency)?.label || currency
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.label || 'English'
 
-  const dirty = currency !== prefs.currency || language !== prefs.language || notifications !== prefs.notifications
+  const dirty =
+    currency !== savedCurrency ||
+    language !== prefs.language ||
+    notifications !== savedNotifications
 
-  function handleSave() {
+  async function handleSave() {
+    if (saving) return
+    setSaving(true)
+    setError('')
     updatePrefs({ currency, language, notifications })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    updateSettings({ currency, notificationsEnabled: notifications })
+    try {
+      if (isApiEnabled()) {
+        await flushSyncNow()
+      }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      setError('Could not sync preferences. They are saved on this device and will retry automatically.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -104,14 +127,15 @@ export function Preferences() {
         </div>
 
         {/* Save */}
+        {error && <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>}
         <button
           onClick={handleSave}
-          disabled={!dirty && !saved}
+          disabled={saving || (!dirty && !saved)}
           className={`w-full rounded-2xl py-4 text-center text-[16px] font-bold text-white transition ${
             saved ? 'bg-green' : dirty ? 'bg-primary active:bg-primary/90' : 'bg-primary/40'
           }`}
         >
-          {saved ? '✓ Saved' : dirty ? 'Save Changes' : 'Saved'}
+          {saving ? 'Saving...' : saved ? '✓ Saved' : dirty ? 'Save Changes' : 'Saved'}
         </button>
       </div>
     </AppShell>

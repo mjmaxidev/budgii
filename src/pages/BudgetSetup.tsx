@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CalendarClock, Wallet, AlertTriangle, PieChart, Bell, BellRing, LineChart, ChevronDown } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -8,21 +8,22 @@ import { ProgressRing } from '@/components/ui/ProgressRing'
 import { ToggleRow } from '@/components/ui/ToggleRow'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { isApiEnabled } from '@/api/config'
+import { flushSyncNow } from '@/api/syncEngine'
 import { useStore } from '@/store/appStore'
 import { statusColor } from '@/utils/budget'
 import { formatMoneyShort } from '@/utils/money'
+import { resolveBackPath } from '@/utils/navigation'
 import type { BudgetPeriod } from '@/types'
 import { useLookups } from '@/store/lookups'
 
 export function BudgetSetup() {
   const navigate = useNavigate()
+  const location = useLocation()
   const budget = useStore((s) => s.budget)
   const updateBudget = useStore((s) => s.updateBudget)
   const { categories } = useLookups()
 
-  // Local string mirrors so fields can be typed freely (incl. empty / partial),
-  // while every change is written straight to the store so other pages (Home,
-  // Reports, the budget ring) react to the new numbers immediately.
   const [period, setPeriod] = useState<BudgetPeriod>(budget.period)
   const [limit, setLimit] = useState(budget.limit ? String(budget.limit) : '')
   const [warning, setWarning] = useState(budget.warningThreshold ? String(budget.warningThreshold) : '')
@@ -30,39 +31,42 @@ export function BudgetSetup() {
   const [warnNotif, setWarnNotif] = useState(budget.warningNotifications)
   const [overAlerts, setOverAlerts] = useState(budget.overBudgetAlerts)
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const limitNum = parseFloat(limit) || 0
   const warningNum = parseFloat(warning) || 0
   const allocated = Object.values(allocations).reduce((a, b) => a + b, 0)
   const remaining = limitNum - allocated
+  const periodLabel = period[0].toUpperCase() + period.slice(1)
 
   function commitLimit(v: string) {
     const clean = v.replace(/[^0-9.]/g, '')
     setLimit(clean)
-    updateBudget({ limit: parseFloat(clean) || 0 })
   }
 
   function commitWarning(v: string) {
     const clean = v.replace(/[^0-9.]/g, '')
     setWarning(clean)
-    updateBudget({ warningThreshold: parseFloat(clean) || 0 })
   }
 
   function setAlloc(id: string, value: string) {
     const clean = parseFloat(value.replace(/[^0-9.]/g, '')) || 0
     setAllocations((prev) => {
       const next = { ...prev, [id]: clean }
-      updateBudget({ categoryAllocations: next })
       return next
     })
   }
 
   function setPeriodLive(p: BudgetPeriod) {
     setPeriod(p)
-    updateBudget({ period: p })
   }
 
-  function save() {
+  async function save() {
+    if (saving) return
+    if (limitNum <= 0) {
+      setError('Enter a total budget greater than $0.')
+      return
+    }
     if (warningNum >= limitNum) {
       setError('Warning threshold must be less than the total budget.')
       return
@@ -72,16 +76,25 @@ export function BudgetSetup() {
       return
     }
     setError('')
-    // Values are already persisted live; this just confirms + returns to reports.
-    updateBudget({
-      period,
-      limit: limitNum,
-      warningThreshold: warningNum,
-      categoryAllocations: allocations,
-      warningNotifications: warnNotif,
-      overBudgetAlerts: overAlerts,
-    })
-    navigate('/reports')
+    setSaving(true)
+    try {
+      updateBudget({
+        period,
+        limit: limitNum,
+        warningThreshold: warningNum,
+        categoryAllocations: allocations,
+        warningNotifications: warnNotif,
+        overBudgetAlerts: overAlerts,
+      })
+      if (isApiEnabled()) {
+        await flushSyncNow()
+      }
+      navigate(resolveBackPath(location.pathname, location.state))
+    } catch {
+      setError('Could not save budget changes. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -111,7 +124,7 @@ export function BudgetSetup() {
 
       {/* Total + warning */}
       <Card className="mt-3 divide-y divide-line/70 py-0">
-        <AmountRow icon={<Wallet size={22} className="text-green" />} iconBg="#EAF8ED" title="Total Monthly Budget" sub="Set your total budget for this period." value={limit} placeholder="1000" onChange={commitLimit} />
+        <AmountRow icon={<Wallet size={22} className="text-green" />} iconBg="#EAF8ED" title={`Total ${periodLabel} Budget`} sub="Set your total budget for this period." value={limit} placeholder="1000" onChange={commitLimit} />
         <AmountRow icon={<AlertTriangle size={22} className="text-orange" />} iconBg="#FFF2DF" title="Warning Threshold" sub="You'll be alerted when spending reaches this." value={warning} placeholder="800" onChange={commitWarning} />
       </Card>
 
@@ -153,9 +166,9 @@ export function BudgetSetup() {
 
       {/* Toggles */}
       <Card className="mt-3 space-y-2">
-        <ToggleRow icon={<Bell size={18} className="text-green" />} title="Warning Notifications" description="Get notified when you reach your warning threshold." checked={warnNotif} onChange={(v) => { setWarnNotif(v); updateBudget({ warningNotifications: v }) }} />
+        <ToggleRow icon={<Bell size={18} className="text-green" />} title="Warning Notifications" description="Get notified when you reach your warning threshold." checked={warnNotif} onChange={setWarnNotif} />
         <div className="h-px bg-line/70" />
-        <ToggleRow icon={<BellRing size={18} className="text-red" />} iconBg="#FEECEC" title="Over-Budget Alerts" description="Get notified when you exceed your budget." checked={overAlerts} onChange={(v) => { setOverAlerts(v); updateBudget({ overBudgetAlerts: v }) }} />
+        <ToggleRow icon={<BellRing size={18} className="text-red" />} iconBg="#FEECEC" title="Over-Budget Alerts" description="Get notified when you exceed your budget." checked={overAlerts} onChange={setOverAlerts} />
       </Card>
 
       {/* Live preview */}
@@ -182,8 +195,8 @@ export function BudgetSetup() {
 
       {error && <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[14px] font-semibold text-red">{error}</p>}
 
-      <ActionButton className="mt-4" onClick={save}>
-        Save Budget
+      <ActionButton className="mt-4" onClick={save} disabled={saving}>
+        {saving ? 'Saving...' : 'Save Budget'}
       </ActionButton>
     </AppShell>
   )

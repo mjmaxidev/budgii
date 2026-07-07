@@ -8,24 +8,52 @@ import { formatDate, formatDateTime, monthLabel } from '@/utils/dates'
 
 type ExportRecord = {
   id: string
-  type: 'csv' | 'pdf' | 'json'
+  type: 'csv' | 'html' | 'json'
   timestamp: string
   fileName: string
   size: string
 }
 
+type StoredExportRecord = Omit<ExportRecord, 'type'> & {
+  type: ExportRecord['type'] | 'pdf'
+}
+
+function loadExportHistory(): ExportRecord[] {
+  try {
+    const saved = localStorage.getItem('exportHistory')
+    if (!saved) return []
+    const parsed = JSON.parse(saved) as StoredExportRecord[]
+    return Array.isArray(parsed)
+      ? parsed.map((record) => ({ ...record, type: record.type === 'pdf' ? 'html' : record.type }))
+      : []
+  } catch {
+    localStorage.removeItem('exportHistory')
+    return []
+  }
+}
+
 export function DataExport() {
   const expenses = useStore((s) => s.expenses)
+  const receipts = useStore((s) => s.receipts)
+  const receiptItems = useStore((s) => s.receiptItems)
   const categories = useStore((s) => s.categories)
   const tags = useStore((s) => s.tags)
   const familyMembers = useStore((s) => s.familyMembers)
+  const budget = useStore((s) => s.budget)
+  const settings = useStore((s) => s.settings)
+  const incomeSources = useStore((s) => s.incomeSources)
+  const incomeItems = useStore((s) => s.incomeItems)
+  const ongoingIncomes = useStore((s) => s.ongoingIncomes)
+  const budgetGoals = useStore((s) => s.budgetGoals)
+  const recurringTransactions = useStore((s) => s.recurringTransactions)
+  const spendingAlerts = useStore((s) => s.spendingAlerts)
+  const watchlistItems = useStore((s) => s.watchlistItems)
+  const deals = useStore((s) => s.deals)
+  const shoppingList = useStore((s) => s.shoppingList)
 
-  const [exportHistory, setExportHistory] = useState<ExportRecord[]>(() => {
-    const saved = localStorage.getItem('exportHistory')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [exportHistory, setExportHistory] = useState<ExportRecord[]>(loadExportHistory)
 
-  const [exporting, setExporting] = useState<'csv' | 'pdf' | 'json' | null>(null)
+  const [exporting, setExporting] = useState<ExportRecord['type'] | null>(null)
 
   useEffect(() => {
     localStorage.setItem('exportHistory', JSON.stringify(exportHistory))
@@ -83,14 +111,11 @@ export function DataExport() {
     }
   }
 
-  // PDF Export - Current month
-  const exportAsPDF = () => {
-    setExporting('pdf')
+  const exportAsHtmlReport = () => {
+    setExporting('html')
     try {
       const monthExpenses = getCurrentMonthExpenses()
-      const now = new Date()
 
-      // Create a simple PDF-like HTML (in a real app, use a library like jsPDF)
       const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -107,7 +132,7 @@ export function DataExport() {
             .summary-item { display: flex; justify-content: space-between; margin: 8px 0; }
           </style>
         </head>
-        <body>
+            <body>
           <h1>Monthly Expense Report</h1>
           <p style="text-align: center; color: #666;">${monthLabel(new Date().toISOString())}</p>
 
@@ -165,11 +190,10 @@ export function DataExport() {
         </html>
       `
 
-      // Create blob and download
       const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' })
       downloadFile(blob, `monthly_report_${new Date().toISOString().split('T')[0]}.html`)
 
-      addToHistory('pdf', `monthly_report_${new Date().toISOString().split('T')[0]}.html`, (blob.size / 1024).toFixed(1))
+      addToHistory('html', `monthly_report_${new Date().toISOString().split('T')[0]}.html`, (blob.size / 1024).toFixed(1))
     } finally {
       setExporting(null)
     }
@@ -184,12 +208,28 @@ export function DataExport() {
         exportDate: new Date().toISOString(),
         data: {
           expenses,
+          receipts,
+          receiptItems,
           categories,
           tags,
           familyMembers,
+          budget,
+          settings,
+          incomeSources,
+          incomeItems,
+          ongoingIncomes,
+          budgetGoals,
+          recurringTransactions,
+          spendingAlerts,
+          watchlistItems,
+          deals,
+          shoppingList,
         },
         summary: {
           totalExpenses: expenses.length,
+          totalReceipts: receipts.length,
+          totalIncomeItems: incomeItems.length,
+          totalShoppingItems: shoppingList.length,
           totalAmount: expenses.reduce((sum, e) => sum + e.amount, 0),
           dateRange: expenses.length > 0 ? `${expenses[expenses.length - 1].date} to ${expenses[0].date}` : 'N/A',
         },
@@ -264,26 +304,26 @@ export function DataExport() {
           </div>
         </Card>
 
-        {/* PDF Export */}
-        <Card className="cursor-pointer active:bg-surfaceSoft" onClick={exportAsPDF} role="button" tabIndex={0}>
+        {/* HTML Report Export */}
+        <Card className="cursor-pointer active:bg-surfaceSoft" onClick={exportAsHtmlReport} role="button" tabIndex={0}>
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red/10">
               <FileText size={24} className="text-red-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-[15px] font-bold text-ink">Export as PDF</h3>
-              <p className="text-[13px] text-muted">Current month report (formatted)</p>
+              <h3 className="text-[15px] font-bold text-ink">Export Monthly Report</h3>
+              <p className="text-[13px] text-muted">Current month report (HTML)</p>
               <p className="mt-1 text-[12px] font-semibold text-red-600">{getCurrentMonthExpenses().length} transactions this month</p>
             </div>
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                exportAsPDF()
+                exportAsHtmlReport()
               }}
-              disabled={exporting === 'pdf'}
+              disabled={exporting === 'html'}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-line transition-colors active:bg-surfaceSoft disabled:opacity-50"
             >
-              <Download size={18} className={exporting === 'pdf' ? 'animate-bounce' : ''} />
+              <Download size={18} className={exporting === 'html' ? 'animate-bounce' : ''} />
             </button>
           </div>
         </Card>
@@ -296,7 +336,7 @@ export function DataExport() {
             </div>
             <div className="flex-1">
               <h3 className="text-[15px] font-bold text-ink">Export as JSON</h3>
-              <p className="text-[13px] text-muted">Complete backup (all data)</p>
+              <p className="text-[13px] text-muted">Complete backup of app data</p>
               <p className="mt-1 text-[12px] font-semibold text-green-600">Full data backup</p>
             </div>
             <button
@@ -343,7 +383,7 @@ export function DataExport() {
             {exportHistory.map((item) => (
               <Card key={item.id} className="flex items-center gap-3 px-4 py-3">
                 {item.type === 'csv' && <FileSpreadsheet size={20} className="text-blue-600" />}
-                {item.type === 'pdf' && <FileText size={20} className="text-red-600" />}
+                {item.type === 'html' && <FileText size={20} className="text-red-600" />}
                 {item.type === 'json' && <FileJson size={20} className="text-green-600" />}
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-[13px] font-semibold text-ink">{item.fileName}</p>
@@ -368,8 +408,8 @@ export function DataExport() {
         <h3 className="text-[13px] font-bold text-ink">About Exports</h3>
         <ul className="space-y-1 text-[12px] text-muted">
           <li>• CSV: Open in Excel or Google Sheets for analysis</li>
-          <li>• PDF: Monthly summary with totals and averages</li>
-          <li>• JSON: Complete backup of all budget data</li>
+          <li>• HTML: Monthly summary with totals and averages</li>
+          <li>• JSON: Complete backup of app data</li>
           <li>• History shows your last 20 exports</li>
           <li>• Files are downloaded directly to your device</li>
         </ul>

@@ -8,6 +8,7 @@ import {
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
+import { logout } from '@/api/auth'
 import { useUserAvatarUrl } from '@/hooks/useUserAvatarUrl'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
@@ -27,6 +28,11 @@ export function Settings() {
   const profileAvatar = apiUser?.avatar || userProfile.avatar
   const resolvedAvatar = useUserAvatarUrl(profileAvatar)
   const displayAvatar = profileAvatar?.startsWith('/users/me/avatar') ? resolvedAvatar : profileAvatar
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
 
   const sections: { title: string; items: Item[] }[] = [
     {
@@ -125,7 +131,7 @@ export function Settings() {
       ))}
 
       <button
-        onClick={() => navigate('/login')}
+        onClick={handleLogout}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-input border border-red/40 py-4 text-[16px] font-bold text-red active:bg-redSoft"
       >
         <LogOut size={20} /> Logout
