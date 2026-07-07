@@ -1,5 +1,5 @@
 import { getMe } from '@/api/auth'
-import { createHousehold, joinHousehold, listHouseholds } from '@/api/households'
+import { createHousehold, getHouseholdBootstrap, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
 import { apiExpensesToExpenses, listAllExpenses } from '@/api/expenses'
 import {
@@ -13,18 +13,25 @@ import { personasToFamilyMembers } from '@/api/personaMap'
 import { pickSyncSnapshot, SYNC_KEYS, type SyncKey } from '@/api/syncKeys'
 import { useAuthStore } from '@/store/authStore'
 import { useStore, type AppStore, type FamilyInvite } from '@/store/appStore'
-import type { InviteResponse } from '@/api/types'
+import type { HouseholdBootstrapResponse, InviteResponse } from '@/api/types'
 import { formatInviteCode } from '@/utils/familyInvite'
 
 export function inviteResponseToFamilyInvite(invite: InviteResponse): FamilyInvite {
   return {
-    id: invite.code,
+    id: invite.id ?? invite.code,
     code: formatInviteCode(invite.code),
-    createdAt: new Date().toISOString().split('T')[0],
+    createdAt: dateOnly(invite.sent_at ?? invite.expires_at) ?? new Date().toISOString().split('T')[0],
     accessRole: invite.access_role,
     editorLevel: invite.editor_level ?? undefined,
-    sentAt: new Date().toISOString().split('T')[0],
+    sentToContact: invite.sent_to_contact ?? undefined,
+    sentAt: dateOnly(invite.sent_at) ?? undefined,
+    usedAt: dateOnly(invite.used_at) ?? undefined,
+    usedBy: invite.used_by ?? undefined,
   }
+}
+
+function dateOnly(value: string | null | undefined): string | undefined {
+  return value?.split('T')[0]
 }
 
 export async function ensureHousehold(): Promise<string> {
@@ -51,14 +58,12 @@ export async function bootstrapSession(options?: { migrateLocal?: boolean }): Pr
     const householdId = await ensureHousehold()
     auth.setHouseholdId(householdId)
 
-    const household = (await listHouseholds()).households.find((h) => h.id === householdId)
-
     if (options?.migrateLocal) {
       const snapshot = pickSyncSnapshot(useStore.getState())
       await pushSync(householdId, snapshot, 1)
     }
 
-    await pullAndHydrate(householdId, household?.is_account_holder)
+    await bootstrapAndHydrate(householdId)
 
     useStore.getState().setUserProfile({
       name: user.name,
@@ -113,21 +118,50 @@ export async function pullAndHydrate(
   }
 
   const { personas } = await listPersonas(householdId)
-  const familyMembers = personasToFamilyMembers(personas, isAccountHolder)
+  const householdIsAccountHolder =
+    isAccountHolder ?? useStore.getState().familyMembers.some((member) => member.isAccountHolder)
+  const familyMembers = personasToFamilyMembers(personas, householdIsAccountHolder)
+  await hydrateNormalizedData(householdId, { familyMembers })
+
+  auth.setSyncMeta(pull.revision, pull.server_time)
+}
+
+export async function bootstrapAndHydrate(householdId: string): Promise<void> {
+  const auth = useAuthStore.getState()
+  const bootstrap = await getHouseholdBootstrap(householdId)
+
+  hydrateFromBootstrap(bootstrap)
+  await hydrateNormalizedData(householdId)
+
+  auth.setSyncMeta(bootstrap.revision, bootstrap.server_time)
+}
+
+function hydrateFromBootstrap(bootstrap: HouseholdBootstrapResponse): void {
+  hydrateFromSnapshot(bootstrap.snapshot)
+
+  useStore.setState({
+    familyMembers: personasToFamilyMembers(bootstrap.personas, bootstrap.household.is_account_holder),
+    familyInvites: bootstrap.invites.map(inviteResponseToFamilyInvite),
+  })
+}
+
+async function hydrateNormalizedData(
+  householdId: string,
+  patch: Partial<AppStore> = {},
+): Promise<void> {
   const expenses = apiExpensesToExpenses(await listAllExpenses(householdId))
   const apiReceipts = await listAllReceipts(householdId)
   const receiptItems = apiReceiptItemsToReceiptItems(
     (await Promise.all(apiReceipts.map((receipt) => listReceiptItems(householdId, receipt.id))))
       .flatMap((response) => response.items),
   )
+
   useStore.setState({
-    familyMembers,
+    ...patch,
     expenses,
     receipts: apiReceiptsToReceipts(apiReceipts),
     receiptItems,
   })
-
-  auth.setSyncMeta(pull.revision, pull.server_time)
 }
 
 function hydrateFromSnapshot(snapshot: Record<string, unknown>): void {

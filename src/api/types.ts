@@ -26,6 +26,18 @@ export type HouseholdListResponse = {
   households: HouseholdResponse[]
 }
 
+export type HouseholdMemberResponse = {
+  user_id: string
+  persona_id: string | null
+  name: string
+  email: string
+  avatar: string | null
+  access_role: MemberAccessRole
+  editor_level: EditorLevel | null
+  is_account_holder: boolean
+  joined_at: string
+}
+
 export type InviteResponse = {
   id: string | null
   code: string
@@ -143,6 +155,16 @@ export type ReceiptStatusResponse = {
 
 export type SyncPullResponse = {
   household_id: string
+  server_time: string
+  revision: number
+  snapshot: Record<string, unknown>
+}
+
+export type HouseholdBootstrapResponse = {
+  household: HouseholdResponse
+  members: HouseholdMemberResponse[]
+  personas: PersonaResponse[]
+  invites: InviteResponse[]
   server_time: string
   revision: number
   snapshot: Record<string, unknown>

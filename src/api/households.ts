@@ -1,5 +1,6 @@
 import { apiRequest } from '@/api/client'
 import type {
+  HouseholdBootstrapResponse,
   HouseholdListResponse,
   HouseholdResponse,
   InviteListResponse,
@@ -23,6 +24,10 @@ export async function joinHousehold(code: string): Promise<HouseholdResponse> {
     method: 'POST',
     body: { code: code.replace(/\s+/g, '').toUpperCase() },
   })
+}
+
+export async function getHouseholdBootstrap(householdId: string): Promise<HouseholdBootstrapResponse> {
+  return apiRequest<HouseholdBootstrapResponse>(`/households/${householdId}/bootstrap`)
 }
 
 export async function createInvite(
