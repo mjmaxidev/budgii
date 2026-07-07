@@ -4,6 +4,10 @@ export function isApiEnabled(): boolean {
   return import.meta.env.VITE_API_ENABLED === 'true'
 }
 
+export function showDemoTools(): boolean {
+  return import.meta.env.VITE_SHOW_DEMO_TOOLS === 'true'
+}
+
 export function getApiBaseUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL?.trim()
   return (base || DEFAULT_BASE_URL).replace(/\/$/, '')

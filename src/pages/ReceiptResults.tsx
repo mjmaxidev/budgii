@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Image, MoreVertical, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { Image, MoreVertical, Plus, RefreshCw, Sparkles, Trash2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -14,6 +14,7 @@ import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
 import { apiExpenseToExpense, createExpense } from '@/api/expenses'
 import { deleteReceipt as apiDeleteReceipt, updateReceipt as apiUpdateReceipt } from '@/api/receipts'
+import { runReceiptAnalysis } from '@/api/receiptAnalysis'
 import { useAuthStore } from '@/store/authStore'
 import { withFrom } from '@/utils/navigation'
 import { useStore } from '@/store/appStore'
@@ -35,6 +36,7 @@ export function ReceiptResults() {
   )
   const confirmReceiptItems = useStore((s) => s.confirmReceiptItems)
   const deleteReceipt = useStore((s) => s.deleteReceipt)
+  const analyzeLocalReceipt = useStore((s) => s.analyzeReceipt)
   const householdId = useAuthStore((s) => s.householdId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [addItemOpen, setAddItemOpen] = useState(false)
@@ -43,6 +45,7 @@ export function ReceiptResults() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState(false)
   const [error, setError] = useState('')
 
   if (!receipt) {
@@ -143,6 +146,30 @@ export function ReceiptResults() {
     }
   }
 
+  async function reanalyzeReceipt() {
+    setMenuOpen(false)
+    setError('')
+
+    if (!isApiEnabled()) {
+      analyzeLocalReceipt(receiptId)
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to re-analyze this receipt.')
+      return
+    }
+
+    setReanalyzing(true)
+    try {
+      await runReceiptAnalysis(householdId, receiptId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not re-analyze receipt')
+    } finally {
+      setReanalyzing(false)
+    }
+  }
+
   return (
     <AppShell
       topBar={
@@ -206,8 +233,25 @@ export function ReceiptResults() {
             {error}
           </p>
         )}
-        <ActionButton variant="green" onClick={() => void confirm()} disabled={saving}>
+        {receipt.status === 'failed' && receipt.analysisError && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {receipt.analysisError}
+          </p>
+        )}
+        <ActionButton
+          variant="green"
+          onClick={() => void confirm()}
+          disabled={saving || reanalyzing || receipt.status === 'analyzing' || items.length === 0}
+        >
           {saving ? 'Saving…' : 'Confirm All Items'}
+        </ActionButton>
+        <ActionButton
+          variant="outline"
+          onClick={() => void reanalyzeReceipt()}
+          disabled={reanalyzing || saving}
+          leftIcon={<RefreshCw size={18} className={reanalyzing ? 'animate-spin' : undefined} />}
+        >
+          {reanalyzing ? 'Re-analyzing…' : 'Re-analyze Receipt'}
         </ActionButton>
         <ActionButton
           variant="greenOutline"
@@ -266,6 +310,13 @@ export function ReceiptResults() {
             className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left text-[15px] font-bold text-ink active:bg-line/40"
           >
             <Image size={18} className="text-green" /> View receipt image
+          </button>
+          <button
+            onClick={() => void reanalyzeReceipt()}
+            disabled={reanalyzing}
+            className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left text-[15px] font-bold text-ink active:bg-line/40 disabled:opacity-60"
+          >
+            <RefreshCw size={18} className={reanalyzing ? 'animate-spin text-green' : 'text-green'} /> Re-analyze receipt
           </button>
           <button
             onClick={() => {

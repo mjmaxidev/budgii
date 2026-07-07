@@ -65,6 +65,7 @@ receipt_items
 | No real OCR provider | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; receipt failure logging/status visibility is in place; real-receipt QA remains Phase 2 |
 | Account settings local-only | **Done** — `PATCH /users/me` updates profile/email and `POST /users/me/password` changes email-account passwords |
 | Notifications mock-only | **Done** — `GET /households/{id}/notifications` generates spending/deal notifications from backend data |
+| Deals/watchlist backend | **Done** — `POST /households/{id}/deals/check` refreshes synced watchlist/deals and frontend report/cards consume backend-generated deal data |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
 | OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
 
@@ -245,9 +246,11 @@ GET  /receipts/{id}/file                                        ✅
 
 **Sync evolution:** Config via document sync; expenses/receipts via paginated API + local cache.
 
-**Remaining Phase 2:** test OpenAI receipt recognition with real receipts. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
+**Remaining Phase 2:** test OpenAI receipt recognition with more real receipts. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
 
 **Receipt QA hardening done:** failed analysis now stores `analysis_error`, status responses return it, backend logs include receipt/user/household context, and the scan flow surfaces the failure reason instead of a generic error.
+
+**Receipt retry/parser hardening done:** Receipt Results can re-analyze existing uploads, Scan Receipt and Receipt Results share the same API polling/hydration flow, and OpenAI payload parsing now skips total/tax/payment rows, merges duplicate item lines, tolerates numeric strings, and fails clearly when no line items are returned.
 
 **Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration.
 

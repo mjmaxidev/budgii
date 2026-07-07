@@ -7,7 +7,10 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
+import { useLookups } from '@/store/lookups'
 import type { RecurringTransaction } from '@/types'
+
+type RecurringFrequency = RecurringTransaction['frequency']
 
 const FREQUENCIES = [
   { value: 'daily', label: 'Daily' },
@@ -49,27 +52,33 @@ export function RecurringTransactions() {
   const addRecurringTransaction = useStore((s) => s.addRecurringTransaction)
   const updateRecurringTransaction = useStore((s) => s.updateRecurringTransaction)
   const deleteRecurringTransaction = useStore((s) => s.deleteRecurringTransaction)
+  const { familyMembers, tags, member } = useLookups()
 
-  // Form state
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [merchant, setMerchant] = useState('')
   const [amount, setAmount] = useState('')
-  const [frequency, setFrequency] = useState('monthly')
+  const [frequency, setFrequency] = useState<RecurringFrequency>('monthly')
   const [dayOfMonth, setDayOfMonth] = useState('1')
   const [dayOfWeek, setDayOfWeek] = useState(String(new Date().getDay()))
   const [monthOfYear, setMonthOfYear] = useState(String(new Date().getMonth() + 1))
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '')
+  const [memberId, setMemberId] = useState(familyMembers.find((item) => item.isDefault)?.id ?? familyMembers[0]?.id ?? '')
+  const [tagIds, setTagIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const isValid = merchant.trim() !== '' && amount.trim() !== '' && !!categoryId
 
+  function toggleTag(id: string) {
+    setTagIds((current) => (current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id]))
+  }
+
   const handleAddOrUpdate = () => {
     if (!isValid) return
 
     const transactionData: Partial<RecurringTransaction> = {
-      frequency: frequency as any,
+      frequency,
       dayOfMonth:
         frequency === 'monthly' || frequency === 'quarterly' || frequency === 'yearly'
           ? parseInt(dayOfMonth)
@@ -81,7 +90,9 @@ export function RecurringTransactions() {
         merchant,
         amount: parseFloat(amount),
         categoryId,
-        notes,
+        memberId: memberId || undefined,
+        tagIds,
+        notes: notes || undefined,
       },
     }
 
@@ -104,6 +115,8 @@ export function RecurringTransactions() {
     setDayOfWeek(transaction.dayOfWeek?.toString() || String(new Date().getDay()))
     setMonthOfYear(transaction.monthOfYear?.toString() || String(new Date().getMonth() + 1))
     setCategoryId(transaction.expense.categoryId || categories[0]?.id || '')
+    setMemberId(transaction.expense.memberId || familyMembers.find((item) => item.isDefault)?.id || familyMembers[0]?.id || '')
+    setTagIds(transaction.expense.tagIds ?? [])
     setNotes(transaction.expense.notes || '')
     setShowForm(true)
   }
@@ -116,6 +129,8 @@ export function RecurringTransactions() {
     setDayOfWeek(String(new Date().getDay()))
     setMonthOfYear(String(new Date().getMonth() + 1))
     setCategoryId(categories[0]?.id || '')
+    setMemberId(familyMembers.find((item) => item.isDefault)?.id ?? familyMembers[0]?.id ?? '')
+    setTagIds([])
     setNotes('')
     setShowForm(false)
     setEditingId(null)
@@ -174,7 +189,7 @@ export function RecurringTransactions() {
             <label className="mb-1 block text-sm font-semibold text-muted">Frequency</label>
             <select
               value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
+              onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
               className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
             >
               {FREQUENCIES.map((freq) => (
@@ -233,7 +248,49 @@ export function RecurringTransactions() {
             </div>
           )}
 
-          {/* Notes */}
+          {familyMembers.length > 0 && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-muted">Family Member</label>
+              <select
+                value={memberId}
+                onChange={(e) => setMemberId(e.target.value)}
+                className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
+              >
+                <option value="">No member</option>
+                {familyMembers.map((familyMember) => (
+                  <option key={familyMember.id} value={familyMember.id}>
+                    {familyMember.avatar} {familyMember.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {tags.length > 0 && (
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-muted">Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => {
+                  const selected = tagIds.includes(tag.id)
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className={`rounded-pill border px-3 py-1.5 text-[13px] font-bold transition ${
+                        selected
+                          ? 'border-green bg-greenSoft text-green'
+                          : 'border-line bg-surface text-muted active:bg-surfaceSoft'
+                      }`}
+                    >
+                      {tag.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-semibold text-muted mb-1">Notes</label>
             <textarea
@@ -292,6 +349,26 @@ export function RecurringTransactions() {
                     <p className="text-[13px] text-muted">
                       ${transaction.expense.amount?.toFixed(2)} / {transaction.frequency}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {transaction.expense.memberId && (
+                        <span className="rounded-pill bg-greenSoft px-2 py-0.5 text-[11px] font-bold text-green">
+                          {member(transaction.expense.memberId)?.name ?? 'Member'}
+                        </span>
+                      )}
+                      {(transaction.expense.tagIds ?? []).map((tagId) => {
+                        const tag = tags.find((item) => item.id === tagId)
+                        if (!tag) return null
+                        return (
+                          <span
+                            key={tag.id}
+                            className="rounded-pill px-2 py-0.5 text-[11px] font-bold"
+                            style={{ backgroundColor: `${tag.color}22`, color: tag.color }}
+                          >
+                            {tag.name}
+                          </span>
+                        )
+                      })}
+                    </div>
                     {transaction.expense.notes && (
                       <p className="text-[12px] text-muted/60 mt-1">{transaction.expense.notes}</p>
                     )}

@@ -220,28 +220,81 @@ def ocr_result_from_payload(payload: dict) -> OcrReceiptResult:
     if not isinstance(items_payload, list):
         raise ValueError("OpenAI receipt analysis returned invalid items")
 
-    items: list[OcrReceiptLine] = []
+    items_by_name: dict[str, OcrReceiptLine] = {}
     for item in items_payload:
         if not isinstance(item, dict):
             continue
         name = str(item.get("name") or "").strip()
-        if not name:
+        if not name or is_non_item_receipt_line(name):
             continue
-        items.append(
-            OcrReceiptLine(
-                name=name,
-                amount=max(0, float(item.get("amount") or 0)),
-                category_name=str(item.get("category_name") or "Other").strip() or "Other",
-                confidence=max(0, min(1, float(item.get("confidence") or 0))),
+        amount = max(0, parse_number(item.get("amount")))
+        if amount <= 0:
+            continue
+        category_name = str(item.get("category_name") or "Other").strip() or "Other"
+        confidence = max(0, min(1, parse_number(item.get("confidence"))))
+        key = name.lower()
+        existing = items_by_name.get(key)
+        if existing:
+            items_by_name[key] = OcrReceiptLine(
+                name=existing.name,
+                amount=round(existing.amount + amount, 2),
+                category_name=existing.category_name,
+                confidence=max(existing.confidence, confidence),
             )
+            continue
+        items_by_name[key] = OcrReceiptLine(
+            name=name,
+            amount=amount,
+            category_name=category_name,
+            confidence=confidence,
         )
+
+    items = list(items_by_name.values())
+    if not items:
+        raise ValueError("OpenAI receipt analysis returned no line items")
+
+    total = parse_number(payload.get("total"))
+    if total <= 0:
+        total = round(sum(item.amount for item in items), 2)
 
     return OcrReceiptResult(
         merchant=str(payload.get("merchant") or "").strip() or "Unknown Merchant",
-        total=max(0, float(payload.get("total") or 0)),
+        total=max(0, total),
         ocr_text=str(payload.get("ocr_text") or "").strip(),
         items=items,
     )
+
+
+def parse_number(value: object) -> float:
+    if isinstance(value, str):
+        value = value.replace("$", "").replace(",", "").strip()
+    try:
+        return float(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def is_non_item_receipt_line(name: str) -> bool:
+    normalized = " ".join(name.lower().replace(":", " ").split())
+    return normalized in {
+        "subtotal",
+        "sub total",
+        "tax",
+        "gst",
+        "sales tax",
+        "total",
+        "amount due",
+        "balance due",
+        "payment",
+        "cash",
+        "card",
+        "credit card",
+        "visa",
+        "mastercard",
+        "eftpos",
+        "change",
+        "change due",
+    }
 
 
 def get_receipt_ocr_provider(

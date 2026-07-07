@@ -22,13 +22,13 @@ const faqItems: FAQItem[] = [
     id: 'scan-receipt',
     icon: ScanLine,
     question: 'How do I scan a receipt?',
-    answer: 'Go to the Scan Receipt page and point your camera at the receipt. The app will use OCR to extract the total amount, items, and merchant name automatically. Review the extracted data and make corrections if needed, then tap Process to add it to your expenses.',
+    answer: 'Go to Scan a Receipt, capture or upload the receipt image, and Budgii will extract the merchant, total, and line items. Review or edit the extracted items, then tap Confirm All Items to add them to your expenses. If OCR fails or looks wrong, use Re-analyze Receipt from the results page.',
   },
   {
     id: 'set-budget',
     icon: Wallet,
     question: 'How do I set my budget?',
-    answer: 'Navigate to Settings and select "Monthly Budget," or use the Budget Setup page. Enter your total budget limit, set a warning threshold for alerts, and optionally allocate amounts to specific categories. Choose whether you want monthly, weekly, or daily budget periods.',
+    answer: 'Go to Settings > Budget Setting. Enter your total budget limit, set a warning threshold for alerts, and optionally allocate amounts to specific categories. Choose whether you want monthly, weekly, or daily budget periods.',
   },
   {
     id: 'invite-family',
@@ -40,7 +40,7 @@ const faqItems: FAQItem[] = [
     id: 'budget-alerts',
     icon: Bell,
     question: 'How do I set up budget alerts?',
-    answer: 'In Settings, go to Budget > Warning Threshold. Turn on "Warning Notifications" to get alerted when spending reaches your warning level, and enable "Over-Budget Alerts" to be notified when you exceed your budget. You can customize notification preferences in the Notifications section.',
+    answer: 'Go to Settings > Spending Alerts. Turn on notifications, choose fixed amount or percentage alerts, then create alerts for the categories you want to watch. Budgii checks those alerts against your current month spending.',
   },
   {
     id: 'categories',
@@ -64,13 +64,13 @@ const faqItems: FAQItem[] = [
     id: 'security',
     icon: Lock,
     question: 'How secure is my data?',
-    answer: 'Your financial data is encrypted and stored securely. You can enable Face ID or app lock in Settings > Privacy & Security for additional protection. Your data is never shared without permission, and we follow industry best practices for data protection.',
+    answer: 'Budgii uses account authentication for backend sync and keeps the app PIN lock local to your device. Household access is permission-based, so admins can control who can view or edit household data.',
   },
   {
     id: 'export-data',
     icon: MessageCircle,
     question: 'Can I export or backup my data?',
-    answer: 'Yes, you can export your expense data, budgets, and reports. Go to Settings > Data & Backup. You can also create automatic backups to keep your financial records safe. Import previously exported data at any time.',
+    answer: 'Yes. Go to Settings > Export Data to download transactions as CSV, a current-month HTML report, or a JSON backup of the app data currently loaded on your device.',
   },
 ]
 

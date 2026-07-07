@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { logout } from '@/api/auth'
+import { showDemoTools } from '@/api/config'
 import { useUserAvatarUrl } from '@/hooks/useUserAvatarUrl'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
@@ -76,7 +77,9 @@ export function Settings() {
       title: 'Data',
       items: [
         { icon: Download, label: 'Export Data', to: '/data-export' },
-        { icon: Trash2, label: 'Reset Demo Data', action: () => resetData(), danger: true },
+        ...(showDemoTools()
+          ? [{ icon: Trash2, label: 'Reset Demo Data', action: () => resetData(), danger: true }]
+          : []),
       ],
     },
     {

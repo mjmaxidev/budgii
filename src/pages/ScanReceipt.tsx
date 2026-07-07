@@ -8,25 +8,16 @@ import { Modal } from '@/components/ui/Modal'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
 import {
-  analyzeReceipt as apiAnalyzeReceipt,
-  apiReceiptItemToReceiptItem,
   apiReceiptToReceipt,
   createReceipt,
-  getReceipt,
-  getReceiptStatus,
-  listReceiptItems,
   uploadReceipt,
 } from '@/api/receipts'
+import { runReceiptAnalysis } from '@/api/receiptAnalysis'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { canUseNativeCamera, captureReceiptPhoto } from '@/capacitor/camera'
 import { withFrom } from '@/utils/navigation'
 import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
-import type { ReceiptItemResponse, ReceiptResponse } from '@/api/types'
-
-function isAnalysisComplete(status: string): boolean {
-  return status === 'needs_review' || status === 'processed' || status === 'failed'
-}
 
 export function ScanReceipt() {
   const navigate = useNavigate()
@@ -34,8 +25,6 @@ export function ScanReceipt() {
   const updateReceipt = useStore((s) => s.updateReceipt)
   const analyzeLocalReceipt = useStore((s) => s.analyzeReceipt)
   const householdId = useAuthStore((s) => s.householdId)
-  const categories = useStore((s) => s.categories)
-  const familyMembers = useStore((s) => s.familyMembers)
   const [analyzing, setAnalyzing] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const [error, setError] = useState('')
@@ -118,69 +107,13 @@ export function ScanReceipt() {
     if (!householdId) return
 
     try {
-      const categoryIds = Object.fromEntries(categories.map((category) => [category.name, category.id]))
-      const defaultMember = familyMembers.find((m) => m.isDefault)?.id
-      const analysis = await apiAnalyzeReceipt(householdId, receiptId, {
-        categoryIds,
-        defaultCategoryId: categories[0]?.id,
-        defaultMemberId: defaultMember,
-      })
-      if (isAnalysisComplete(analysis.receipt.status)) {
-        hydrateApiAnalysis(receiptId, analysis.receipt, analysis.items)
-      } else {
-        await waitForApiAnalysis(receiptId)
-      }
+      await runReceiptAnalysis(householdId, receiptId)
       setAnalyzing(false)
       navigate(`/receipt-results/${receiptId}`, withFrom('/scan-receipt'))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not analyze receipt')
       setAnalyzing(false)
     }
-  }
-
-  function hydrateApiAnalysis(
-    receiptId: string,
-    receiptResponse: ReceiptResponse,
-    itemResponses: ReceiptItemResponse[],
-  ) {
-    const receipt = apiReceiptToReceipt(receiptResponse)
-    const savedItems = itemResponses.map(apiReceiptItemToReceiptItem)
-    useStore.setState((state) => ({
-      receipts: state.receipts.map((r) =>
-        r.id === receiptId ? { ...receipt, itemIds: savedItems.map((item) => item.id) } : r,
-      ),
-      receiptItems: [...savedItems, ...state.receiptItems.filter((item) => item.receiptId !== receiptId)],
-    }))
-  }
-
-  async function waitForApiAnalysis(receiptId: string) {
-    if (!householdId) return
-
-    const maxAttempts = 18
-    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      await new Promise((resolve) => window.setTimeout(resolve, 700))
-      const status = await getReceiptStatus(householdId, receiptId)
-      if (status.status === 'failed') {
-        useStore.setState((state) => ({
-          receipts: state.receipts.map((receipt) =>
-            receipt.id === receiptId
-              ? { ...receipt, status: 'failed', analysisError: status.analysis_error ?? undefined }
-              : receipt,
-          ),
-        }))
-        throw new Error(status.analysis_error || 'Receipt analysis failed')
-      }
-      if (isAnalysisComplete(status.status)) {
-        const [receipt, items] = await Promise.all([
-          getReceipt(householdId, receiptId),
-          listReceiptItems(householdId, receiptId),
-        ])
-        hydrateApiAnalysis(receiptId, receipt, items.items)
-        return
-      }
-    }
-
-    throw new Error('Receipt analysis is taking longer than expected')
   }
 
   return (
