@@ -267,7 +267,7 @@ GET  /receipts/{id}/file                                        ✅
 | Monitoring | `/v1/health`, structured logs, Sentry |
 | Mobile | Capacitor → `https://api.budgii.app/v1` |
 | Universal links | `https://budgii.app/join?code=` → app or web |
-| CORS | Lock origins in prod (debug allows `*`) |
+| CORS | ✅ `CORS_ORIGINS` locks origins when `APP_DEBUG=false`; production startup rejects weak/default JWT secrets |
 
 ---
 

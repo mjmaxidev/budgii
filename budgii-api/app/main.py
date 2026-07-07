@@ -7,6 +7,7 @@ from app.config import get_settings
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    settings.validate_runtime()
     app = FastAPI(
         title="Budgii API",
         version="0.1.0",
@@ -16,7 +17,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if settings.app_debug else [],
+        allow_origins=["*"] if settings.app_debug else settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
