@@ -10,7 +10,7 @@ import { AppLockProvider } from '@/components/security/AppLockProvider'
  */
 export function AppLayout({ children }: { children?: ReactNode }) {
   return (
-    <div id="mobile-frame-root" className="safe-top safe-x relative mx-auto h-full w-full max-w-[390px] bg-bg">
+    <div id="mobile-frame-root" className="safe-top safe-x relative mx-auto h-full w-full bg-bg sm:max-w-[390px]">
       <AppLockProvider>
         {children ?? <Outlet />}
       </AppLockProvider>
