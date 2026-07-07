@@ -11,6 +11,7 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
+COPY tests ./tests
 COPY alembic ./alembic
 COPY alembic.ini .
 RUN chmod +x scripts/entrypoint.sh && mkdir -p /app/uploads

@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, parse_uuid
 from app.config import Settings, get_settings
 from app.db.session import get_db
-from app.models import User
+from app.models import Household, HouseholdMembership, User
 from app.schemas.household import (
     CreateHouseholdRequest,
+    HouseholdBootstrapResponse,
     HouseholdListResponse,
     HouseholdMemberListResponse,
     HouseholdMemberResponse,
@@ -17,8 +19,11 @@ from app.schemas.household import (
     SendInviteRequest,
     UpdateMemberRequest,
 )
+from app.schemas.persona import PersonaResponse
 from app.services import household as household_service
-from app.services.permissions import normalize_editor_level
+from app.services import persona as persona_service
+from app.services import sync as sync_service
+from app.services.permissions import normalize_editor_level, require_can_pull
 
 router = APIRouter()
 
@@ -44,6 +49,21 @@ def member_response(membership, user) -> HouseholdMemberResponse:
         editor_level=membership.editor_level,
         is_account_holder=membership.is_account_holder,
         joined_at=membership.joined_at,
+    )
+
+
+def persona_response(persona, membership_by_persona) -> PersonaResponse:
+    membership = membership_by_persona.get(persona.id)
+    return PersonaResponse(
+        id=str(persona.id),
+        name=persona.name,
+        relationship=persona.relation_label,
+        avatar=persona.avatar,
+        active=persona.active,
+        is_default=persona.is_default,
+        has_app_access=membership is not None,
+        access_role=membership.access_role if membership else None,
+        editor_level=membership.editor_level if membership else None,
     )
 
 
@@ -119,6 +139,48 @@ async def revoke_invite(
 ) -> None:
     invite_uuid = parse_uuid(invite_id, "invite_id")
     await household_service.revoke_invite(session, user, invite_uuid)
+
+
+@router.get("/{household_id}/bootstrap", response_model=HouseholdBootstrapResponse)
+async def bootstrap_household(
+    household_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> HouseholdBootstrapResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    membership = await household_service.require_membership(session, user.id, household_uuid)
+    require_can_pull(membership)
+
+    household = await session.get(Household, household_uuid)
+    if not household:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Household not found")
+
+    member_rows = await household_service.list_members(session, user, household_uuid)
+    personas = await persona_service.list_personas(session, household_uuid)
+    links = await session.scalars(
+        select(HouseholdMembership).where(
+            HouseholdMembership.household_id == household_uuid,
+            HouseholdMembership.persona_id.is_not(None),
+        )
+    )
+    membership_by_persona = {link.persona_id: link for link in links if link.persona_id}
+
+    invites = []
+    if membership.access_role == "admin":
+        invites = await household_service.list_invites(session, user, household_uuid, settings)
+
+    snapshot, server_time, revision = await sync_service.pull_snapshot(session, user.id, household_uuid, None)
+
+    return HouseholdBootstrapResponse(
+        household=household_response(household, membership),
+        members=[member_response(member, member_user) for member, member_user in member_rows],
+        personas=[persona_response(persona, membership_by_persona) for persona in personas],
+        invites=[InviteResponse(**invite) for invite in invites],
+        server_time=server_time,
+        revision=revision,
+        snapshot=snapshot,
+    )
 
 
 @router.get("/{household_id}/members", response_model=HouseholdMemberListResponse)

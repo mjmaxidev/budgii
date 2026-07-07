@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.schemas.access import AccessRole, EditorLevel
+from app.schemas.persona import PersonaResponse
 
 
 class MembershipResponse(BaseModel):
@@ -74,3 +76,13 @@ class HouseholdMemberListResponse(BaseModel):
 class UpdateMemberRequest(BaseModel):
     access_role: AccessRole
     editor_level: EditorLevel | None = None
+
+
+class HouseholdBootstrapResponse(BaseModel):
+    household: HouseholdResponse
+    members: list[HouseholdMemberResponse]
+    personas: list[PersonaResponse]
+    invites: list[InviteResponse]
+    server_time: datetime
+    revision: int
+    snapshot: dict[str, Any]

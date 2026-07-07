@@ -63,7 +63,7 @@ receipt_uploads             ← file metadata (bytes on Docker volume at /app/up
 | No membership admin APIs | ~~Can't PATCH role, remove member~~ **Done** — `GET/PATCH/DELETE /households/{id}/members` |
 | No email delivery | `sent_to_contact` stored; nothing sent |
 | No OCR pipeline | Upload saves file; no link to sync `receipts[]` |
-| No tests | No pytest suite |
+| Limited tests | Bootstrap, auth registration, and viewer permission coverage started in pytest |
 | OAuth needs config | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` empty in `.env` |
 
 ---
@@ -163,7 +163,7 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 | 1 | Commit persona/permissions slice | *(see §6)* |
 | 2 | Invite list + revoke | ✅ `GET /households/invites?household_id=`, `DELETE /households/invites/{id}` |
 | 3 | Membership admin | ✅ `GET /households/{id}/members`, `PATCH`, `DELETE` |
-| 4 | Bootstrap (optional) | `GET /households/{id}/bootstrap` → household + personas + invites + sync snapshot |
+| 4 | Bootstrap | ✅ `GET /households/{id}/bootstrap` → household + members + personas + invites + sync snapshot |
 | 5 | Viewer pull filtering (optional) | Strip admin-only keys from snapshot for limited roles |
 
 #### Frontend tasks
@@ -198,6 +198,7 @@ DELETE /v1/households/invites/{id}                 ✅
 GET  /v1/households/{id}/members                   ✅
 PATCH /v1/households/{id}/members/{user_id}        ✅
 DELETE /v1/households/{id}/members/{user_id}       ✅
+GET  /v1/households/{id}/bootstrap                 ✅
 
 GET  /v1/personas?household_id=
 POST /v1/personas?household_id=
