@@ -19,6 +19,7 @@ import {
 } from '@/api/receipts'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
+import { canUseNativeCamera, captureReceiptPhoto } from '@/capacitor/camera'
 import { withFrom } from '@/utils/navigation'
 import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
 import type { ReceiptItemResponse, ReceiptResponse } from '@/api/types'
@@ -40,6 +41,22 @@ export function ScanReceipt() {
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
+
+  async function handleCameraCapture() {
+    if (!canUseNativeCamera()) {
+      cameraRef.current?.click()
+      return
+    }
+
+    try {
+      const file = await captureReceiptPhoto()
+      if (file) await handleFile(file)
+    } catch (err) {
+      const message = err instanceof Error ? err.message.toLowerCase() : ''
+      if (message.includes('cancel')) return
+      cameraRef.current?.click()
+    }
+  }
 
   async function handleFile(file?: File) {
     setAnalyzing(true)
@@ -210,7 +227,7 @@ export function ScanReceipt() {
 
       <div className="mt-7 space-y-3">
         <button
-          onClick={() => cameraRef.current?.click()}
+          onClick={() => void handleCameraCapture()}
           className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-input bg-green text-[16px] font-bold text-white shadow-soft active:scale-[0.98]"
         >
           <Camera size={20} /> Scan Receipt

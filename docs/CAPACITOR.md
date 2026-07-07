@@ -20,6 +20,21 @@ npm run cap:sync
 
 Native projects (`ios/`, `android/`) are gitignored and regenerated locally with `cap add`. Commit `capacitor.config.ts` and web source only.
 
+## Native camera
+
+Receipt scanning uses `@capacitor/camera` on iOS/Android and falls back to a browser file input on web/Electron.
+
+After regenerating `ios/`, add these usage descriptions to `ios/App/App/Info.plist` before running on device:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Budgii uses the camera to capture receipt photos for item extraction.</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Budgii lets you choose receipt photos from your library.</string>
+```
+
+The iOS Simulator can install and launch the app, but proper camera capture requires a physical iPhone.
+
 ## Scripts
 
 | Script | What it does |
