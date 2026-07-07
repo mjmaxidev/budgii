@@ -175,6 +175,9 @@ class Expense(Base):
     receipt_upload_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("receipt_uploads.id", ondelete="SET NULL"), nullable=True
     )
+    receipt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipts.id", ondelete="SET NULL"), nullable=True
+    )
     source: Mapped[str] = mapped_column(String(32), default="manual")
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -184,6 +187,7 @@ class Expense(Base):
 
     household: Mapped[Household] = relationship(back_populates="expenses")
     persona: Mapped[HouseholdPersona | None] = relationship(back_populates="expenses")
+    receipt: Mapped["Receipt | None"] = relationship(back_populates="expenses")
 
 
 class ReceiptUpload(Base):
@@ -224,6 +228,7 @@ class Receipt(Base):
     household: Mapped[Household] = relationship(back_populates="receipts")
     upload: Mapped[ReceiptUpload | None] = relationship(back_populates="receipt")
     items: Mapped[list["ReceiptItem"]] = relationship(back_populates="receipt", cascade="all, delete-orphan")
+    expenses: Mapped[list[Expense]] = relationship(back_populates="receipt")
 
 
 class ReceiptItem(Base):

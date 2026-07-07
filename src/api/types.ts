@@ -70,6 +70,7 @@ export type ExpenseResponse = {
   tag_ids: string[]
   notes: string | null
   receipt_upload_id: string | null
+  receipt_id: string | null
   source: 'manual' | 'receipt_ai' | string
   created_at: string
   updated_at: string

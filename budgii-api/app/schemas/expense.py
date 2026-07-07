@@ -14,6 +14,7 @@ class ExpenseResponse(BaseModel):
     tag_ids: list[str] = Field(default_factory=list)
     notes: str | None = None
     receipt_upload_id: str | None = None
+    receipt_id: str | None = None
     source: str
     created_at: datetime
     updated_at: datetime
@@ -36,6 +37,7 @@ class CreateExpenseRequest(BaseModel):
     tag_ids: list[str] = Field(default_factory=list)
     notes: str | None = None
     receipt_upload_id: str | None = None
+    receipt_id: str | None = None
     source: str = Field(default="manual", max_length=32)
 
 
@@ -48,4 +50,5 @@ class UpdateExpenseRequest(BaseModel):
     tag_ids: list[str] | None = None
     notes: str | None = None
     receipt_upload_id: str | None = None
+    receipt_id: str | None = None
     source: str | None = Field(default=None, max_length=32)

@@ -38,6 +38,7 @@ def expense_response(expense: Expense) -> ExpenseResponse:
         tag_ids=list(expense.tag_ids or []),
         notes=expense.notes,
         receipt_upload_id=str(expense.receipt_upload_id) if expense.receipt_upload_id else None,
+        receipt_id=str(expense.receipt_id) if expense.receipt_id else None,
         source=expense.source,
         created_at=expense.created_at,
         updated_at=expense.updated_at,
@@ -94,6 +95,7 @@ async def create_expense(
         tag_ids=body.tag_ids,
         notes=body.notes,
         receipt_upload_id=parse_optional_uuid(body.receipt_upload_id, "receipt_upload_id"),
+        receipt_id=parse_optional_uuid(body.receipt_id, "receipt_id"),
         source=body.source,
     )
     return expense_response(expense)
@@ -121,6 +123,11 @@ async def update_expense(
         if "receipt_upload_id" in body.model_fields_set
         else ...
     )
+    receipt_id = (
+        parse_optional_uuid(body.receipt_id, "receipt_id")
+        if "receipt_id" in body.model_fields_set
+        else ...
+    )
     notes = body.notes if "notes" in body.model_fields_set else ...
 
     expense = await expense_service.update_expense(
@@ -135,6 +142,7 @@ async def update_expense(
         tag_ids=body.tag_ids,
         notes=notes,
         receipt_upload_id=receipt_upload_id,
+        receipt_id=receipt_id,
         source=body.source,
     )
     return expense_response(expense)

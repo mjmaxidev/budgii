@@ -27,7 +27,7 @@ function expenseBody(input: ExpenseApiInput | ExpenseApiPatch): Record<string, u
   if ('tagIds' in input) body.tag_ids = input.tagIds
   if ('memberId' in input) body.persona_id = input.memberId ?? null
   if ('notes' in input) body.notes = input.notes ?? null
-  if ('receiptId' in input) body.receipt_upload_id = input.receiptId ?? null
+  if ('receiptId' in input) body.receipt_id = input.receiptId ?? null
   if ('source' in input) body.source = input.source
   return body
 }
@@ -42,7 +42,7 @@ export function apiExpenseToExpense(expense: ExpenseResponse): Expense {
     tagIds: expense.tag_ids,
     memberId: expense.persona_id ?? undefined,
     notes: expense.notes ?? undefined,
-    receiptId: expense.receipt_upload_id ?? undefined,
+    receiptId: expense.receipt_id ?? expense.receipt_upload_id ?? undefined,
     source: expense.source === 'receipt_ai' ? 'receipt_ai' : 'manual',
   }
 }

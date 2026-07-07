@@ -79,10 +79,11 @@ export function ReceiptResults() {
                   categoryId: item.categoryId,
                   tagIds: item.tagIds,
                   memberId: item.memberId,
+                  receiptId,
                   source: 'receipt_ai',
                 }),
               )
-              return { ...expense, receiptId }
+              return expense
             }),
         )
         await apiUpdateReceipt(householdId, receiptId, { status: 'processed' })

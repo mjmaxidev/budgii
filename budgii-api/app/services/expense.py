@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Expense, HouseholdMembership, HouseholdPersona, ReceiptUpload, User
+from app.models import Expense, HouseholdMembership, HouseholdPersona, Receipt, ReceiptUpload, User
 from app.services.permissions import require_expense_write
 
 
@@ -78,6 +78,23 @@ async def ensure_receipt_upload(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household")
 
 
+async def ensure_receipt(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    receipt_id: uuid.UUID | None,
+) -> None:
+    if receipt_id is None:
+        return
+    receipt = await session.scalar(
+        select(Receipt.id).where(
+            Receipt.id == receipt_id,
+            Receipt.household_id == household_id,
+        )
+    )
+    if not receipt:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt is not in this household")
+
+
 async def create_expense(
     session: AsyncSession,
     membership: HouseholdMembership,
@@ -92,11 +109,13 @@ async def create_expense(
     tag_ids: list[str],
     notes: str | None,
     receipt_upload_id: uuid.UUID | None,
+    receipt_id: uuid.UUID | None,
     source: str,
 ) -> Expense:
     require_expense_write(membership)
     await ensure_persona(session, membership.household_id, persona_id)
     await ensure_receipt_upload(session, membership.household_id, receipt_upload_id)
+    await ensure_receipt(session, membership.household_id, receipt_id)
 
     expense = Expense(
         id=expense_id or uuid.uuid4(),
@@ -109,6 +128,7 @@ async def create_expense(
         tag_ids=tag_ids,
         notes=notes.strip() if notes else None,
         receipt_upload_id=receipt_upload_id,
+        receipt_id=receipt_id,
         source=source,
         created_by=user.id,
     )
@@ -131,6 +151,7 @@ async def update_expense(
     tag_ids: list[str] | None = None,
     notes: str | None | object = ...,
     receipt_upload_id: uuid.UUID | None | object = ...,
+    receipt_id: uuid.UUID | None | object = ...,
     source: str | None = None,
 ) -> Expense:
     require_expense_write(membership)
@@ -154,6 +175,9 @@ async def update_expense(
     if receipt_upload_id is not ...:
         await ensure_receipt_upload(session, membership.household_id, receipt_upload_id)
         expense.receipt_upload_id = receipt_upload_id
+    if receipt_id is not ...:
+        await ensure_receipt(session, membership.household_id, receipt_id)
+        expense.receipt_id = receipt_id
     if source is not None:
         expense.source = source
 
