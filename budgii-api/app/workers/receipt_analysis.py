@@ -26,7 +26,12 @@ async def run_receipt_analysis(
                 upload = await receipt_service.get_upload_for_receipt(session, household_id, receipt_id)
                 storage_path = upload.storage_path
 
-            provider = get_receipt_ocr_provider(get_settings().receipt_ocr_provider)
+            settings = get_settings()
+            provider = get_receipt_ocr_provider(
+                settings.receipt_ocr_provider,
+                openai_api_key=settings.openai_api_key,
+                openai_model=settings.receipt_openai_model,
+            )
             analysis = await provider.analyze(storage_path)
             await receipt_service.analyze_receipt(
                 session,

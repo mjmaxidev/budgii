@@ -1,5 +1,11 @@
+import base64
+import json
+import mimetypes
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
+
+import httpx
 
 
 @dataclass(frozen=True)
@@ -78,7 +84,174 @@ class DeterministicReceiptOcrProvider:
         )
 
 
-def get_receipt_ocr_provider(provider_name: str) -> ReceiptOcrProvider:
+RECEIPT_ANALYSIS_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["merchant", "total", "ocr_text", "items"],
+    "properties": {
+        "merchant": {"type": "string"},
+        "total": {"type": "number"},
+        "ocr_text": {"type": "string"},
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["name", "amount", "category_name", "confidence"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "amount": {"type": "number"},
+                    "category_name": {"type": "string"},
+                    "confidence": {"type": "number"},
+                },
+            },
+        },
+    },
+}
+
+
+class OpenAiReceiptOcrProvider:
+    def __init__(self, api_key: str, model: str) -> None:
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is required when RECEIPT_OCR_PROVIDER=openai")
+        if not model:
+            raise ValueError("RECEIPT_OPENAI_MODEL is required when RECEIPT_OCR_PROVIDER=openai")
+        self.api_key = api_key
+        self.model = model
+
+    async def analyze(self, storage_path: str | None) -> OcrReceiptResult:
+        if not storage_path:
+            raise ValueError("A receipt image upload is required for OpenAI receipt analysis")
+
+        image_url = image_file_to_data_url(storage_path)
+        response = await self.create_response(image_url)
+        payload = parse_response_json(response)
+        return ocr_result_from_payload(payload)
+
+    async def create_response(self, image_url: str) -> dict:
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/responses",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.model,
+                    "input": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "input_text",
+                                    "text": (
+                                        "Extract this receipt into strict JSON. "
+                                        "Return merchant, total, raw OCR text, and line items. "
+                                        "For each item choose the closest broad category name such as "
+                                        "Groceries, Dining, Transport, Shopping, Bills, Health, "
+                                        "Entertainment, Travel, or Other. Use numeric confidence from 0 to 1."
+                                    ),
+                                },
+                                {
+                                    "type": "input_image",
+                                    "image_url": image_url,
+                                },
+                            ],
+                        }
+                    ],
+                    "text": {
+                        "format": {
+                            "type": "json_schema",
+                            "name": "receipt_analysis",
+                            "strict": True,
+                            "schema": RECEIPT_ANALYSIS_SCHEMA,
+                        }
+                    },
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+
+
+def image_file_to_data_url(storage_path: str) -> str:
+    path = Path(storage_path)
+    if not path.is_file():
+        raise ValueError("Receipt image file not found")
+
+    mime_type = mimetypes.guess_type(path.name)[0] or "image/jpeg"
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def parse_response_json(response: dict) -> dict:
+    output_text = response.get("output_text")
+    if not isinstance(output_text, str):
+        output_text = extract_output_text(response)
+    if not output_text:
+        raise ValueError("OpenAI receipt analysis returned no text")
+
+    parsed = json.loads(output_text)
+    if not isinstance(parsed, dict):
+        raise ValueError("OpenAI receipt analysis did not return an object")
+    return parsed
+
+
+def extract_output_text(response: dict) -> str:
+    chunks: list[str] = []
+    output = response.get("output", [])
+    if not isinstance(output, list):
+        return ""
+
+    for item in output:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content", [])
+        if not isinstance(content, list):
+            continue
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "output_text" and isinstance(part.get("text"), str):
+                chunks.append(part["text"])
+
+    return "".join(chunks)
+
+
+def ocr_result_from_payload(payload: dict) -> OcrReceiptResult:
+    items_payload = payload.get("items")
+    if not isinstance(items_payload, list):
+        raise ValueError("OpenAI receipt analysis returned invalid items")
+
+    items: list[OcrReceiptLine] = []
+    for item in items_payload:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+        items.append(
+            OcrReceiptLine(
+                name=name,
+                amount=max(0, float(item.get("amount") or 0)),
+                category_name=str(item.get("category_name") or "Other").strip() or "Other",
+                confidence=max(0, min(1, float(item.get("confidence") or 0))),
+            )
+        )
+
+    return OcrReceiptResult(
+        merchant=str(payload.get("merchant") or "").strip() or "Unknown Merchant",
+        total=max(0, float(payload.get("total") or 0)),
+        ocr_text=str(payload.get("ocr_text") or "").strip(),
+        items=items,
+    )
+
+
+def get_receipt_ocr_provider(
+    provider_name: str,
+    *,
+    openai_api_key: str = "",
+    openai_model: str = "",
+) -> ReceiptOcrProvider:
     if provider_name == "deterministic":
         return DeterministicReceiptOcrProvider()
+    if provider_name == "openai":
+        return OpenAiReceiptOcrProvider(openai_api_key, openai_model)
     raise ValueError(f"Unsupported receipt OCR provider: {provider_name}")

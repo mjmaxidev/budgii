@@ -62,7 +62,7 @@ receipt_items
 | No invite list/revoke | **Done** — API-backed pending invite list and revoke UI |
 | No membership admin APIs | **Done** — role update and removal endpoints plus Family Members UI |
 | No email delivery | `sent_to_contact` stored; nothing sent |
-| No real OCR provider | Async deterministic provider abstraction exists; OpenAI key/model placeholders are ready; provider implementation remains Phase 2 |
+| No real OCR provider | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; real-receipt QA remains Phase 2 |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
 | OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
 
@@ -243,7 +243,7 @@ GET  /receipts/{id}/file                                        ✅
 
 **Sync evolution:** Config via document sync; expenses/receipts via paginated API + local cache.
 
-**Remaining Phase 2:** add the OpenAI receipt provider implementation behind `RECEIPT_OCR_PROVIDER=openai`, add recurring transaction application, evaluate spending alerts server-side, and add richer finance pagination/cache UX as data volume grows. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
+**Remaining Phase 2:** test OpenAI receipt recognition with real receipts, add recurring transaction application, evaluate spending alerts server-side, and add richer finance pagination/cache UX as data volume grows. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
 
 ---
 

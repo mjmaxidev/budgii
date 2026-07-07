@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     invite_link_base: str = "https://budgii.app/join"
     receipt_storage_path: str = "/app/uploads"
     receipt_ocr_provider: str = "deterministic"
-    receipt_openai_model: str = ""
+    receipt_openai_model: str = "gpt-5.5"
 
 
 @lru_cache

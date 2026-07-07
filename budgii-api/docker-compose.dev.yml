@@ -25,6 +25,9 @@ services:
       JWT_SECRET: dev-docker-secret-change-me
       INVITE_LINK_BASE: https://budgii.app/join
       RECEIPT_STORAGE_PATH: /app/uploads
+      RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-deterministic}
+      RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       BUDGII_DEV_SEED: "true"
     volumes:
       - receipt_uploads:/app/uploads
