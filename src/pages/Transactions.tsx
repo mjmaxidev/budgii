@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Plus, ScanLine } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
@@ -13,11 +13,14 @@ import { useStore } from '@/store/appStore'
 import { formatDate } from '@/utils/dates'
 import { withFrom } from '@/utils/navigation'
 
+const PAGE_SIZE = 30
+
 export function Transactions() {
   const navigate = useNavigate()
   const expenses = useStore((s) => s.expenses)
   const [query, setQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const filtered = useMemo(
     () =>
@@ -26,17 +29,23 @@ export function Transactions() {
         .sort((a, b) => +new Date(b.date) - +new Date(a.date)),
     [expenses, query],
   )
+  const visible = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [query, expenses.length])
 
   // group by date label
   const groups = useMemo(() => {
-    const map = new Map<string, typeof filtered>()
-    for (const e of filtered) {
+    const map = new Map<string, typeof visible>()
+    for (const e of visible) {
       const key = formatDate(e.date)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(e)
     }
     return Array.from(map.entries())
-  }, [filtered])
+  }, [visible])
 
   return (
     <AppShell showBottomNav topBar={<TopBar title="Transactions" />}>
@@ -59,6 +68,12 @@ export function Transactions() {
         </ActionButton>
       </div>
 
+      {filtered.length > 0 && (
+        <p className="mt-3 px-1 text-[12px] font-semibold text-muted">
+          Showing {Math.min(visibleCount, filtered.length)} of {filtered.length} transactions
+        </p>
+      )}
+
       {groups.length === 0 ? (
         <div className="mt-6">
           <EmptyState
@@ -79,6 +94,15 @@ export function Transactions() {
               </Card>
             </div>
           ))}
+          {hasMore && (
+            <ActionButton
+              size="md"
+              variant="greenOutline"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            >
+              Load More Transactions
+            </ActionButton>
+          )}
         </div>
       )}
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Trash2, Edit2, MoreVertical } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
@@ -18,6 +18,8 @@ import { useReceiptImageUrl } from '@/hooks/useReceiptImageUrl'
 import { formatDate } from '@/utils/dates'
 import { withFrom } from '@/utils/navigation'
 
+const PAGE_SIZE = 20
+
 export function ReceiptHistory() {
   const navigate = useNavigate()
   const receipts = useStore((s) => s.receipts)
@@ -28,6 +30,7 @@ export function ReceiptHistory() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const filtered = useMemo(
     () =>
@@ -36,6 +39,12 @@ export function ReceiptHistory() {
         .sort((a, b) => +new Date(b.date) - +new Date(a.date)),
     [receipts, query],
   )
+  const visibleReceipts = filtered.slice(0, visibleCount)
+  const hasMore = visibleCount < filtered.length
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [query, receipts.length])
 
   const selectedReceipt = filtered.find((r) => r.id === selectedReceiptId)
   const selectedReceiptImageUrl = useReceiptImageUrl({
@@ -88,6 +97,12 @@ export function ReceiptHistory() {
         />
       </div>
 
+      {filtered.length > 0 && (
+        <p className="mt-3 px-1 text-[12px] font-semibold text-muted">
+          Showing {Math.min(visibleCount, filtered.length)} of {filtered.length} receipts
+        </p>
+      )}
+
       {filtered.length === 0 ? (
         <div className="mt-10">
           <EmptyState
@@ -98,7 +113,7 @@ export function ReceiptHistory() {
         </div>
       ) : (
         <div className="mt-4 space-y-3">
-          {filtered.map((receipt) => (
+          {visibleReceipts.map((receipt) => (
             <Card
               key={receipt.id}
               className="flex cursor-pointer items-center gap-3 p-3 transition-colors hover:bg-line/20 active:bg-line/30"
@@ -160,6 +175,15 @@ export function ReceiptHistory() {
               </div>
             </Card>
           ))}
+          {hasMore && (
+            <ActionButton
+              size="md"
+              variant="greenOutline"
+              onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+            >
+              Load More Receipts
+            </ActionButton>
+          )}
         </div>
       )}
 
