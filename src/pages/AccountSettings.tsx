@@ -8,15 +8,16 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { PinSetupModal } from '@/components/security/PinSetupModal'
 import { ApiError } from '@/api/client'
-import { changePassword, logout, updateMe } from '@/api/auth'
+import { changePassword, logout, updateMe, uploadAvatar } from '@/api/auth'
 import { isApiEnabled } from '@/api/config'
+import { useUserAvatarUrl } from '@/hooks/useUserAvatarUrl'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 
 const EMOJI_AVATARS = ['👤', '👨', '👩', '🧑', '😊', '😎', '🧔', '👵', '🧓', '👶', '💼', '🎨']
 
-// avatar can be an emoji (default) or an uploaded image stored as a data URL
-const isImage = (a?: string) => !!a && /^(data:|https?:|\/)/.test(a)
+// avatar can be an emoji, remote image URL, local preview, or server-backed upload path
+const isImage = (a?: string) => !!a && /^(blob:|data:|https?:|\/)/.test(a)
 
 export function AccountSettings() {
   const navigate = useNavigate()
@@ -29,6 +30,7 @@ export function AccountSettings() {
   const [name, setName] = useState(apiUser?.name || userProfile.name || 'Alex Johnson')
   const [email, setEmail] = useState(apiUser?.email || userProfile.email || 'dev@mjproductions.app')
   const [avatar, setAvatar] = useState(apiUser?.avatar || userProfile.avatar || '🧑')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [currentPw, setCurrentPw] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -39,13 +41,39 @@ export function AccountSettings() {
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const resolvedAvatar = useUserAvatarUrl(avatar)
+  const displayAvatar = avatar.startsWith('/users/me/avatar') ? resolvedAvatar : avatar
 
-  function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  function flashSaved() {
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setAvatarFile(file)
     const reader = new FileReader()
     reader.onload = () => setAvatar(reader.result as string)
     reader.readAsDataURL(file)
+
+    if (!apiOn) return
+
+    setError('')
+    setSaving(true)
+    try {
+      const user = await uploadAvatar(file)
+      const savedAvatar = user.avatar ?? undefined
+      setAvatar(savedAvatar || '🧑')
+      setAvatarFile(null)
+      setUserProfile({ avatar: savedAvatar })
+      flashSaved()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not upload profile photo.')
+    } finally {
+      setSaving(false)
+      e.target.value = ''
+    }
   }
 
   async function handleSave() {
@@ -58,8 +86,8 @@ export function AccountSettings() {
       setError('Enter your current password to change it.')
       return
     }
-    if (apiOn && isImage(avatar) && avatar.startsWith('data:')) {
-      setError('Photo upload is not synced yet. Choose an emoji avatar for now.')
+    if (apiOn && isImage(avatar) && avatar.startsWith('data:') && !avatarFile) {
+      setError('Choose the photo again so Budgii can upload it.')
       return
     }
 
@@ -68,20 +96,27 @@ export function AccountSettings() {
 
     try {
       if (apiOn) {
-        const user = await updateMe({
+        let user = await updateMe({
           name,
           email,
-          avatar,
+          avatar: avatarFile ? undefined : avatar,
         })
+
+        if (avatarFile) {
+          user = await uploadAvatar(avatarFile)
+        }
 
         if (newPw) {
           await changePassword(currentPw, newPw)
         }
 
+        const savedAvatar = user.avatar ?? undefined
+        setAvatar(savedAvatar || '🧑')
+        setAvatarFile(null)
         setUserProfile({
           name: user.name,
           email: user.email,
-          avatar: user.avatar ?? undefined,
+          avatar: savedAvatar,
         })
       } else {
         setUserProfile({ name, email, avatar })
@@ -90,8 +125,7 @@ export function AccountSettings() {
       setCurrentPw('')
       setNewPw('')
       setConfirmPw('')
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      flashSaved()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not save account changes.')
     } finally {
@@ -110,14 +144,15 @@ export function AccountSettings() {
       <div className="mt-4 flex flex-col items-center gap-2">
         <div className="relative">
           <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-primarySoft shadow-card">
-            {isImage(avatar) ? (
-              <img src={avatar} alt="" className="h-full w-full object-cover" />
+            {isImage(displayAvatar) ? (
+              <img src={displayAvatar} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="text-6xl">{avatar}</span>
+              <span className="text-6xl">{displayAvatar || '🧑'}</span>
             )}
           </div>
           <button
             onClick={() => fileRef.current?.click()}
+            disabled={saving}
             className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-soft transition active:scale-90"
             aria-label="Upload photo"
           >
@@ -145,6 +180,7 @@ export function AccountSettings() {
                 key={emoji}
                 onClick={() => {
                   setAvatar(emoji)
+                  setAvatarFile(null)
                   setShowEmoji(false)
                 }}
                 className={`flex h-12 items-center justify-center rounded-xl text-3xl transition ${

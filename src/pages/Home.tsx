@@ -41,10 +41,14 @@ export function Home() {
   const [activeCard, setActiveCard] = useState(0)
   const expenses = useStore((s) => s.expenses)
   const budget = useStore((s) => s.budget)
+  const userProfile = useStore((s) => s.userProfile)
   const getTotalIncome = useStore((s) => s.getTotalIncome)
   const householdId = useAuthStore((s) => s.householdId)
+  const apiUser = useAuthStore((s) => s.user)
   const { category } = useLookups()
   const [activeAlerts, setActiveAlerts] = useState<SpendingAlertEvaluation[]>([])
+  const displayName = apiUser?.name || userProfile.name || apiUser?.email?.split('@')[0] || 'there'
+  const firstName = displayName.trim().split(/\s+/)[0] || 'there'
 
   const periodExpenses = expensesInPeriod(expenses, period)
   const spent = sumExpenses(periodExpenses)
@@ -108,7 +112,7 @@ export function Home() {
               <Telescope size={24} />
             </button>
             <p className="text-[18px] font-semibold text-ink">
-              Hello, <span className="font-extrabold">Alex</span>
+              Hello, <span className="font-extrabold">{firstName}</span>
             </p>
             <button
               className="relative flex h-10 w-10 items-center justify-center rounded-full active:bg-line/40"

@@ -104,6 +104,42 @@ def test_update_profile_rejects_duplicate_email(client: TestClient) -> None:
     assert response.json()["detail"] == "Email already registered"
 
 
+def test_upload_profile_avatar_and_fetch_file(client: TestClient) -> None:
+    tokens = register_user(client, "avatar")
+
+    response = client.post(
+        "/v1/users/me/avatar",
+        files={"file": ("avatar.png", b"avatar-bytes", "image/png")},
+        headers=auth_headers(tokens),
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["avatar"].startswith("/users/me/avatar?v=")
+
+    me_response = client.get("/v1/users/me", headers=auth_headers(tokens))
+    assert me_response.status_code == 200
+    assert me_response.json()["avatar"].startswith("/users/me/avatar?v=")
+
+    file_response = client.get(f"/v1{body['avatar']}", headers=auth_headers(tokens))
+    assert file_response.status_code == 200
+    assert file_response.content == b"avatar-bytes"
+    assert file_response.headers["content-type"].startswith("image/png")
+
+
+def test_upload_profile_avatar_rejects_non_image(client: TestClient) -> None:
+    tokens = register_user(client, "avatar-invalid")
+
+    response = client.post(
+        "/v1/users/me/avatar",
+        files={"file": ("avatar.txt", b"not an image", "text/plain")},
+        headers=auth_headers(tokens),
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Avatar must be a JPEG, PNG, WebP, or GIF image"
+
+
 def test_change_password(client: TestClient) -> None:
     tokens = register_user(client, "password")
 

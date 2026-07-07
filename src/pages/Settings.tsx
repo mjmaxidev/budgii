@@ -8,17 +8,25 @@ import {
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
+import { useUserAvatarUrl } from '@/hooks/useUserAvatarUrl'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 
 type Item = { icon: typeof User; label: string; to?: string; soon?: boolean; danger?: boolean; action?: () => void }
 
-// avatar can be an emoji or an uploaded image stored as a data URL
-const isImage = (a?: string) => !!a && /^(data:|https?:|\/)/.test(a)
+// avatar can be an emoji, remote image URL, local preview, or server-backed upload path
+const isImage = (a?: string) => !!a && /^(blob:|data:|https?:|\/)/.test(a)
 
 export function Settings() {
   const navigate = useNavigate()
   const resetData = useStore((s) => s.resetData)
   const userProfile = useStore((s) => s.userProfile)
+  const apiUser = useAuthStore((s) => s.user)
+  const profileName = apiUser?.name || userProfile.name || 'Your account'
+  const profileEmail = apiUser?.email || userProfile.email || ''
+  const profileAvatar = apiUser?.avatar || userProfile.avatar
+  const resolvedAvatar = useUserAvatarUrl(profileAvatar)
+  const displayAvatar = profileAvatar?.startsWith('/users/me/avatar') ? resolvedAvatar : profileAvatar
 
   const sections: { title: string; items: Item[] }[] = [
     {
@@ -79,15 +87,15 @@ export function Settings() {
       <button onClick={() => navigate('/account-settings')} className="w-full text-left">
         <Card className="flex items-center gap-3">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-primarySoft text-2xl">
-            {isImage(userProfile.avatar) ? (
-              <img src={userProfile.avatar} alt="" className="h-full w-full object-cover" />
+            {isImage(displayAvatar) ? (
+              <img src={displayAvatar} alt="" className="h-full w-full object-cover" />
             ) : (
-              userProfile.avatar || '🧑'
+              displayAvatar || '🧑'
             )}
           </div>
           <div className="flex-1">
-            <p className="text-[17px] font-extrabold text-ink">{userProfile.name || 'Alex Johnson'}</p>
-            <p className="text-[13px] text-muted">{userProfile.email || 'dev@mjproductions.app'}</p>
+            <p className="text-[17px] font-extrabold text-ink">{profileName}</p>
+            {profileEmail && <p className="text-[13px] text-muted">{profileEmail}</p>}
           </div>
           <ChevronRight size={20} className="text-muted" />
         </Card>

@@ -1,4 +1,4 @@
-import { apiRequest } from '@/api/client'
+import { apiRequest, apiUpload } from '@/api/client'
 import { clearStoredAuthTokens, loadStoredAuthTokens, saveStoredAuthTokens } from '@/api/authStorage'
 import type { TokenResponse, UpdateUserInput, UserResponse } from '@/api/types'
 import { useAuthStore } from '@/store/authStore'
@@ -50,6 +50,14 @@ export async function updateMe(input: UpdateUserInput): Promise<UserResponse> {
     method: 'PATCH',
     body: input,
   })
+  useAuthStore.getState().setUser(user)
+  return user
+}
+
+export async function uploadAvatar(file: File): Promise<UserResponse> {
+  const form = new FormData()
+  form.append('file', file)
+  const user = await apiUpload<UserResponse>('/users/me/avatar', form)
   useAuthStore.getState().setUser(user)
   return user
 }
