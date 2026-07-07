@@ -30,8 +30,14 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    memberships: Mapped[list["HouseholdMembership"]] = relationship(back_populates="user")
-    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    memberships: Mapped[list["HouseholdMembership"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
 class RefreshToken(Base):

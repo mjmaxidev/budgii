@@ -63,7 +63,7 @@ receipt_uploads             ← file metadata (bytes on Docker volume at /app/up
 | No membership admin APIs | ~~Can't PATCH role, remove member~~ **Done** — `GET/PATCH/DELETE /households/{id}/members` |
 | No email delivery | `sent_to_contact` stored; nothing sent |
 | No OCR pipeline | Upload saves file; no link to sync `receipts[]` |
-| Limited tests | Bootstrap, auth registration, household permissions, and normalized finance coverage started in pytest |
+| Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
 | OAuth needs config | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` empty in `.env` |
 
 ---
