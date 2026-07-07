@@ -439,6 +439,16 @@ and auto-seeds the default dev login if it is missing.
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+To wipe the local Docker dev database, re-run Alembic migrations, and load the
+rich mock dataset:
+
+```bash
+scripts/reset_dev_db.sh --yes
+```
+
+The reset script intentionally leaves receipt upload files in the Docker volume.
+It only recreates the Postgres schema and rows.
+
 ---
 
 *MJ Productions — dev@mjproductions.app*
