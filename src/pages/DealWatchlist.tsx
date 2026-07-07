@@ -8,6 +8,10 @@ import { FloatingActionButton } from '@/components/layout/FloatingActionButton'
 import { DealWatchlistCard } from '@/components/deals/DealWatchlistCard'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { isApiEnabled } from '@/api/config'
+import { runDealCheck } from '@/api/deals'
+import { setHydrating } from '@/api/syncEngine'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { cn } from '@/utils/cn'
 import { withFrom } from '@/utils/navigation'
@@ -18,6 +22,8 @@ export function DealWatchlist() {
   const addWatchlistItem = useStore((s) => s.addWatchlistItem)
   const removeWatchlistItem = useStore((s) => s.removeWatchlistItem)
   const runCheck = useStore((s) => s.mockRunDailyDealCheck)
+  const householdId = useAuthStore((s) => s.householdId)
+  const setSyncMeta = useAuthStore((s) => s.setSyncMeta)
   const [edit, setEdit] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -25,6 +31,47 @@ export function DealWatchlist() {
   const [name, setName] = useState('')
   const [merchant, setMerchant] = useState('')
   const [price, setPrice] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const checkedDates = items
+    .map((item) => item.lastCheckedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+  const lastCheckedAt = checkedDates[checkedDates.length - 1]
+
+  async function checkDeals() {
+    setError(null)
+
+    if (!isApiEnabled()) {
+      runCheck()
+      return
+    }
+
+    if (!householdId) {
+      setError('No household selected.')
+      return
+    }
+
+    setChecking(true)
+    try {
+      const result = await runDealCheck(householdId)
+      setHydrating(true)
+      try {
+        useStore.setState({
+          watchlistItems: result.watchlist_items,
+          deals: result.deals,
+        })
+      } finally {
+        setHydrating(false)
+      }
+      setSyncMeta(result.sync_revision, result.server_time)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Deal check failed.')
+    } finally {
+      setChecking(false)
+    }
+  }
 
   function add() {
     if (!name.trim()) return
@@ -84,16 +131,23 @@ export function DealWatchlist() {
       }
       fab={edit ? undefined : <FloatingActionButton onClick={() => setModal(true)} icon={<Plus size={20} />} label="Add Item" />}
     >
-      {/* Daily AI deal check */}
+      {/* Deal check */}
       <Card className="flex items-center gap-3">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-greenSoft">
           <Bot size={28} className="text-green" />
         </div>
         <div className="flex-1">
-          <p className="text-[16px] font-extrabold text-ink">Daily AI Deal Check</p>
-          <p className="text-[13px] text-muted">Our AI scans prices so you don't have to.</p>
+          <p className="text-[16px] font-extrabold text-ink">Deal Check</p>
+          <p className="text-[13px] text-muted">Refresh tracked prices and deal alerts.</p>
           <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-semibold">
-            <span className="h-2 w-2 rounded-full bg-green" /> Next report: <span className="text-green">7:00 AM</span>
+            <span className="h-2 w-2 rounded-full bg-green" />{' '}
+            {lastCheckedAt ? (
+              <>
+                Last checked: <span className="text-green">{new Date(lastCheckedAt).toLocaleDateString()}</span>
+              </>
+            ) : (
+              <span className="text-green">Ready to check</span>
+            )}
           </p>
         </div>
         <button
@@ -105,11 +159,17 @@ export function DealWatchlist() {
       </Card>
 
       <button
-        onClick={() => runCheck()}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-input border border-line bg-surface py-3 text-[14px] font-bold text-green active:bg-greenSoft"
+        onClick={() => void checkDeals()}
+        disabled={checking}
+        className={cn(
+          'mt-3 flex w-full items-center justify-center gap-2 rounded-input border border-line bg-surface py-3 text-[14px] font-bold text-green active:bg-greenSoft',
+          checking && 'cursor-not-allowed opacity-60',
+        )}
       >
-        <RefreshCw size={16} /> Run deal check now (mock)
+        <RefreshCw size={16} className={checking ? 'animate-spin' : undefined} />{' '}
+        {checking ? 'Checking prices...' : 'Check prices now'}
       </button>
+      {error && <p className="mt-2 text-[13px] font-semibold text-[#DC2626]">{error}</p>}
 
       {/* Tracked items */}
       <div className="mt-5 flex items-center justify-between">
