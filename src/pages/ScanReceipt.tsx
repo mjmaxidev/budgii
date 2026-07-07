@@ -63,7 +63,6 @@ export function ScanReceipt() {
             merchant,
             date: today,
             total: MOCK_RECEIPT_TOTAL,
-            imageUrl,
             status: 'uploaded',
           }),
         )

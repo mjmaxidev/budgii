@@ -14,6 +14,7 @@ import { isApiEnabled } from '@/api/config'
 import { deleteReceipt as apiDeleteReceipt } from '@/api/receipts'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
+import { useReceiptImageUrl } from '@/hooks/useReceiptImageUrl'
 import { formatDate } from '@/utils/dates'
 import { withFrom } from '@/utils/navigation'
 
@@ -37,6 +38,11 @@ export function ReceiptHistory() {
   )
 
   const selectedReceipt = filtered.find((r) => r.id === selectedReceiptId)
+  const selectedReceiptImageUrl = useReceiptImageUrl({
+    receiptId: selectedReceipt?.id,
+    uploadId: selectedReceipt?.uploadId,
+    imageUrl: selectedReceipt?.imageUrl,
+  })
 
   const handleDeleteReceipt = async (id: string) => {
     if (isApiEnabled()) {
@@ -101,6 +107,8 @@ export function ReceiptHistory() {
               {/* Thumbnail */}
               <div className="shrink-0">
                 <ReceiptThumbnail
+                  receiptId={receipt.id}
+                  uploadId={receipt.uploadId}
                   imageUrl={receipt.imageUrl}
                   className="h-[80px] w-[64px] border border-line/50"
                   rounded="rounded-lg"
@@ -165,9 +173,9 @@ export function ReceiptHistory() {
         {selectedReceipt && (
           <div className="space-y-4">
             {/* Receipt image */}
-            {selectedReceipt.imageUrl ? (
+            {selectedReceiptImageUrl ? (
               <img
-                src={selectedReceipt.imageUrl}
+                src={selectedReceiptImageUrl}
                 alt="receipt"
                 className="max-h-[50vh] w-full rounded-input object-contain"
               />

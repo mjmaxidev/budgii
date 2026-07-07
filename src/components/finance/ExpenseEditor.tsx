@@ -151,7 +151,13 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
           }}
           className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left active:bg-line/30"
         >
-          <ReceiptThumbnail imageUrl={receipt.imageUrl} className="h-14 w-11 shrink-0" rounded="rounded-lg" />
+          <ReceiptThumbnail
+            receiptId={receipt.id}
+            uploadId={receipt.uploadId}
+            imageUrl={receipt.imageUrl}
+            className="h-14 w-11 shrink-0"
+            rounded="rounded-lg"
+          />
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-[13px] font-bold text-ink">
               <FileText size={14} className="text-primary" />

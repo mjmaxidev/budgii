@@ -17,6 +17,7 @@ import { apiReceiptItemToReceiptItem, deleteReceiptItem, updateReceiptItem as ap
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
+import { useReceiptImageUrl } from '@/hooks/useReceiptImageUrl'
 import { formatDateTime } from '@/utils/dates'
 
 export function ItemDetail() {
@@ -33,6 +34,11 @@ export function ItemDetail() {
   const [tagPickerOpen, setTagPickerOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const receiptImageUrl = useReceiptImageUrl({
+    receiptId: receipt?.id,
+    uploadId: receipt?.uploadId,
+    imageUrl: receipt?.imageUrl,
+  })
 
   if (!item) {
     return (
@@ -150,7 +156,12 @@ export function ItemDetail() {
       )}
       <div className="mt-3 flex gap-4">
         <button onClick={() => setOpenReceipt(true)} className="w-32 shrink-0">
-          <ReceiptThumbnail imageUrl={receipt?.imageUrl} className="h-40 w-32 border border-line" />
+          <ReceiptThumbnail
+            receiptId={receipt?.id}
+            uploadId={receipt?.uploadId}
+            imageUrl={receipt?.imageUrl}
+            className="h-40 w-32 border border-line"
+          />
         </button>
         <div className="flex-1">
           <p className="text-[15px] leading-snug text-muted">This item was detected from your scanned receipt.</p>
@@ -169,8 +180,8 @@ export function ItemDetail() {
 
       {/* Receipt viewer */}
       <Modal open={openReceipt} onClose={() => setOpenReceipt(false)} title={receipt?.merchant} variant="center">
-        {receipt?.imageUrl ? (
-          <img src={receipt.imageUrl} alt="receipt" className="max-h-[70vh] w-full rounded-input object-contain" />
+        {receiptImageUrl ? (
+          <img src={receiptImageUrl} alt="receipt" className="max-h-[70vh] w-full rounded-input object-contain" />
         ) : (
           <pre className="max-h-[70vh] overflow-auto rounded-input bg-[#FAF6F0] p-4 font-mono text-[12px] leading-relaxed text-ink/80">
             {receipt?.ocrText ?? 'No receipt image available.'}

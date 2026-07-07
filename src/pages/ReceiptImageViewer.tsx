@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { useReceiptImageUrl } from '@/hooks/useReceiptImageUrl'
 import { useStore } from '@/store/appStore'
 
 export function ReceiptImageViewer() {
@@ -15,6 +16,11 @@ export function ReceiptImageViewer() {
   const [showFullscreen, setShowFullscreen] = useState(false)
 
   const receipt = receipts.find((r) => r.id === receiptId)
+  const receiptImageUrl = useReceiptImageUrl({
+    receiptId: receipt?.id,
+    uploadId: receipt?.uploadId,
+    imageUrl: receipt?.imageUrl,
+  })
 
   if (!receipt) {
     return (
@@ -42,9 +48,9 @@ export function ReceiptImageViewer() {
   }
 
   const handleDownload = () => {
-    if (receipt.imageUrl) {
+    if (receiptImageUrl) {
       const link = document.createElement('a')
-      link.href = receipt.imageUrl
+      link.href = receiptImageUrl
       link.download = `receipt-${receipt.id}.png`
       link.click()
     }
@@ -64,13 +70,13 @@ export function ReceiptImageViewer() {
       </Card>
 
       {/* Image Viewer */}
-      {receipt.imageUrl ? (
+      {receiptImageUrl ? (
         <>
           {/* Main Image */}
           <div className="mb-4 overflow-hidden rounded-card bg-surfaceSoft">
             <div className="flex items-center justify-center bg-black/5 min-h-[400px] p-3">
               <img
-                src={receipt.imageUrl}
+                src={receiptImageUrl}
                 alt={`Receipt from ${receipt.merchant}`}
                 style={{
                   transform: `scale(${zoom})`,
@@ -129,7 +135,7 @@ export function ReceiptImageViewer() {
               </button>
 
               <img
-                src={receipt.imageUrl}
+                src={receiptImageUrl}
                 alt={`Receipt from ${receipt.merchant} fullscreen`}
                 className="max-h-[90vh] max-w-[90vw] object-contain"
               />

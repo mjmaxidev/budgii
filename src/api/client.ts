@@ -91,3 +91,31 @@ export async function apiUpload<T>(path: string, formData: FormData): Promise<T>
   }
   return (await res.json()) as T
 }
+
+export async function apiBlob(path: string, options: Pick<RequestOptions, 'auth' | 'retry'> = {}): Promise<Blob> {
+  const { auth = true, retry = true } = options
+  const url = `${getApiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`
+  const headers: Record<string, string> = {}
+  if (auth) {
+    const token = getAccessToken()
+    if (token) headers.Authorization = `Bearer ${token}`
+  }
+
+  const res = await fetch(url, { headers })
+
+  if (res.status === 401 && auth && retry && getRefreshToken()) {
+    try {
+      await refreshTokens()
+      return apiBlob(path, { ...options, retry: false })
+    } catch {
+      useAuthStore.getState().clearAuth()
+      throw await parseError(res)
+    }
+  }
+
+  if (!res.ok) {
+    throw await parseError(res)
+  }
+
+  return res.blob()
+}

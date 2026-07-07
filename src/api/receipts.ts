@@ -1,4 +1,4 @@
-import { apiRequest, apiUpload } from '@/api/client'
+import { apiBlob, apiRequest, apiUpload } from '@/api/client'
 import type {
   ReceiptAnalyzeResponse,
   ReceiptItemListResponse,
@@ -72,6 +72,7 @@ function receiptItemBody(input: ReceiptItemInput | ReceiptItemPatch): Record<str
 export function apiReceiptToReceipt(receipt: ReceiptResponse): Receipt {
   return {
     id: receipt.id,
+    uploadId: receipt.upload_id ?? undefined,
     merchant: receipt.merchant,
     date: receipt.date,
     total: receipt.total,
@@ -136,6 +137,10 @@ export async function getReceiptStatus(householdId: string, receiptId: string): 
   return apiRequest<ReceiptStatusResponse>(
     `/receipts/${receiptId}/status?household_id=${encodeURIComponent(householdId)}`,
   )
+}
+
+export async function getReceiptFile(householdId: string, receiptId: string): Promise<Blob> {
+  return apiBlob(`/receipts/${receiptId}/file?household_id=${encodeURIComponent(householdId)}`)
 }
 
 export async function listReceipts(

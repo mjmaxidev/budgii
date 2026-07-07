@@ -46,6 +46,7 @@ export type ReceiptStatus = 'uploaded' | 'analyzing' | 'needs_review' | 'process
 
 export type Receipt = {
   id: string
+  uploadId?: string
   merchant: string
   date: string
   total: number

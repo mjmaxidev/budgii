@@ -100,6 +100,25 @@ async def ensure_upload(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household")
 
 
+async def get_upload_for_receipt(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    receipt_id: uuid.UUID,
+) -> ReceiptUpload:
+    receipt = await get_receipt(session, household_id, receipt_id)
+    if receipt.upload_id is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receipt file not found")
+    upload = await session.scalar(
+        select(ReceiptUpload).where(
+            ReceiptUpload.id == receipt.upload_id,
+            ReceiptUpload.household_id == household_id,
+        )
+    )
+    if not upload:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receipt file not found")
+    return upload
+
+
 async def ensure_persona(
     session: AsyncSession,
     household_id: uuid.UUID,

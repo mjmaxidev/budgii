@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, parse_uuid
@@ -151,6 +152,24 @@ async def get_receipt_status(
         item_count=len(receipt.items),
         updated_at=receipt.updated_at,
     )
+
+
+@router.get("/{receipt_id}/file")
+async def get_receipt_file(
+    receipt_id: str,
+    household_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> FileResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    receipt_uuid = parse_uuid(receipt_id, "receipt_id")
+    membership = await require_membership(session, user.id, household_uuid)
+    require_receipt_upload(membership)
+    upload = await receipt_service.get_upload_for_receipt(session, household_uuid, receipt_uuid)
+    path = Path(upload.storage_path)
+    if not path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Receipt file not found")
+    return FileResponse(path, media_type=upload.content_type, filename=upload.filename)
 
 
 @household_router.get("/{household_id}/receipts", response_model=ReceiptListResponse)
