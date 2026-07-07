@@ -33,6 +33,7 @@ class ReceiptResponse(BaseModel):
     image_url: str | None = None
     ocr_text: str | None = None
     status: str
+    analysis_error: str | None = None
     item_ids: list[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
@@ -65,6 +66,7 @@ class ReceiptAnalyzeResponse(BaseModel):
 class ReceiptStatusResponse(BaseModel):
     id: str
     status: str
+    analysis_error: str | None = None
     item_count: int
     updated_at: datetime
 

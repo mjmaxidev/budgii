@@ -1,10 +1,15 @@
+import logging
 import uuid
+
+from fastapi import HTTPException
 
 from app.config import get_settings
 from app.db.session import async_session_factory
 from app.services import receipt as receipt_service
 from app.services.household import require_membership
 from app.services.ocr import get_receipt_ocr_provider
+
+logger = logging.getLogger(__name__)
 
 
 async def run_receipt_analysis(
@@ -44,16 +49,36 @@ async def run_receipt_analysis(
                 default_tag_ids=default_tag_ids,
             )
             await session.commit()
-        except Exception:
+        except Exception as exc:
             await session.rollback()
-            await mark_receipt_failed(household_id, receipt_id)
+            logger.exception(
+                "Receipt analysis failed",
+                extra={
+                    "household_id": str(household_id),
+                    "receipt_id": str(receipt_id),
+                    "user_id": str(user_id),
+                },
+            )
+            await mark_receipt_failed(household_id, receipt_id, analysis_error=analysis_error_message(exc))
 
 
-async def mark_receipt_failed(household_id: uuid.UUID, receipt_id: uuid.UUID) -> None:
+def analysis_error_message(exc: Exception) -> str:
+    if isinstance(exc, HTTPException):
+        detail = exc.detail
+        if isinstance(detail, str):
+            return detail
+    message = str(exc).strip()
+    if not message:
+        message = exc.__class__.__name__
+    return message[:300]
+
+
+async def mark_receipt_failed(household_id: uuid.UUID, receipt_id: uuid.UUID, *, analysis_error: str) -> None:
     async with async_session_factory() as session:
         try:
             receipt = await receipt_service.get_receipt(session, household_id, receipt_id)
             receipt.status = "failed"
+            receipt.analysis_error = analysis_error
             await session.commit()
         except Exception:
             await session.rollback()

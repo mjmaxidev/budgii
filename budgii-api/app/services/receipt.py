@@ -129,6 +129,7 @@ async def create_receipt(
         image_url=image_url,
         ocr_text=ocr_text,
         status=receipt_status,
+        analysis_error=None,
         created_by=user.id,
     )
     session.add(receipt)
@@ -266,6 +267,7 @@ async def analyze_receipt(
     await ensure_persona(session, membership.household_id, default_persona_id)
     receipt = await get_receipt(session, membership.household_id, receipt_id)
     receipt.status = "analyzing"
+    receipt.analysis_error = None
     await session.flush()
 
     existing_items = await session.scalars(
@@ -283,6 +285,7 @@ async def analyze_receipt(
         category_id = category_ids.get(line.category_name) or default_category_id
         if not category_id:
             receipt.status = "failed"
+            receipt.analysis_error = "A default category is required"
             await session.flush()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A default category is required")
 
@@ -305,6 +308,7 @@ async def analyze_receipt(
     receipt.total = analysis.total
     receipt.ocr_text = analysis.ocr_text
     receipt.status = "needs_review"
+    receipt.analysis_error = None
     await session.flush()
     await session.refresh(receipt)
     for item in saved_items:

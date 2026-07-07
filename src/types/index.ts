@@ -54,6 +54,7 @@ export type Receipt = {
   ocrText?: string
   itemIds: string[]
   status: ReceiptStatus
+  analysisError?: string
 }
 
 export type ReceiptItem = {

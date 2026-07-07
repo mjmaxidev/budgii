@@ -115,6 +115,7 @@ export type ReceiptResponse = {
   image_url: string | null
   ocr_text: string | null
   status: 'uploaded' | 'analyzing' | 'needs_review' | 'processed' | 'failed' | string
+  analysis_error: string | null
   item_ids: string[]
   created_at: string
   updated_at: string
@@ -153,6 +154,7 @@ export type ReceiptAnalyzeResponse = {
 export type ReceiptStatusResponse = {
   id: string
   status: 'uploaded' | 'analyzing' | 'needs_review' | 'processed' | 'failed' | string
+  analysis_error: string | null
   item_count: number
   updated_at: string
 }

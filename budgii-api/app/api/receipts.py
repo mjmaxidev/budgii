@@ -51,6 +51,7 @@ def receipt_response(receipt: Receipt) -> ReceiptResponse:
         image_url=receipt.image_url,
         ocr_text=receipt.ocr_text,
         status=receipt.status,
+        analysis_error=receipt.analysis_error,
         item_ids=[str(item.id) for item in items],
         created_at=receipt.created_at,
         updated_at=receipt.updated_at,
@@ -138,7 +139,7 @@ async def analyze_receipt(
         default_persona_id=parse_optional_uuid(body.default_persona_id, "default_persona_id"),
         default_tag_ids=body.default_tag_ids,
     )
-    queued_receipt = receipt_response(receipt).model_copy(update={"status": "analyzing"})
+    queued_receipt = receipt_response(receipt).model_copy(update={"status": "analyzing", "analysis_error": None})
     return ReceiptAnalyzeResponse(
         receipt=queued_receipt,
         items=[],
@@ -160,6 +161,7 @@ async def get_receipt_status(
     return ReceiptStatusResponse(
         id=str(receipt.id),
         status=receipt.status,
+        analysis_error=receipt.analysis_error,
         item_count=len(receipt.items),
         updated_at=receipt.updated_at,
     )

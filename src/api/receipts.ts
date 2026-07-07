@@ -80,6 +80,7 @@ export function apiReceiptToReceipt(receipt: ReceiptResponse): Receipt {
     ocrText: receipt.ocr_text ?? undefined,
     itemIds: receipt.item_ids,
     status: isReceiptStatus(receipt.status) ? receipt.status : 'uploaded',
+    analysisError: receipt.analysis_error ?? undefined,
   }
 }
 

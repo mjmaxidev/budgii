@@ -407,10 +407,11 @@ export const useStore = create<AppStore>()(
             id: `exp_${i.id}`,
             amount: i.amount,
             date: receipt.date,
-            merchant: receipt.merchant,
+            merchant: i.name,
             categoryId: i.categoryId,
             tagIds: i.tagIds,
             memberId: i.memberId,
+            notes: `From ${receipt.merchant}`,
             receiptId,
             source: 'receipt_ai' as const,
           }))

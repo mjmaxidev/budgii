@@ -66,19 +66,25 @@ export function ReceiptResults() {
       setSaving(true)
       setError('')
       try {
-        const existing = new Set(useStore.getState().expenses.filter((e) => e.receiptId === receiptId).map((e) => e.id))
+        const existing = new Set(
+          useStore
+            .getState()
+            .expenses.filter((expense) => expense.receiptId === receiptId && expense.source === 'receipt_ai')
+            .map((expense) => `${expense.merchant}:${expense.amount}:${expense.categoryId}:${expense.memberId ?? ''}`),
+        )
         const savedExpenses = await Promise.all(
           items
-            .filter((item) => !existing.has(`exp_${item.id}`))
+            .filter((item) => !existing.has(`${item.name}:${item.amount}:${item.categoryId}:${item.memberId ?? ''}`))
             .map(async (item) => {
               const expense = apiExpenseToExpense(
                 await createExpense(householdId, {
                   amount: item.amount,
                   date: receipt.date,
-                  merchant: receipt.merchant,
+                  merchant: item.name,
                   categoryId: item.categoryId,
                   tagIds: item.tagIds,
                   memberId: item.memberId,
+                  notes: `From ${receipt.merchant}`,
                   receiptId,
                   source: 'receipt_ai',
                 }),
@@ -100,10 +106,11 @@ export function ReceiptResults() {
       confirmReceiptItems(receiptId)
     }
     const firstItemCategory = items[0]?.categoryId || ''
+    const firstItemName = items[0]?.name || receipt.merchant
     navigate('/transaction-confirm', {
       state: {
         transaction: {
-          merchant: receipt.merchant,
+          merchant: firstItemName,
           amount: receipt.total,
           categoryId: firstItemCategory,
           date: receipt.date,

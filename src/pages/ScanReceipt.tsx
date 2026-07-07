@@ -133,7 +133,7 @@ export function ScanReceipt() {
       setAnalyzing(false)
       navigate(`/receipt-results/${receiptId}`, withFrom('/scan-receipt'))
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not analyze receipt')
+      setError(err instanceof Error ? err.message : 'Could not analyze receipt')
       setAnalyzing(false)
     }
   }
@@ -160,6 +160,16 @@ export function ScanReceipt() {
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, 700))
       const status = await getReceiptStatus(householdId, receiptId)
+      if (status.status === 'failed') {
+        useStore.setState((state) => ({
+          receipts: state.receipts.map((receipt) =>
+            receipt.id === receiptId
+              ? { ...receipt, status: 'failed', analysisError: status.analysis_error ?? undefined }
+              : receipt,
+          ),
+        }))
+        throw new Error(status.analysis_error || 'Receipt analysis failed')
+      }
       if (isAnalysisComplete(status.status)) {
         const [receipt, items] = await Promise.all([
           getReceipt(householdId, receiptId),

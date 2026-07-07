@@ -208,6 +208,7 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
     assert analyze_response.status_code == 200, analyze_response.text
     queued = analyze_response.json()
     assert queued["receipt"]["status"] == "analyzing"
+    assert queued["receipt"]["analysis_error"] is None
     assert queued["items"] == []
 
     status_response = client.get(
@@ -216,6 +217,7 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
     )
     assert status_response.status_code == 200
     assert status_response.json()["status"] == "needs_review"
+    assert status_response.json()["analysis_error"] is None
     assert status_response.json()["item_count"] == 6
 
     analyzed_receipt_response = client.get(
@@ -224,6 +226,7 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
     )
     assert analyzed_receipt_response.status_code == 200
     assert analyzed_receipt_response.json()["merchant"] == "Whole Foods Market"
+    assert analyzed_receipt_response.json()["analysis_error"] is None
 
     analyzed_items_response = client.get(
         f"/v1/households/{household['id']}/receipts/{receipt['id']}/items",
@@ -233,6 +236,33 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
     analyzed_items = analyzed_items_response.json()["items"]
     assert len(analyzed_items) == 6
     assert {row["persona_id"] for row in analyzed_items} == {persona_id}
+
+    failed_upload = upload_receipt_file(client, admin, household["id"])
+    failed_receipt = create_receipt(
+        client,
+        admin,
+        household["id"],
+        upload_id=failed_upload["id"],
+        merchant="Missing Category Store",
+    )
+    failed_analyze_response = client.post(
+        f"/v1/receipts/{failed_receipt['id']}/analyze",
+        json={
+            "household_id": household["id"],
+            "category_ids": {},
+            "default_category_id": None,
+        },
+        headers=auth_headers(admin),
+    )
+    assert failed_analyze_response.status_code == 200, failed_analyze_response.text
+
+    failed_status_response = client.get(
+        f"/v1/receipts/{failed_receipt['id']}/status?household_id={household['id']}",
+        headers=auth_headers(admin),
+    )
+    assert failed_status_response.status_code == 200
+    assert failed_status_response.json()["status"] == "failed"
+    assert failed_status_response.json()["analysis_error"] == "A default category is required"
 
     linked_expense = create_expense(
         client,
