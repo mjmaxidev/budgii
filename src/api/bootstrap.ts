@@ -1,7 +1,7 @@
 import { getMe } from '@/api/auth'
 import { createHousehold, getHouseholdBootstrap, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
-import { apiExpensesToExpenses, listAllExpenses } from '@/api/expenses'
+import { apiExpensesToExpenses, applyDueRecurringTransactions, listAllExpenses } from '@/api/expenses'
 import {
   apiReceiptItemsToReceiptItems,
   apiReceiptsToReceipts,
@@ -149,6 +149,15 @@ async function hydrateNormalizedData(
   householdId: string,
   patch: Partial<AppStore> = {},
 ): Promise<void> {
+  try {
+    const applied = await applyDueRecurringTransactions(householdId)
+    if (applied.applied_count > 0) {
+      console.info(`[recurring] applied ${applied.applied_count} due transaction(s)`)
+    }
+  } catch (err) {
+    console.info('[recurring] due transaction application skipped', err)
+  }
+
   const expenses = apiExpensesToExpenses(await listAllExpenses(householdId))
   const apiReceipts = await listAllReceipts(householdId)
   const receiptItems = apiReceiptItemsToReceiptItems(

@@ -27,6 +27,16 @@ class ExpenseListResponse(BaseModel):
     total: int
 
 
+class ApplyRecurringRequest(BaseModel):
+    date: datetime | None = None
+
+
+class ApplyRecurringResponse(BaseModel):
+    expenses: list[ExpenseResponse]
+    applied_count: int
+    skipped_count: int
+
+
 class CreateExpenseRequest(BaseModel):
     id: str | None = None
     persona_id: str | None = None

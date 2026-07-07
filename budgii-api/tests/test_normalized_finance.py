@@ -147,6 +147,123 @@ def test_limited_editor_can_write_expenses_but_not_receipts(client: TestClient) 
     assert receipt_response.status_code == 403
 
 
+def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> None:
+    admin = register_user(client, "recurring-admin")
+    household = create_household(client, admin, "Recurring Apply")
+    bootstrap_response = bootstrap(client, admin, household["id"])
+    assert bootstrap_response.status_code == 200
+    revision = bootstrap_response.json()["revision"]
+
+    push_response = client.post(
+        "/v1/sync",
+        json={
+            "household_id": household["id"],
+            "client_time": "2026-07-07T00:00:00Z",
+            "base_revision": revision,
+            "changes": {
+                "recurringTransactions": [
+                    {
+                        "id": "rt-daily",
+                        "frequency": "daily",
+                        "expense": {
+                            "merchant": "Daily Coffee",
+                            "amount": 4.5,
+                            "categoryId": "cat-dining",
+                            "tagIds": ["tag-routine"],
+                            "notes": "Weekday cup",
+                        },
+                    },
+                    {
+                        "id": "rt-weekly",
+                        "frequency": "weekly",
+                        "dayOfWeek": 2,
+                        "expense": {
+                            "merchant": "Tuesday Gym",
+                            "amount": 12,
+                            "categoryId": "cat-health",
+                        },
+                    },
+                    {
+                        "id": "rt-monthly",
+                        "frequency": "monthly",
+                        "dayOfMonth": 7,
+                        "expense": {
+                            "merchant": "Month End Bill",
+                            "amount": 55,
+                            "categoryId": "cat-bills",
+                        },
+                    },
+                    {
+                        "id": "rt-yearly",
+                        "frequency": "yearly",
+                        "dayOfMonth": 7,
+                        "monthOfYear": 7,
+                        "expense": {
+                            "merchant": "Annual Renewal",
+                            "amount": 99,
+                            "categoryId": "cat-bills",
+                        },
+                    },
+                    {
+                        "id": "rt-invalid",
+                        "frequency": "weekly",
+                        "expense": {
+                            "merchant": "Missing Day",
+                            "amount": 9,
+                            "categoryId": "cat-bills",
+                        },
+                    },
+                ],
+            },
+        },
+        headers=auth_headers(admin),
+    )
+    assert push_response.status_code == 200, push_response.text
+    assert push_response.json()["accepted"] is True
+
+    apply_response = client.post(
+        f"/v1/households/{household['id']}/recurring/apply",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(admin),
+    )
+    assert apply_response.status_code == 200, apply_response.text
+    applied = apply_response.json()
+    assert applied["applied_count"] == 4
+    assert applied["skipped_count"] == 1
+    assert {expense["merchant"] for expense in applied["expenses"]} == {
+        "Annual Renewal",
+        "Daily Coffee",
+        "Month End Bill",
+        "Tuesday Gym",
+    }
+    assert {expense["source"] for expense in applied["expenses"]} == {"recurring"}
+
+    repeat_response = client.post(
+        f"/v1/households/{household['id']}/recurring/apply",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(admin),
+    )
+    assert repeat_response.status_code == 200
+    assert repeat_response.json()["applied_count"] == 0
+
+    expenses_response = client.get(
+        f"/v1/households/{household['id']}/expenses",
+        headers=auth_headers(admin),
+    )
+    assert expenses_response.status_code == 200
+    assert expenses_response.json()["total"] == 4
+
+    viewer_invite = create_invite(client, admin, household["id"], "viewer")
+    viewer = register_user(client, "recurring-viewer")
+    join_household(client, viewer, viewer_invite["code"])
+    viewer_apply_response = client.post(
+        f"/v1/households/{household['id']}/recurring/apply",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(viewer),
+    )
+    assert viewer_apply_response.status_code == 403
+
+
 def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) -> None:
     admin = register_user(client, "admin")
     household = create_household(client, admin, "Receipt Lifecycle")

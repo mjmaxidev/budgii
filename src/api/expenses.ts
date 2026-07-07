@@ -1,5 +1,5 @@
 import { apiRequest } from '@/api/client'
-import type { ExpenseListResponse, ExpenseResponse } from '@/api/types'
+import type { ApplyRecurringResponse, ExpenseListResponse, ExpenseResponse } from '@/api/types'
 import type { Expense } from '@/types'
 
 type ExpenseApiInput = {
@@ -43,7 +43,7 @@ export function apiExpenseToExpense(expense: ExpenseResponse): Expense {
     memberId: expense.persona_id ?? undefined,
     notes: expense.notes ?? undefined,
     receiptId: expense.receipt_id ?? expense.receipt_upload_id ?? undefined,
-    source: expense.source === 'receipt_ai' ? 'receipt_ai' : 'manual',
+    source: expense.source === 'receipt_ai' || expense.source === 'recurring' ? expense.source : 'manual',
   }
 }
 
@@ -82,6 +82,16 @@ export async function createExpense(householdId: string, input: ExpenseApiInput)
   return apiRequest<ExpenseResponse>(`/households/${householdId}/expenses`, {
     method: 'POST',
     body: expenseBody(input),
+  })
+}
+
+export async function applyDueRecurringTransactions(
+  householdId: string,
+  date = new Date(),
+): Promise<ApplyRecurringResponse> {
+  return apiRequest<ApplyRecurringResponse>(`/households/${householdId}/recurring/apply`, {
+    method: 'POST',
+    body: { date: date.toISOString() },
   })
 }
 

@@ -18,6 +18,31 @@ const FREQUENCIES = [
   { value: 'yearly', label: 'Yearly' },
 ]
 
+const WEEK_DAYS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+]
+
+const MONTHS = [
+  { value: 1, label: 'January' },
+  { value: 2, label: 'February' },
+  { value: 3, label: 'March' },
+  { value: 4, label: 'April' },
+  { value: 5, label: 'May' },
+  { value: 6, label: 'June' },
+  { value: 7, label: 'July' },
+  { value: 8, label: 'August' },
+  { value: 9, label: 'September' },
+  { value: 10, label: 'October' },
+  { value: 11, label: 'November' },
+  { value: 12, label: 'December' },
+]
+
 export function RecurringTransactions() {
   const recurringTransactions = useStore((s) => s.recurringTransactions)
   const categories = useStore((s) => s.categories)
@@ -32,6 +57,8 @@ export function RecurringTransactions() {
   const [amount, setAmount] = useState('')
   const [frequency, setFrequency] = useState('monthly')
   const [dayOfMonth, setDayOfMonth] = useState('1')
+  const [dayOfWeek, setDayOfWeek] = useState(String(new Date().getDay()))
+  const [monthOfYear, setMonthOfYear] = useState(String(new Date().getMonth() + 1))
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '')
   const [notes, setNotes] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -43,7 +70,13 @@ export function RecurringTransactions() {
 
     const transactionData: Partial<RecurringTransaction> = {
       frequency: frequency as any,
-      dayOfMonth: frequency === 'monthly' ? parseInt(dayOfMonth) : undefined,
+      dayOfMonth:
+        frequency === 'monthly' || frequency === 'quarterly' || frequency === 'yearly'
+          ? parseInt(dayOfMonth)
+          : undefined,
+      dayOfWeek: frequency === 'weekly' || frequency === 'biweekly' ? parseInt(dayOfWeek) : undefined,
+      monthOfYear:
+        frequency === 'quarterly' || frequency === 'yearly' ? parseInt(monthOfYear) : undefined,
       expense: {
         merchant,
         amount: parseFloat(amount),
@@ -68,6 +101,8 @@ export function RecurringTransactions() {
     setAmount(transaction.expense.amount?.toString() || '')
     setFrequency(transaction.frequency)
     setDayOfMonth(transaction.dayOfMonth?.toString() || '1')
+    setDayOfWeek(transaction.dayOfWeek?.toString() || String(new Date().getDay()))
+    setMonthOfYear(transaction.monthOfYear?.toString() || String(new Date().getMonth() + 1))
     setCategoryId(transaction.expense.categoryId || categories[0]?.id || '')
     setNotes(transaction.expense.notes || '')
     setShowForm(true)
@@ -78,6 +113,8 @@ export function RecurringTransactions() {
     setAmount('')
     setFrequency('monthly')
     setDayOfMonth('1')
+    setDayOfWeek(String(new Date().getDay()))
+    setMonthOfYear(String(new Date().getMonth() + 1))
     setCategoryId(categories[0]?.id || '')
     setNotes('')
     setShowForm(false)
@@ -149,7 +186,7 @@ export function RecurringTransactions() {
           </div>
 
           {/* Day of Month (for monthly) */}
-          {frequency === 'monthly' && (
+          {(frequency === 'monthly' || frequency === 'quarterly' || frequency === 'yearly') && (
             <FormField
               label="Day of Month"
               type="number"
@@ -158,6 +195,42 @@ export function RecurringTransactions() {
               min="1"
               max="31"
             />
+          )}
+
+          {(frequency === 'quarterly' || frequency === 'yearly') && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-muted">
+                {frequency === 'quarterly' ? 'Anchor Month' : 'Month'}
+              </label>
+              <select
+                value={monthOfYear}
+                onChange={(e) => setMonthOfYear(e.target.value)}
+                className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
+              >
+                {MONTHS.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(frequency === 'weekly' || frequency === 'biweekly') && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-muted">Day of Week</label>
+              <select
+                value={dayOfWeek}
+                onChange={(e) => setDayOfWeek(e.target.value)}
+                className="w-full rounded-input border border-line bg-surface px-4 py-2.5 text-[15px] font-semibold text-ink"
+              >
+                {WEEK_DAYS.map((day) => (
+                  <option key={day.value} value={day.value}>
+                    {day.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           {/* Notes */}

@@ -243,9 +243,11 @@ GET  /receipts/{id}/file                                        ✅
 
 **Sync evolution:** Config via document sync; expenses/receipts via paginated API + local cache.
 
-**Remaining Phase 2:** test OpenAI receipt recognition with real receipts, add recurring transaction application, evaluate spending alerts server-side, and add richer finance pagination/cache UX as data volume grows. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
+**Remaining Phase 2:** test OpenAI receipt recognition with real receipts, evaluate spending alerts server-side, and add richer finance pagination/cache UX as data volume grows. OCR reads receipt files from `RECEIPT_STORAGE_PATH` (local volume) — no object storage required at this phase.
 
 **Receipt QA hardening done:** failed analysis now stores `analysis_error`, status responses return it, backend logs include receipt/user/household context, and the scan flow surfaces the failure reason instead of a generic error.
+
+**Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration.
 
 ---
 

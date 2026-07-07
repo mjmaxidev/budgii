@@ -74,6 +74,7 @@ export type RecurringTransaction = {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
   dayOfMonth?: number
   dayOfWeek?: number
+  monthOfYear?: number
   expense: Partial<Expense>
 }
 
@@ -825,6 +826,7 @@ export const useStore = create<AppStore>()(
           frequency: transaction.frequency ?? 'monthly',
           dayOfMonth: transaction.dayOfMonth,
           dayOfWeek: transaction.dayOfWeek,
+          monthOfYear: transaction.monthOfYear,
           expense: transaction.expense ?? {},
         }
         set((s) => ({ recurringTransactions: [...s.recurringTransactions, recurringTransaction] }))

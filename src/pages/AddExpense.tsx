@@ -83,8 +83,12 @@ export function AddExpense() {
 
     // If recurring, also add to recurring transactions
     if (isRecurring) {
+      const scheduledDate = new Date(`${date}T00:00:00`)
       addRecurringTransaction({
         frequency,
+        dayOfWeek: frequency === 'weekly' ? scheduledDate.getDay() : undefined,
+        dayOfMonth: frequency === 'monthly' || frequency === 'yearly' ? scheduledDate.getDate() : undefined,
+        monthOfYear: frequency === 'yearly' ? scheduledDate.getMonth() + 1 : undefined,
         expense: expenseData,
       })
     }

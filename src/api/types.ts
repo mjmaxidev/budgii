@@ -87,7 +87,7 @@ export type ExpenseResponse = {
   notes: string | null
   receipt_upload_id: string | null
   receipt_id: string | null
-  source: 'manual' | 'receipt_ai' | string
+  source: 'manual' | 'receipt_ai' | 'recurring' | string
   created_at: string
   updated_at: string
 }
@@ -97,6 +97,12 @@ export type ExpenseListResponse = {
   limit: number
   offset: number
   total: number
+}
+
+export type ApplyRecurringResponse = {
+  expenses: ExpenseResponse[]
+  applied_count: number
+  skipped_count: number
 }
 
 export type ReceiptUploadResponse = {

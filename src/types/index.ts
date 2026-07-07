@@ -39,7 +39,7 @@ export type Expense = {
   memberId?: string
   notes?: string
   receiptId?: string
-  source: 'manual' | 'receipt_ai'
+  source: 'manual' | 'receipt_ai' | 'recurring'
 }
 
 export type ReceiptStatus = 'uploaded' | 'analyzing' | 'needs_review' | 'processed' | 'failed'
@@ -174,6 +174,7 @@ export type RecurringTransaction = {
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
   dayOfMonth?: number
   dayOfWeek?: number
+  monthOfYear?: number
   expense: Partial<Expense>
 }
 
