@@ -9,6 +9,10 @@ import { MoneyText } from '@/components/ui/MoneyText'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { deleteReceipt as apiDeleteReceipt } from '@/api/receipts'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { formatDate } from '@/utils/dates'
 import { withFrom } from '@/utils/navigation'
@@ -17,9 +21,12 @@ export function ReceiptHistory() {
   const navigate = useNavigate()
   const receipts = useStore((s) => s.receipts)
   const deleteReceipt = useStore((s) => s.deleteReceipt)
+  const householdId = useAuthStore((s) => s.householdId)
   const [query, setQuery] = useState('')
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState('')
 
   const filtered = useMemo(
     () =>
@@ -31,12 +38,26 @@ export function ReceiptHistory() {
 
   const selectedReceipt = filtered.find((r) => r.id === selectedReceiptId)
 
-  const handleDeleteReceipt = (id: string) => {
+  const handleDeleteReceipt = async (id: string) => {
+    if (isApiEnabled()) {
+      if (!householdId) {
+        setError('Sign in again to delete this receipt.')
+        return
+      }
+      setDeleting(true)
+      setError('')
+      try {
+        await apiDeleteReceipt(householdId, id)
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not delete receipt')
+        setDeleting(false)
+        return
+      }
+    }
     deleteReceipt(id)
     setConfirmDeleteId(null)
-    if (selectedReceiptId === id) {
-      setSelectedReceiptId(null)
-    }
+    setDeleting(false)
+    if (selectedReceiptId === id) setSelectedReceiptId(null)
   }
 
   const handleViewReceipt = (receiptId: string) => {
@@ -239,15 +260,23 @@ export function ReceiptHistory() {
         <p className="text-[15px] text-muted">
           This will permanently remove the receipt and all its items.
         </p>
+        {error && (
+          <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {error}
+          </p>
+        )}
         <div className="mt-5 flex gap-3">
           <ActionButton variant="ghost" onClick={() => setConfirmDeleteId(null)}>
             Cancel
           </ActionButton>
           <ActionButton
             variant="danger"
-            onClick={() => confirmDeleteId && handleDeleteReceipt(confirmDeleteId)}
+            onClick={() => {
+              if (confirmDeleteId) void handleDeleteReceipt(confirmDeleteId)
+            }}
+            disabled={deleting}
           >
-            Delete
+            {deleting ? 'Deleting…' : 'Delete'}
           </ActionButton>
         </div>
       </Modal>

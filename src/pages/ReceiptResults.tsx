@@ -10,6 +10,11 @@ import { ReceiptItemCreateForm } from '@/components/receipts/ReceiptItemCreateFo
 import { ReceiptItemEditor } from '@/components/receipts/ReceiptItemEditor'
 import { Modal } from '@/components/ui/Modal'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { apiExpenseToExpense, createExpense } from '@/api/expenses'
+import { deleteReceipt as apiDeleteReceipt, updateReceipt as apiUpdateReceipt } from '@/api/receipts'
+import { useAuthStore } from '@/store/authStore'
 import { withFrom } from '@/utils/navigation'
 import { useStore } from '@/store/appStore'
 import { formatDateTime } from '@/utils/dates'
@@ -30,12 +35,15 @@ export function ReceiptResults() {
   )
   const confirmReceiptItems = useStore((s) => s.confirmReceiptItems)
   const deleteReceipt = useStore((s) => s.deleteReceipt)
+  const householdId = useAuthStore((s) => s.householdId)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [addItemOpen, setAddItemOpen] = useState(false)
   const [matchHelpOpen, setMatchHelpOpen] = useState(false)
   const [matchHelpConfidence, setMatchHelpConfidence] = useState<number | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   if (!receipt) {
     return (
@@ -47,9 +55,49 @@ export function ReceiptResults() {
 
   const allHighConfidence = items.every((i) => i.aiConfidence >= 0.9)
 
-  function confirm() {
+  async function confirm() {
     if (!receipt) return
-    confirmReceiptItems(receiptId)
+    if (isApiEnabled()) {
+      if (!householdId) {
+        setError('Sign in again to confirm this receipt.')
+        return
+      }
+
+      setSaving(true)
+      setError('')
+      try {
+        const existing = new Set(useStore.getState().expenses.filter((e) => e.receiptId === receiptId).map((e) => e.id))
+        const savedExpenses = await Promise.all(
+          items
+            .filter((item) => !existing.has(`exp_${item.id}`))
+            .map(async (item) => {
+              const expense = apiExpenseToExpense(
+                await createExpense(householdId, {
+                  amount: item.amount,
+                  date: receipt.date,
+                  merchant: receipt.merchant,
+                  categoryId: item.categoryId,
+                  tagIds: item.tagIds,
+                  memberId: item.memberId,
+                  source: 'receipt_ai',
+                }),
+              )
+              return { ...expense, receiptId }
+            }),
+        )
+        await apiUpdateReceipt(householdId, receiptId, { status: 'processed' })
+        useStore.setState((state) => ({
+          expenses: [...savedExpenses, ...state.expenses],
+          receipts: state.receipts.map((r) => (r.id === receiptId ? { ...r, status: 'processed' } : r)),
+        }))
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not confirm receipt')
+        setSaving(false)
+        return
+      }
+    } else {
+      confirmReceiptItems(receiptId)
+    }
     const firstItemCategory = items[0]?.categoryId || ''
     navigate('/transaction-confirm', {
       state: {
@@ -61,6 +109,30 @@ export function ReceiptResults() {
         },
       },
     })
+  }
+
+  async function removeReceipt() {
+    if (!isApiEnabled()) {
+      deleteReceipt(receiptId)
+      navigate('/home')
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to delete this receipt.')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    try {
+      await apiDeleteReceipt(householdId, receiptId)
+      deleteReceipt(receiptId)
+      navigate('/home')
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not delete receipt')
+      setSaving(false)
+    }
   }
 
   return (
@@ -121,8 +193,13 @@ export function ReceiptResults() {
       </Card>
 
       <div className="mt-5 space-y-3">
-        <ActionButton variant="green" onClick={confirm}>
-          Confirm All Items
+        {error && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+            {error}
+          </p>
+        )}
+        <ActionButton variant="green" onClick={() => void confirm()} disabled={saving}>
+          {saving ? 'Saving…' : 'Confirm All Items'}
         </ActionButton>
         <ActionButton
           variant="greenOutline"
@@ -204,12 +281,10 @@ export function ReceiptResults() {
           </ActionButton>
           <ActionButton
             variant="danger"
-            onClick={() => {
-              deleteReceipt(receiptId)
-              navigate('/home')
-            }}
+            onClick={() => void removeReceipt()}
+            disabled={saving}
           >
-            Delete
+            {saving ? 'Deleting…' : 'Delete'}
           </ActionButton>
         </div>
       </Modal>

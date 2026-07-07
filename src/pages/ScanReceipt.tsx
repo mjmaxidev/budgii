@@ -5,22 +5,43 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Modal } from '@/components/ui/Modal'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import {
+  apiReceiptItemToReceiptItem,
+  apiReceiptToReceipt,
+  createReceipt,
+  createReceiptItem,
+  updateReceipt as apiUpdateReceipt,
+  uploadReceipt,
+} from '@/api/receipts'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { withFrom } from '@/utils/navigation'
-import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
+import {
+  mockExtractReceiptItems,
+  MOCK_RECEIPT_MERCHANT,
+  MOCK_RECEIPT_OCR,
+  MOCK_RECEIPT_TOTAL,
+} from '@/utils/mockAi'
 
 export function ScanReceipt() {
   const navigate = useNavigate()
   const addReceipt = useStore((s) => s.addReceipt)
   const updateReceipt = useStore((s) => s.updateReceipt)
   const analyzeReceipt = useStore((s) => s.analyzeReceipt)
+  const householdId = useAuthStore((s) => s.householdId)
+  const categories = useStore((s) => s.categories)
+  const familyMembers = useStore((s) => s.familyMembers)
   const [analyzing, setAnalyzing] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
 
   async function handleFile(file?: File) {
     setAnalyzing(true)
+    setError('')
     const merchant = file?.name?.split('.')[0] || MOCK_RECEIPT_MERCHANT
     const today = new Date().toISOString()
     let imageUrl = ''
@@ -33,6 +54,38 @@ export function ScanReceipt() {
       })
     }
 
+    if (isApiEnabled()) {
+      if (!householdId) {
+        setError('Sign in again to save this receipt.')
+        setAnalyzing(false)
+        return
+      }
+
+      try {
+        const upload = file ? await uploadReceipt(householdId, file) : undefined
+        const created = apiReceiptToReceipt(
+          await createReceipt(householdId, {
+            uploadId: upload?.id,
+            merchant,
+            date: today,
+            total: MOCK_RECEIPT_TOTAL,
+            imageUrl,
+            ocrText: MOCK_RECEIPT_OCR,
+            status: 'analyzing',
+          }),
+        )
+        useStore.setState((state) => ({ receipts: [created, ...state.receipts] }))
+
+        window.setTimeout(() => {
+          void finishApiAnalysis(created.id, imageUrl)
+        }, 1200)
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not save receipt')
+        setAnalyzing(false)
+      }
+      return
+    }
+
     const id = addReceipt(merchant, today, MOCK_RECEIPT_TOTAL, imageUrl)
 
     window.setTimeout(() => {
@@ -41,6 +94,53 @@ export function ScanReceipt() {
       setAnalyzing(false)
       navigate(`/receipt-results/${id}`, withFrom('/scan-receipt'))
     }, 1200)
+  }
+
+  async function finishApiAnalysis(receiptId: string, imageUrl: string) {
+    if (!householdId) return
+
+    try {
+      const receipt = apiReceiptToReceipt(
+        await apiUpdateReceipt(householdId, receiptId, {
+          merchant: MOCK_RECEIPT_MERCHANT,
+          total: MOCK_RECEIPT_TOTAL,
+          imageUrl,
+          ocrText: MOCK_RECEIPT_OCR,
+          status: 'needs_review',
+        }),
+      )
+      const resolveCategoryId = (name: string) => {
+        const match = categories.find((c) => c.name.toLowerCase() === name.toLowerCase())
+        return match?.id ?? categories[0]?.id ?? ''
+      }
+      const defaultMember = familyMembers.find((m) => m.isDefault)?.id
+      const mockItems = mockExtractReceiptItems({ receiptId, resolveCategoryId, defaultMemberId: defaultMember })
+      const items = await Promise.all(
+        mockItems.map((item) =>
+          createReceiptItem(householdId, receiptId, {
+            name: item.name,
+            amount: item.amount,
+            categoryId: item.categoryId,
+            tagIds: item.tagIds,
+            memberId: item.memberId,
+            aiConfidence: item.aiConfidence,
+            manuallyEdited: item.manuallyEdited,
+          }),
+        ),
+      )
+      const savedItems = items.map(apiReceiptItemToReceiptItem)
+      useStore.setState((state) => ({
+        receipts: state.receipts.map((r) =>
+          r.id === receiptId ? { ...receipt, itemIds: savedItems.map((item) => item.id) } : r,
+        ),
+        receiptItems: [...savedItems, ...state.receiptItems.filter((item) => item.receiptId !== receiptId)],
+      }))
+      setAnalyzing(false)
+      navigate(`/receipt-results/${receiptId}`, withFrom('/scan-receipt'))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not analyze receipt')
+      setAnalyzing(false)
+    }
   }
 
   return (
@@ -124,6 +224,12 @@ export function ScanReceipt() {
           </div>
           <ProgressBar progress={0.65} color="#16A34A" className="mt-3" height={8} />
         </div>
+      )}
+
+      {error && (
+        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {error}
+        </p>
       )}
 
       {!analyzing && (

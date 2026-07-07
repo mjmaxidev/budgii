@@ -82,6 +82,52 @@ export type ExpenseListResponse = {
   total: number
 }
 
+export type ReceiptUploadResponse = {
+  id: string
+  status: string
+  filename: string
+}
+
+export type ReceiptResponse = {
+  id: string
+  household_id: string
+  upload_id: string | null
+  merchant: string
+  date: string
+  total: number
+  image_url: string | null
+  ocr_text: string | null
+  status: 'uploaded' | 'analyzing' | 'needs_review' | 'processed' | 'failed' | string
+  item_ids: string[]
+  created_at: string
+  updated_at: string
+}
+
+export type ReceiptListResponse = {
+  receipts: ReceiptResponse[]
+  limit: number
+  offset: number
+  total: number
+}
+
+export type ReceiptItemResponse = {
+  id: string
+  receipt_id: string
+  name: string
+  amount: number
+  category_id: string
+  tag_ids: string[]
+  persona_id: string | null
+  ai_confidence: number
+  manually_edited: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type ReceiptItemListResponse = {
+  items: ReceiptItemResponse[]
+}
+
 export type SyncPullResponse = {
   household_id: string
   server_time: string

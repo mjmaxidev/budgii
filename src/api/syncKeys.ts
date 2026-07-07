@@ -3,8 +3,6 @@ import type { AppStore } from '@/store/appStore'
 export const SYNC_KEYS = [
   'categories',
   'tags',
-  'receipts',
-  'receiptItems',
   'budget',
   'watchlistItems',
   'deals',

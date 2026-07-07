@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { Chip } from '@/components/ui/Chip'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { ReceiptItemMetaFields } from '@/components/receipts/ReceiptItemMetaFields'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { apiReceiptItemToReceiptItem, createReceiptItem } from '@/api/receipts'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 
@@ -12,6 +16,7 @@ type Props = {
 
 export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
   const addReceiptItem = useStore((s) => s.addReceiptItem)
+  const householdId = useAuthStore((s) => s.householdId)
   const { categories, familyMembers } = useLookups()
 
   const [name, setName] = useState('')
@@ -21,10 +26,12 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
   const [memberId, setMemberId] = useState<string | undefined>(
     familyMembers.find((m) => m.isDefault)?.id,
   )
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  function save() {
+  async function save() {
     if (!name.trim() || !categoryId) return
-    addReceiptItem(receiptId, {
+    const input = {
       name: name.trim(),
       amount: parseFloat(amount) || 0,
       categoryId,
@@ -32,7 +39,34 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
       memberId,
       aiConfidence: 1,
       manuallyEdited: true,
-    })
+    }
+
+    if (isApiEnabled()) {
+      if (!householdId) {
+        setError('Sign in again to save this item.')
+        return
+      }
+
+      setSaving(true)
+      setError('')
+      try {
+        const saved = apiReceiptItemToReceiptItem(await createReceiptItem(householdId, receiptId, input))
+        useStore.setState((state) => ({
+          receiptItems: [saved, ...state.receiptItems],
+          receipts: state.receipts.map((receipt) =>
+            receipt.id === receiptId
+              ? { ...receipt, itemIds: receipt.itemIds.includes(saved.id) ? receipt.itemIds : [...receipt.itemIds, saved.id] }
+              : receipt,
+          ),
+        }))
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : 'Could not save item')
+        setSaving(false)
+        return
+      }
+    } else {
+      addReceiptItem(receiptId, input)
+    }
     onDone()
   }
 
@@ -91,8 +125,14 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
         </div>
       </div>
 
-      <ActionButton variant="green" onClick={save} disabled={!canSave}>
-        Save Item
+      {error && (
+        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {error}
+        </p>
+      )}
+
+      <ActionButton variant="green" onClick={() => void save()} disabled={!canSave || saving}>
+        {saving ? 'Saving…' : 'Save Item'}
       </ActionButton>
     </div>
   )

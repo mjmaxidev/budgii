@@ -11,6 +11,10 @@ import { MoneyText } from '@/components/ui/MoneyText'
 import { Modal } from '@/components/ui/Modal'
 import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
 import { ActionButton } from '@/components/ui/ActionButton'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import { apiReceiptItemToReceiptItem, deleteReceiptItem, updateReceiptItem as apiUpdateReceiptItem } from '@/api/receipts'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { formatDateTime } from '@/utils/dates'
@@ -22,10 +26,13 @@ export function ItemDetail() {
   const receipt = useStore((s) => s.receipts.find((r) => r.id === item?.receiptId))
   const removeReceiptItem = useStore((s) => s.removeReceiptItem)
   const updateReceiptItem = useStore((s) => s.updateReceiptItem)
+  const householdId = useAuthStore((s) => s.householdId)
   const { category, tag, tags } = useLookups()
   const [openReceipt, setOpenReceipt] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [tagPickerOpen, setTagPickerOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   if (!item) {
     return (
@@ -35,8 +42,66 @@ export function ItemDetail() {
     )
   }
 
-  const cat = category(item.categoryId)
-  const confidence = Math.round(item.aiConfidence * 100)
+  const currentItem = item
+  const cat = category(currentItem.categoryId)
+  const confidence = Math.round(currentItem.aiConfidence * 100)
+
+  async function updateTags(tagIds: string[]) {
+    if (!isApiEnabled()) {
+      updateReceiptItem(currentItem.id, { tagIds })
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to update this item.')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    try {
+      const saved = apiReceiptItemToReceiptItem(
+        await apiUpdateReceiptItem(householdId, currentItem.receiptId, currentItem.id, { tagIds }),
+      )
+      updateReceiptItem(currentItem.id, saved)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not update item')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeItem() {
+    if (!isApiEnabled()) {
+      removeReceiptItem(currentItem.id)
+      goBack()
+      return
+    }
+
+    if (!householdId) {
+      setError('Sign in again to remove this item.')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+    try {
+      await deleteReceiptItem(householdId, currentItem.receiptId, currentItem.id)
+      removeReceiptItem(currentItem.id)
+      useStore.setState((state) => ({
+        receipts: state.receipts.map((receipt) =>
+          receipt.id === currentItem.receiptId
+            ? { ...receipt, itemIds: receipt.itemIds.filter((id) => id !== currentItem.id) }
+            : receipt,
+        ),
+      }))
+      goBack()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not remove item')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <AppShell topBar={<TopBar title="Item Detail" showBack />}>
@@ -78,6 +143,11 @@ export function ItemDetail() {
       </div>
 
       <h3 className="mt-6 text-[19px] font-extrabold text-ink">Source Receipt</h3>
+      {error && (
+        <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
+          {error}
+        </p>
+      )}
       <div className="mt-3 flex gap-4">
         <button onClick={() => setOpenReceipt(true)} className="w-32 shrink-0">
           <ReceiptThumbnail imageUrl={receipt?.imageUrl} className="h-40 w-32 border border-line" />
@@ -119,13 +189,8 @@ export function ItemDetail() {
               return (
                 <button
                   key={t.id}
-                  onClick={() =>
-                    updateReceiptItem(item.id, {
-                      tagIds: active
-                        ? item.tagIds.filter((id) => id !== t.id)
-                        : [...item.tagIds, t.id],
-                    })
-                  }
+                  onClick={() => void updateTags(active ? item.tagIds.filter((id) => id !== t.id) : [...item.tagIds, t.id])}
+                  disabled={saving}
                   className={`inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-[13px] font-semibold transition ${
                     active ? 'border-transparent text-white' : 'border-line bg-surface text-ink'
                   }`}
@@ -152,12 +217,10 @@ export function ItemDetail() {
           </ActionButton>
           <ActionButton
             variant="danger"
-            onClick={() => {
-              removeReceiptItem(item.id)
-              goBack()
-            }}
+            onClick={() => void removeItem()}
+            disabled={saving}
           >
-            Remove
+            {saving ? 'Removing…' : 'Remove'}
           </ActionButton>
         </div>
       </Modal>

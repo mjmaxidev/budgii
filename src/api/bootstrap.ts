@@ -2,6 +2,12 @@ import { getMe } from '@/api/auth'
 import { createHousehold, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
 import { apiExpensesToExpenses, listAllExpenses } from '@/api/expenses'
+import {
+  apiReceiptItemsToReceiptItems,
+  apiReceiptsToReceipts,
+  listAllReceipts,
+  listReceiptItems,
+} from '@/api/receipts'
 import { pullSync, pushSync } from '@/api/sync'
 import { personasToFamilyMembers } from '@/api/personaMap'
 import { pickSyncSnapshot, SYNC_KEYS, type SyncKey } from '@/api/syncKeys'
@@ -109,7 +115,17 @@ export async function pullAndHydrate(
   const { personas } = await listPersonas(householdId)
   const familyMembers = personasToFamilyMembers(personas, isAccountHolder)
   const expenses = apiExpensesToExpenses(await listAllExpenses(householdId))
-  useStore.setState({ familyMembers, expenses })
+  const apiReceipts = await listAllReceipts(householdId)
+  const receiptItems = apiReceiptItemsToReceiptItems(
+    (await Promise.all(apiReceipts.map((receipt) => listReceiptItems(householdId, receipt.id))))
+      .flatMap((response) => response.items),
+  )
+  useStore.setState({
+    familyMembers,
+    expenses,
+    receipts: apiReceiptsToReceipts(apiReceipts),
+    receiptItems,
+  })
 
   auth.setSyncMeta(pull.revision, pull.server_time)
 }
