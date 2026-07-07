@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Info, X, Binoculars, Check, ShoppingCart, PartyPopper } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -10,19 +10,34 @@ import { useStore } from '@/store/appStore'
 
 export function DealCards() {
   const navigate = useNavigate()
+  const location = useLocation()
   const deals = useStore((s) => s.deals)
   const skipDeal = useStore((s) => s.skipDeal)
   const keepWatchingDeal = useStore((s) => s.keepWatchingDeal)
   const addDealToShoppingList = useStore((s) => s.addDealToShoppingList)
+  const selectedDealId = (location.state as { dealId?: string } | null)?.dealId
+  const reviewableDeals = deals.filter((deal) => deal.actionStatus === 'new')
+  const selectedDeal =
+    selectedDealId && deals.find((deal) => deal.id === selectedDealId && deal.actionStatus !== 'skipped')
+  const cards = selectedDeal
+    ? [selectedDeal, ...reviewableDeals.filter((deal) => deal.id !== selectedDeal.id)]
+    : reviewableDeals
   const [index, setIndex] = useState(0)
   const [showInfo, setShowInfo] = useState(false)
 
-  const total = deals.length
-  const current = deals[index]
+  const total = cards.length
+  const current = cards[index]
   const done = index >= total
 
   function advance() {
     setIndex((i) => i + 1)
+  }
+
+  function handleCurrentAction(action: (dealId: string) => void) {
+    if (!current) return
+    const shouldAdvance = current.actionStatus !== 'new'
+    action(current.id)
+    if (shouldAdvance) advance()
   }
 
   return (
@@ -44,7 +59,7 @@ export function DealCards() {
       }
       scrollClassName="overflow-hidden"
     >
-      <p className="mb-4 text-center text-[14px] font-semibold text-muted">💎 Save more on the items you love</p>
+      <p className="mb-4 text-center text-[14px] font-semibold text-muted">Review new deals from your watchlist</p>
 
       {done ? (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
@@ -64,7 +79,7 @@ export function DealCards() {
         <>
           {/* Card stack */}
           <div className="relative mx-auto h-[460px] w-full max-w-[340px]">
-            {deals.slice(index, index + 3).map((deal, i) => (
+            {cards.slice(index, index + 3).map((deal, i) => (
               <DealSwipeCard key={deal.id} deal={deal} depth={i} />
             ))}
           </div>
@@ -75,7 +90,7 @@ export function DealCards() {
               {index + 1} of {total}
             </p>
             <div className="flex gap-1.5">
-              {deals.map((_, i) => (
+              {cards.map((_, i) => (
                 <span
                   key={i}
                   className={`h-2 rounded-full transition-all ${i === index ? 'w-5 bg-green' : 'w-2 bg-line'}`}
@@ -96,28 +111,19 @@ export function DealCards() {
               color="#EF4444"
               icon={<X size={28} />}
               label="Skip"
-              onClick={() => {
-                if (current) skipDeal(current.id)
-                advance()
-              }}
+              onClick={() => handleCurrentAction(skipDeal)}
             />
             <SwipeAction
               color="#6B7280"
               icon={<Binoculars size={26} />}
               label="Keep Watching"
-              onClick={() => {
-                if (current) keepWatchingDeal(current.id)
-                advance()
-              }}
+              onClick={() => handleCurrentAction(keepWatchingDeal)}
             />
             <SwipeAction
               color="#16A34A"
               icon={<Check size={28} />}
               label="Add to List"
-              onClick={() => {
-                if (current) addDealToShoppingList(current.id)
-                advance()
-              }}
+              onClick={() => handleCurrentAction(addDealToShoppingList)}
             />
           </div>
         </>
