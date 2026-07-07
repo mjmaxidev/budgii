@@ -23,10 +23,12 @@ class Settings(BaseSettings):
 
     apple_client_id: str = ""
     google_client_id: str = ""
+    openai_api_key: str = ""
 
     invite_link_base: str = "https://budgii.app/join"
     receipt_storage_path: str = "/app/uploads"
     receipt_ocr_provider: str = "deterministic"
+    receipt_openai_model: str = ""
 
 
 @lru_cache
