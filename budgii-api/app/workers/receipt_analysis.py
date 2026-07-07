@@ -1,8 +1,10 @@
 import uuid
 
+from app.config import get_settings
 from app.db.session import async_session_factory
 from app.services import receipt as receipt_service
 from app.services.household import require_membership
+from app.services.ocr import get_receipt_ocr_provider
 
 
 async def run_receipt_analysis(
@@ -18,10 +20,19 @@ async def run_receipt_analysis(
     async with async_session_factory() as session:
         try:
             membership = await require_membership(session, user_id, household_id)
+            receipt = await receipt_service.get_receipt(session, household_id, receipt_id)
+            storage_path = None
+            if receipt.upload_id is not None:
+                upload = await receipt_service.get_upload_for_receipt(session, household_id, receipt_id)
+                storage_path = upload.storage_path
+
+            provider = get_receipt_ocr_provider(get_settings().receipt_ocr_provider)
+            analysis = await provider.analyze(storage_path)
             await receipt_service.analyze_receipt(
                 session,
                 membership,
                 receipt_id,
+                analysis=analysis,
                 category_ids=category_ids,
                 default_category_id=default_category_id,
                 default_persona_id=default_persona_id,
