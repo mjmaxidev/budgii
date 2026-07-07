@@ -264,7 +264,7 @@ GET  /receipts/{id}/file                                        ✅
 | Receipt storage | **Keep local volume** on single-host deploy; mount persistent disk on the API container. Move to MinIO or S3/R2 only if you need multi-replica APIs, CDN delivery, or presigned direct uploads |
 | Email invites | Resend / SendGrid (`INVITE_EMAIL_FROM`) |
 | OCR | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split) |
-| Monitoring | `/v1/health`, structured logs, Sentry |
+| Monitoring | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy |
 | Mobile | Capacitor → `https://api.budgii.app/v1` |
 | Universal links | `https://budgii.app/join?code=` → app or web |
 | CORS | ✅ `CORS_ORIGINS` locks origins when `APP_DEBUG=false`; production startup rejects weak/default JWT secrets |
