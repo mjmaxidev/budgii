@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from '@/api/config'
 import { refreshTokens } from '@/api/auth'
+import { clearStoredAuthTokens } from '@/api/authStorage'
 import { getAccessToken, getRefreshToken, useAuthStore } from '@/store/authStore'
 
 export class ApiError extends Error {
@@ -63,6 +64,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       await refreshTokens()
       return apiRequest<T>(path, { ...options, retry: false })
     } catch {
+      void clearStoredAuthTokens()
       useAuthStore.getState().clearAuth()
       throw await parseError(res)
     }
@@ -108,6 +110,7 @@ export async function apiBlob(path: string, options: Pick<RequestOptions, 'auth'
       await refreshTokens()
       return apiBlob(path, { ...options, retry: false })
     } catch {
+      void clearStoredAuthTokens()
       useAuthStore.getState().clearAuth()
       throw await parseError(res)
     }

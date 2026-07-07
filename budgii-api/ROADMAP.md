@@ -178,7 +178,7 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 | 6 | Replace local invite/join with API | ✅ (when `VITE_API_ENABLED=true`) |
 | 7 | `VITE_API_ENABLED` flag for offline dev fallback | ✅ |
 
-**Remaining Phase 1 frontend:** OAuth (Apple/Google) wiring, Capacitor secure token storage, persona CRUD via API from `FamilyMembers.tsx`, invite list/revoke UI (blocked on backend endpoints), localStorage migration prompt UX, logout in Account Settings.
+**Remaining Phase 1 frontend:** OAuth (Apple/Google) wiring, persona CRUD via API from `FamilyMembers.tsx`, invite list/revoke UI, logout in Account Settings.
 
 #### Phase 1 API surface (complete target)
 
@@ -284,6 +284,7 @@ GET  /receipts/{id}/status
 ### Auth flow
 
 - [x] Login/register → store tokens
+- [x] Capacitor secure token storage
 - [x] Create or join household on first use
 - [x] Pull sync snapshot → hydrate Zustand
 - [x] Push on mutation with `base_revision`

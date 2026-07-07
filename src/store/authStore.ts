@@ -15,6 +15,7 @@ type AuthState = {
   error: string | null
 
   setTokens: (accessToken: string, refreshToken: string) => void
+  hydrateTokens: (accessToken: string, refreshToken: string) => void
   setUser: (user: UserResponse | null) => void
   setHouseholdId: (householdId: string | null) => void
   setSyncMeta: (revision: number, serverTime: string) => void
@@ -36,6 +37,8 @@ export const useAuthStore = create<AuthState>()(
 
       setTokens: (accessToken, refreshToken) =>
         set({ accessToken, refreshToken, status: 'authenticated', error: null }),
+
+      hydrateTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
 
       setUser: (user) => set({ user }),
 
@@ -60,9 +63,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'budgii-auth',
+      merge: (persisted, current) => {
+        const state = { ...current, ...(persisted as Partial<AuthState>) }
+        return { ...state, accessToken: null, refreshToken: null }
+      },
       partialize: (state) => ({
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         user: state.user,
         householdId: state.householdId,
         syncRevision: state.syncRevision,
