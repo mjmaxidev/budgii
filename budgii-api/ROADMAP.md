@@ -64,6 +64,7 @@ receipt_items
 | No email delivery | **Done** — dev logs invite links; production supports Resend/SendGrid via env |
 | No real OCR provider | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; receipt failure logging/status visibility is in place; real-receipt QA remains Phase 2 |
 | Account settings local-only | **Done** — `PATCH /users/me` updates profile/email and `POST /users/me/password` changes email-account passwords |
+| Notifications mock-only | **Done** — `GET /households/{id}/notifications` generates spending/deal notifications from backend data |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
 | OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
 

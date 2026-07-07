@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Bell, TrendingDown, AlertTriangle, Gift, Check } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
+import { isApiEnabled } from '@/api/config'
+import { listNotifications } from '@/api/notifications'
+import type { NotificationResponse } from '@/api/types'
+import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/utils/cn'
 
 const READ_KEY = 'budgii-notifications-read'
@@ -29,8 +33,7 @@ type Notification = {
   icon: 'trending_down' | 'alert' | 'gift'
 }
 
-// Mock notifications
-const NOTIFICATIONS: Notification[] = [
+const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
     type: 'price_drop',
@@ -78,6 +81,43 @@ const NOTIFICATIONS: Notification[] = [
   },
 ]
 
+function mapApiNotification(notification: NotificationResponse): Notification {
+  return {
+    id: notification.id,
+    type: isKnownType(notification.type) ? notification.type : 'deal_found',
+    title: notification.title,
+    description: notification.description,
+    timestamp: formatTimestamp(notification.timestamp),
+    read: false,
+    icon: isKnownIcon(notification.icon) ? notification.icon : 'gift',
+  }
+}
+
+function isKnownType(value: string): value is Notification['type'] {
+  return ['price_drop', 'budget_warning', 'budget_exceeded', 'deal_found'].includes(value)
+}
+
+function isKnownIcon(value: string): value is Notification['icon'] {
+  return ['trending_down', 'alert', 'gift'].includes(value)
+}
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60_000))
+  if (diffMinutes < 1) return 'Just now'
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
+
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays === 1) return 'Yesterday'
+  return `${diffDays} days ago`
+}
+
 const getIconComponent = (icon: string) => {
   switch (icon) {
     case 'trending_down':
@@ -107,10 +147,40 @@ const getTypeBadgeColor = (type: string) => {
 }
 
 export function Notifications() {
+  const householdId = useAuthStore((s) => s.householdId)
   const [readIds, setReadIds] = useState<Set<string>>(loadReadIds)
+  const [apiNotifications, setApiNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const apiOn = isApiEnabled()
 
+  useEffect(() => {
+    if (!apiOn || !householdId) return
+
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    listNotifications(householdId)
+      .then((response) => {
+        if (!cancelled) {
+          setApiNotifications(response.notifications.map(mapApiNotification))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load notifications.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [apiOn, householdId])
+
+  const notifications = apiOn ? apiNotifications : MOCK_NOTIFICATIONS
   const isRead = (n: Notification) => n.read || readIds.has(n.id)
-  const unreadCount = NOTIFICATIONS.filter((n) => !isRead(n)).length
+  const unreadCount = notifications.filter((n) => !isRead(n)).length
 
   function markRead(id: string) {
     setReadIds((prev) => {
@@ -122,7 +192,7 @@ export function Notifications() {
   }
 
   function markAllRead() {
-    const next = new Set(NOTIFICATIONS.map((n) => n.id))
+    const next = new Set(notifications.map((n) => n.id))
     saveReadIds(next)
     setReadIds(next)
   }
@@ -154,9 +224,21 @@ export function Notifications() {
           </Card>
         )}
 
+        {error && (
+          <Card className="border border-red/20 bg-red/5">
+            <p className="text-[13px] font-semibold text-red">{error}</p>
+          </Card>
+        )}
+
+        {loading && (
+          <Card className="py-4 text-center">
+            <p className="text-[14px] font-semibold text-muted">Loading notifications...</p>
+          </Card>
+        )}
+
         {/* Notifications list */}
         <div className="space-y-2">
-          {NOTIFICATIONS.map((notif) => {
+          {notifications.map((notif) => {
             const read = isRead(notif)
             return (
               <Card
@@ -187,7 +269,7 @@ export function Notifications() {
         </div>
 
         {/* Empty state */}
-        {NOTIFICATIONS.length === 0 && (
+        {!loading && notifications.length === 0 && (
           <Card className="py-8 text-center">
             <Bell size={32} className="mx-auto mb-3 text-muted/40" />
             <p className="text-muted">No notifications yet</p>

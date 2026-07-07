@@ -123,6 +123,19 @@ export type SpendingAlertEvaluationResponse = {
   alerts: SpendingAlertEvaluation[]
 }
 
+export type NotificationResponse = {
+  id: string
+  type: 'price_drop' | 'budget_warning' | 'budget_exceeded' | 'deal_found' | string
+  title: string
+  description: string
+  timestamp: string
+  icon: 'trending_down' | 'alert' | 'gift' | string
+}
+
+export type NotificationListResponse = {
+  notifications: NotificationResponse[]
+}
+
 export type ApplyRecurringResponse = {
   expenses: ExpenseResponse[]
   applied_count: number
