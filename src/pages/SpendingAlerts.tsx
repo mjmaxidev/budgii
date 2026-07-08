@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  Bell,
-  AlertTriangle,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  ChevronRight,
-  Check,
-} from 'lucide-react'
+import { Bell, AlertTriangle, Plus, Trash2, AlertCircle, ChevronRight, Check } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -24,7 +15,6 @@ import { isApiEnabled } from '@/api/config'
 import { evaluateSpendingAlerts } from '@/api/alerts'
 import { useAuthStore } from '@/store/authStore'
 import type { SpendingAlertEvaluation } from '@/api/types'
-import type { SpendingAlert } from '@/types'
 
 export function SpendingAlerts() {
   const [newCategoryId, setNewCategoryId] = useState('')
@@ -39,7 +29,6 @@ export function SpendingAlerts() {
 
   const spendingAlerts = useStore((s) => s.spendingAlerts)
   const addSpendingAlert = useStore((s) => s.addSpendingAlert)
-  const updateSpendingAlert = useStore((s) => s.updateSpendingAlert)
   const deleteSpendingAlert = useStore((s) => s.deleteSpendingAlert)
   const deleteCategory = useStore((s) => s.deleteCategory)
   const updateExpense = useStore((s) => s.updateExpense)
@@ -151,7 +140,7 @@ export function SpendingAlerts() {
           updateSettings({ notificationsEnabled: true })
           testNotification()
         }
-      } catch (err) {
+      } catch {
         setError('Failed to request notification permission.')
       }
     } else {
@@ -200,18 +189,6 @@ export function SpendingAlerts() {
     setNewThreshold('')
     setNewAlertType('amount')
     setError('')
-  }
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find((c) => c.id === categoryId)?.name ?? 'Unknown'
-  }
-
-  const getCategoryColor = (categoryId: string) => {
-    return categories.find((c) => c.id === categoryId)?.color ?? '#ccc'
-  }
-
-  const getCategoryIcon = (categoryId: string) => {
-    return categories.find((c) => c.id === categoryId)?.icon ?? '📁'
   }
 
   // Group alerts by category

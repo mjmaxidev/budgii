@@ -5,8 +5,6 @@ import { CHALK_TONE_PRESET } from '@/constants/chalkColors'
 import { normalizeHex } from '@/utils/color'
 import { ColorWheelPanel } from '@/components/ui/ColorWheelPanel'
 
-export { normalizeHex } from '@/utils/color'
-
 type Props = {
   value: string
   onChange: (color: string) => void

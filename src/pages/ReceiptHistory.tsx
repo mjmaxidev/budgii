@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Trash2, Edit2, MoreVertical } from 'lucide-react'
+import { Search, Trash2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'

@@ -1,5 +1,4 @@
 import { Children, type ReactNode } from 'react'
-import { cn } from '@/utils/cn'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 
 type Props = {

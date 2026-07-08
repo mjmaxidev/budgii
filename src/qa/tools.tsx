@@ -3,15 +3,7 @@
  * studio (in place of the app iframe) when selected from the nav rail.
  */
 import type { ReactNode } from 'react'
-
-const ToolPlaceholder = ({ name }: { name: string }) => (
-  <div className="flex h-full w-full items-center justify-center bg-surface">
-    <div className="text-center">
-      <p className="mb-2 text-muted">{name}</p>
-      <p className="text-[13px] text-muted/60">(QA workspace)</p>
-    </div>
-  </div>
-)
+import { ToolPlaceholder } from './ToolPlaceholder'
 
 export type QaTool = {
   key: string

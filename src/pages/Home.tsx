@@ -13,7 +13,7 @@ import { MoneyText } from '@/components/ui/MoneyText'
 import { TransactionRow } from '@/components/finance/TransactionRow'
 import { useStore } from '@/store/appStore'
 import { breakdownByCategory, expensesInPeriod, sumExpenses } from '@/store/selectors'
-import { getBudgetStatus, statusColor } from '@/utils/budget'
+import { statusColor } from '@/utils/budget'
 import type { Period } from '@/types'
 import { useLookups } from '@/store/lookups'
 import { formatMoneyShort } from '@/utils/money'
@@ -25,14 +25,6 @@ import type { SpendingAlertEvaluation } from '@/api/types'
 
 const periodDivisor: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1 }
 
-// Helper to get current month range
-function getMonthRange() {
-  const now = new Date()
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
-  return { startDate, endDate }
-}
-
 export function Home() {
   const navigate = useNavigate()
   const [period, setPeriod] = useState<Period>('monthly')
@@ -43,7 +35,6 @@ export function Home() {
   const expenses = useStore((s) => s.expenses)
   const budget = useStore((s) => s.budget)
   const userProfile = useStore((s) => s.userProfile)
-  const getTotalIncome = useStore((s) => s.getTotalIncome)
   const householdId = useAuthStore((s) => s.householdId)
   const apiUser = useAuthStore((s) => s.user)
   const { category } = useLookups()
@@ -54,15 +45,7 @@ export function Home() {
   const periodExpenses = expensesInPeriod(expenses, period)
   const spent = sumExpenses(periodExpenses)
   const limit = budget.limit / periodDivisor[period]
-  const warning = budget.warningThreshold / periodDivisor[period]
   const remaining = limit - spent
-  const status = getBudgetStatus(spent, limit, warning)
-
-  // Get monthly summary
-  const { startDate, endDate } = getMonthRange()
-  const monthlyIncome = getTotalIncome(startDate, endDate)
-  const monthlyExpenses = sumExpenses(expenses.filter((e) => e.date >= startDate && e.date <= endDate))
-  const monthlyBalance = monthlyIncome - monthlyExpenses
 
   // Calculate budget progress percentage
   const budgetProgressPercent = limit > 0 ? (spent / limit) * 100 : 0

@@ -6,9 +6,8 @@ import { Card } from '@/components/ui/Card'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { MoneyText } from '@/components/ui/MoneyText'
 import { useStore } from '@/store/appStore'
-import { breakdownByCategory, sumExpenses } from '@/store/selectors'
 import { useLookups } from '@/store/lookups'
-import { monthLabel } from '@/utils/dates'
+import { breakdownByCategory, sumExpenses } from '@/store/selectors'
 import type { Expense, IncomeItem, OngoingIncome } from '@/types'
 import { sumOngoingIncome } from '@/utils/income'
 
@@ -68,7 +67,6 @@ function computeMonthData(
   income: IncomeItem[],
   ongoing: OngoingIncome[],
   monthOffset: number,
-  category: ReturnType<typeof useLookups>['category'],
 ): MonthData {
   const monthExpenses = getExpensesForMonth(expenses, monthOffset)
   const { manual, ongoingTotal } = getIncomeForMonth(income, ongoing, monthOffset)
@@ -94,8 +92,8 @@ export function BudgetComparison() {
   const { category } = useLookups()
 
   // Current month and previous month for comparison
-  const currentMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, 0, category)
-  const comparisonMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, monthOffset, category)
+  const currentMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, 0)
+  const comparisonMonth = computeMonthData(expenses, incomeItems, ongoingIncomes, monthOffset)
 
   const currentLabel = getMonthLabel(0)
   const comparisonLabel = getMonthLabel(monthOffset)

@@ -33,12 +33,7 @@ import {
 } from '@/data/seed'
 import { uid } from '@/utils/id'
 import { todayISO } from '@/utils/dates'
-import {
-  MOCK_RECEIPT_MERCHANT,
-  MOCK_RECEIPT_OCR,
-  MOCK_RECEIPT_TOTAL,
-  mockExtractReceiptItems,
-} from '@/utils/mockAi'
+import { mockExtractReceiptItems } from '@/utils/mockAi'
 import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
 import { sumOngoingIncome } from '@/utils/income'
 import { normalizeInviteCode } from '@/utils/familyInvite'
@@ -1168,12 +1163,3 @@ export const useStore = create<AppStore>()(
     },
   ),
 )
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}

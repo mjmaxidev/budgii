@@ -3,14 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { PinLockOverlay } from '@/components/security/PinLockOverlay'
 import { PinSetupPromptModal } from '@/components/security/PinSetupPromptModal'
 import { PinSetupModal } from '@/components/security/PinSetupModal'
+import { isProtectedPath } from '@/components/security/appLockRoutes'
 import { useStore } from '@/store/appStore'
-
-const EXEMPT_PATHS = ['/login', '/onboarding', '/verification']
-
-function isProtectedPath(pathname: string): boolean {
-  if (pathname === '/') return false
-  return !EXEMPT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))
-}
 
 type Props = { children: ReactNode }
 
@@ -101,8 +95,4 @@ export function AppLockProvider({ children }: Props) {
       />
     </>
   )
-}
-
-export function isAppLockExemptPath(pathname: string): boolean {
-  return !isProtectedPath(pathname)
 }

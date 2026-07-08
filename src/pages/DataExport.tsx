@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { useStore } from '@/store/appStore'
-import { formatDate, formatDateTime, monthLabel } from '@/utils/dates'
+import { formatDateTime, monthLabel } from '@/utils/dates'
 
 type ExportRecord = {
   id: string

@@ -1,6 +1,7 @@
-import { createContext, useContext, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Eraser, MousePointer2, Pen, Trash2, Undo2 } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { AnnotationContext, useAnnotation, type AnnotationApi } from '@/components/dev/annotationContext'
 
 /**
  * Desktop-only "red pen" review overlay, styled to match the codexUI review studio.
@@ -28,25 +29,6 @@ function toPath(points: Point[]): string {
     return `M ${p.x} ${p.y} L ${p.x + 0.1} ${p.y + 0.1}`
   }
   return 'M ' + points.map((p) => `${p.x} ${p.y}`).join(' L ')
-}
-
-type AnnotationApi = {
-  enabled: boolean
-  setEnabled: (next: boolean) => void
-  undo: () => void
-  clear: () => void
-  clearAll: () => void
-  canUndo: boolean
-  hasMarks: boolean
-  hasAnyMarks: boolean
-}
-
-const AnnotationContext = createContext<AnnotationApi | null>(null)
-
-export function useAnnotation(): AnnotationApi {
-  const ctx = useContext(AnnotationContext)
-  if (!ctx) throw new Error('useAnnotation must be used within <AnnotationProvider>')
-  return ctx
 }
 
 /**
