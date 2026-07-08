@@ -14,18 +14,26 @@ if [ "$RUN_ALL" = "1" ]; then
   frontend_changed=1
   backend_changed=1
 else
-  if printf "%s\n" "$STAGED_FILES" | grep -Eq '^(\.githooks/pre-commit|scripts/precommit\.sh)$'; then
-    frontend_changed=1
-    backend_changed=1
-  fi
-
-  if printf "%s\n" "$STAGED_FILES" | grep -Eq '^(src/|public/|index\.html|qa\.html|vite\.config\.ts|capacitor\.config\.ts|tailwind\.config\.(js|ts)|postcss\.config\.(js|cjs)|eslint\.config\.(js|mjs)|tsconfig[^/]*\.json|package\.json|package-lock\.json)$'; then
-    frontend_changed=1
-  fi
-
-  if printf "%s\n" "$STAGED_FILES" | grep -Eq '^budgii-api/((app|tests|alembic|scripts)/.*\.py|scripts/lint\.sh|pyproject\.toml|requirements\.txt|Dockerfile|alembic\.ini)$'; then
-    backend_changed=1
-  fi
+  for file in $STAGED_FILES; do
+    case "$file" in
+      .githooks/pre-commit | scripts/precommit.sh)
+        frontend_changed=1
+        backend_changed=1
+        ;;
+      src/* | public/* | index.html | qa.html | vite.config.ts | capacitor.config.ts | \
+        tailwind.config.js | tailwind.config.ts | postcss.config.js | postcss.config.cjs | \
+        eslint.config.js | eslint.config.mjs | tsconfig*.json | package.json | package-lock.json | \
+        yarn.lock)
+        frontend_changed=1
+        ;;
+      budgii-api/app/*.py | budgii-api/tests/*.py | budgii-api/alembic/*.py | \
+        budgii-api/alembic/versions/*.py | budgii-api/scripts/*.py | budgii-api/scripts/lint.sh | \
+        budgii-api/pyproject.toml | budgii-api/requirements.txt | budgii-api/Dockerfile | \
+        budgii-api/alembic.ini)
+        backend_changed=1
+        ;;
+    esac
+  done
 fi
 
 if [ -z "$STAGED_FILES" ] && [ "$RUN_ALL" != "1" ]; then
