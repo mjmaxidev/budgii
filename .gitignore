@@ -46,6 +46,7 @@ Thumbs.db
 
 # Local-only files
 *.local
+budgii-api/fixtures/
 
 # Python
 __pycache__/

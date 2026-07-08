@@ -147,6 +147,13 @@ class OpenAiReceiptOcrProvider:
                                     "text": (
                                         "Extract this receipt into strict JSON. "
                                         "Return merchant, total, raw OCR text, and line items. "
+                                        "Line items must be purchased products or services only. "
+                                        "Do not include subtotal, tax/GST, payment/card/cash lines, "
+                                        "rewards, savings summaries, balances, or change due as items. "
+                                        "Use the actual product/service name for each line item; do not "
+                                        "repeat the merchant/store name as the item name unless it is truly "
+                                        "the printed item description. Treat discounts/coupons as negative "
+                                        "amounts only when they are tied to a purchased line item. "
                                         "For each item choose the closest broad category name such as "
                                         "Groceries, Dining, Transport, Shopping, Bills, Health, "
                                         "Entertainment, Travel, or Other. Use numeric confidence from 0 to 1."
@@ -224,15 +231,16 @@ def ocr_result_from_payload(payload: dict) -> OcrReceiptResult:
     if not isinstance(items_payload, list):
         raise ValueError("OpenAI receipt analysis returned invalid items")
 
+    merchant = str(payload.get("merchant") or "").strip() or "Unknown Merchant"
     items_by_name: dict[str, OcrReceiptLine] = {}
     for item in items_payload:
         if not isinstance(item, dict):
             continue
         name = str(item.get("name") or "").strip()
-        if not name or is_non_item_receipt_line(name):
+        if not name or is_non_item_receipt_line(name) or is_merchant_line(name, merchant):
             continue
-        amount = max(0, parse_number(item.get("amount")))
-        if amount <= 0:
+        amount = parse_number(item.get("amount"))
+        if amount == 0:
             continue
         category_name = str(item.get("category_name") or "Other").strip() or "Other"
         confidence = max(0, min(1, parse_number(item.get("confidence"))))
@@ -257,13 +265,14 @@ def ocr_result_from_payload(payload: dict) -> OcrReceiptResult:
     if not items:
         raise ValueError("OpenAI receipt analysis returned no line items")
 
+    item_total = round(sum(item.amount for item in items), 2)
     total = parse_number(payload.get("total"))
-    if total <= 0:
-        total = round(sum(item.amount for item in items), 2)
+    if total <= 0 or is_total_inconsistent(total, item_total):
+        total = item_total
 
     return OcrReceiptResult(
-        merchant=str(payload.get("merchant") or "").strip() or "Unknown Merchant",
-        total=max(0, total),
+        merchant=merchant,
+        total=max(0, round(total, 2)),
         ocr_text=str(payload.get("ocr_text") or "").strip(),
         items=items,
     )
@@ -278,9 +287,15 @@ def parse_number(value: object) -> float:
         return 0
 
 
+def normalized_receipt_text(value: str) -> str:
+    return " ".join(
+        value.lower().replace(":", " ").replace("#", " ").replace("*", " ").replace("-", " ").split()
+    )
+
+
 def is_non_item_receipt_line(name: str) -> bool:
-    normalized = " ".join(name.lower().replace(":", " ").split())
-    return normalized in {
+    normalized = normalized_receipt_text(name)
+    exact_non_items = {
         "subtotal",
         "sub total",
         "tax",
@@ -296,9 +311,58 @@ def is_non_item_receipt_line(name: str) -> bool:
         "visa",
         "mastercard",
         "eftpos",
+        "eftpos purchase",
         "change",
         "change due",
+        "savings",
+        "total savings",
+        "rewards",
+        "flybuys",
     }
+    if normalized in exact_non_items:
+        return True
+
+    non_item_terms = (
+        "total",
+        "subtotal",
+        "sub total",
+        "tax",
+        "gst",
+        "payment",
+        "paid",
+        "tender",
+        "cash",
+        "card",
+        "visa",
+        "mastercard",
+        "eftpos",
+        "change",
+        "balance",
+        "rounding",
+        "savings",
+        "rewards",
+        "flybuys",
+        "receipt",
+        "abn",
+        "terminal",
+        "approval",
+    )
+    return any(term in normalized for term in non_item_terms)
+
+
+def is_merchant_line(name: str, merchant: str) -> bool:
+    normalized_name = normalized_receipt_text(name)
+    normalized_merchant = normalized_receipt_text(merchant)
+    if not normalized_name or not normalized_merchant or normalized_merchant == "unknown merchant":
+        return False
+    return normalized_name == normalized_merchant
+
+
+def is_total_inconsistent(total: float, item_total: float) -> bool:
+    if item_total <= 0:
+        return False
+    tolerance = max(1.0, item_total * 0.25)
+    return abs(total - item_total) > tolerance
 
 
 def get_receipt_ocr_provider(
