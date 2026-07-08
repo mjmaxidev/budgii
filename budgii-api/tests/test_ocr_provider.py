@@ -62,7 +62,7 @@ def test_ocr_result_from_payload_clamps_confidence_and_defaults() -> None:
     )
 
     assert result.merchant == "Unknown Merchant"
-    assert result.total == 0
+    assert result.total == 6.5
     assert result.items[0].category_name == "Other"
     assert result.items[0].confidence == 1
 

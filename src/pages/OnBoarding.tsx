@@ -239,7 +239,7 @@ export function OnBoarding() {
           password,
           name.trim(),
           householdName,
-          true,
+          false,
         )
         setStep(4)
       } catch (err) {

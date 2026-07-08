@@ -450,6 +450,56 @@ def test_receipt_upload_analyze_items_and_expense_linking(client: TestClient) ->
     assert len(analyzed_items) == 6
     assert {row["persona_id"] for row in analyzed_items} == {persona_id}
 
+    viewer_invite = create_invite(client, admin, household["id"], "viewer")
+    viewer = register_user(client, "receipt-viewer")
+    join_household(client, viewer, viewer_invite["code"])
+
+    viewer_list_response = client.get(
+        f"/v1/households/{household['id']}/receipts",
+        headers=auth_headers(viewer),
+    )
+    assert viewer_list_response.status_code == 200
+    assert viewer_list_response.json()["total"] == 1
+
+    viewer_file_response = client.get(
+        f"/v1/receipts/{receipt['id']}/file?household_id={household['id']}",
+        headers=auth_headers(viewer),
+    )
+    assert viewer_file_response.status_code == 200
+    assert viewer_file_response.content == b"fake receipt image"
+
+    viewer_status_response = client.get(
+        f"/v1/receipts/{receipt['id']}/status?household_id={household['id']}",
+        headers=auth_headers(viewer),
+    )
+    assert viewer_status_response.status_code == 200
+    assert viewer_status_response.json()["status"] == "needs_review"
+
+    viewer_items_response = client.get(
+        f"/v1/households/{household['id']}/receipts/{receipt['id']}/items",
+        headers=auth_headers(viewer),
+    )
+    assert viewer_items_response.status_code == 200
+    assert len(viewer_items_response.json()["items"]) == 6
+
+    viewer_create_response = client.post(
+        f"/v1/households/{household['id']}/receipts",
+        json={"merchant": "Viewer Receipt", "date": DATE, "total": 5},
+        headers=auth_headers(viewer),
+    )
+    assert viewer_create_response.status_code == 403
+
+    viewer_analyze_response = client.post(
+        f"/v1/receipts/{receipt['id']}/analyze",
+        json={
+            "household_id": household["id"],
+            "category_ids": {"Groceries": "cat-groceries"},
+            "default_category_id": "cat-other",
+        },
+        headers=auth_headers(viewer),
+    )
+    assert viewer_analyze_response.status_code == 403
+
     failed_upload = upload_receipt_file(client, admin, household["id"])
     failed_receipt = create_receipt(
         client,

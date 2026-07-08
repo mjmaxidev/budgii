@@ -26,7 +26,7 @@ from app.schemas.receipts import (
 )
 from app.services import receipt as receipt_service
 from app.services.household import require_membership
-from app.services.permissions import require_receipt_upload
+from app.services.permissions import require_can_pull, require_receipt_upload
 from app.workers.receipt_analysis import run_receipt_analysis
 
 router = APIRouter()
@@ -156,7 +156,7 @@ async def get_receipt_status(
     household_uuid = parse_uuid(household_id, "household_id")
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
-    require_receipt_upload(membership)
+    require_can_pull(membership)
     receipt = await receipt_service.get_receipt(session, household_uuid, receipt_uuid)
     return ReceiptStatusResponse(
         id=str(receipt.id),
@@ -177,7 +177,7 @@ async def get_receipt_file(
     household_uuid = parse_uuid(household_id, "household_id")
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
-    require_receipt_upload(membership)
+    require_can_pull(membership)
     upload = await receipt_service.get_upload_for_receipt(session, household_uuid, receipt_uuid)
     path = Path(upload.storage_path)
     if not path.is_file():
@@ -196,7 +196,7 @@ async def list_receipts(
 ) -> ReceiptListResponse:
     household_uuid = parse_uuid(household_id, "household_id")
     membership = await require_membership(session, user.id, household_uuid)
-    require_receipt_upload(membership)
+    require_can_pull(membership)
 
     receipts, total = await receipt_service.list_receipts(
         session,
@@ -223,7 +223,7 @@ async def get_receipt(
     household_uuid = parse_uuid(household_id, "household_id")
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
-    require_receipt_upload(membership)
+    require_can_pull(membership)
     receipt = await receipt_service.get_receipt(session, household_uuid, receipt_uuid)
     return receipt_response(receipt)
 
@@ -307,7 +307,7 @@ async def list_receipt_items(
     household_uuid = parse_uuid(household_id, "household_id")
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
-    require_receipt_upload(membership)
+    require_can_pull(membership)
 
     items = await receipt_service.list_receipt_items(session, household_uuid, receipt_uuid)
     return ReceiptItemListResponse(items=[receipt_item_response(item) for item in items])

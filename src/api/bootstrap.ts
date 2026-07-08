@@ -84,7 +84,7 @@ export async function registerAndCreateHousehold(
   password: string,
   name: string,
   householdName: string,
-  migrateLocal = true,
+  migrateLocal = false,
 ): Promise<void> {
   const { register } = await import('@/api/auth')
   await register(email, password, name)

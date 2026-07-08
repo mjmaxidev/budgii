@@ -8,7 +8,7 @@
 
 ## 1. Executive summary
 
-Budgii's backend is a FastAPI service with JWT auth, household tenancy, and document-level JSONB sync that mirrors the existing Zustand store. Uncommitted work adds **personas** (tag-only family members), **access roles** (admin / editor / viewer with editor levels), and **permission-gated sync** — this slice should land before any frontend wiring.
+Budgii's backend is a FastAPI service with JWT auth, household tenancy, document-level JSONB sync, **personas** (tag-only family members), **access roles** (admin / editor / viewer with editor levels), and permission-gated sync.
 
 The path forward is three phases: **wire the React app to the API** (Phase 1), **normalize expenses and receipts into relational tables** for reporting and OCR (Phase 2, now in progress), then **production deploy** with managed Postgres, email invites, OAuth polish, and async workers (Phase 3). Receipt images stay on a **local Docker volume** through Phases 1–2; object storage (S3/R2/MinIO) is deferred to Phase 3+ only if scale requires it.
 
@@ -29,13 +29,13 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 | Receipts | ✅ (Phase 2, local volume) | Upload, CRUD, item CRUD, deterministic analyze/status/file endpoints |
 | Docker | ✅ | Postgres + API on `:8001`, Alembic on boot; `receipt_uploads` volume → `/app/uploads` |
 
-### Current working tree
+### Recent completed work
 
 | Area | Files | What changed |
 |------|-------|--------------|
-| Membership admin UI | `src/pages/FamilyMembers.tsx`, `src/api/households.ts`, `src/api/types.ts` | Family Members can list app-access users, update roles, and remove non-owner access |
-| Phase 2 sync ownership | `services/seed.py`, `models/access.py`, `tests/test_household_bootstrap.py` | Finance records removed from document sync defaults/permissions |
-| Roadmap | `ROADMAP.md` | OAuth deferred; Phase 2 marked in progress |
+| Settings panel | `src/pages/Settings.tsx`, settings sub-pages | Settings flows are linked and backend-aware where applicable |
+| Receipt OCR | `app/services/ocr.py`, receipt pages, tests | OpenAI provider is wired, parser is hardened, and failed analysis is surfaced |
+| Dev operations | `scripts/reset_dev_db.sh`, README, roadmap | Local Docker dev database can be reset and reseeded with one guarded command |
 
 ### Database tables
 
@@ -139,7 +139,7 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 | Docker Compose | Named volume `receipt_uploads` mounted at `/app/uploads` on the `api` service |
 | Upload layout | `{RECEIPT_STORAGE_PATH}/{household_id}/{upload_id}_{filename}` |
 | API response | `ReceiptUploadResponse` returns `id`, `status`, `filename` — client stores `id`; file path is server-internal |
-| Serving files | Not implemented yet; add `GET /receipts/{id}/file` (auth + household check) when the client needs to display images |
+| Serving files | ✅ `GET /receipts/{id}/file` with auth + household check |
 
 `POST /v1/receipts/upload` writes bytes to disk and records metadata in `receipt_uploads`. Phase 2 OCR workers read from the same local path.
 
@@ -215,7 +215,7 @@ POST /v1/sync
 POST /v1/receipts/upload
 ```
 
-**ID strategy:** New entities use `crypto.randomUUID()` client-side. Existing `localStorage` users get a one-time migration prompt or fresh start on first login.
+**ID strategy:** New entities use `crypto.randomUUID()` client-side. Existing `localStorage` data is treated as a local cache/fallback; new API accounts start fresh unless we intentionally add an import flow later.
 
 ---
 
@@ -288,7 +288,7 @@ GET  /receipts/{id}/file                                        ✅
 ### Server-owned (API, not blob)
 
 - [x] `familyMembers` → `GET /personas` mapped to store shape
-- [x] `familyInvites` → invite endpoints (create; list/revoke pending backend)
+- [x] `familyInvites` → invite endpoints (create, list, revoke)
 - [x] `userProfile.name/email/avatar` → `GET /users/me`
 - [x] `expenses`, `receipts`, `receiptItems` → normalized finance endpoints
 
@@ -358,10 +358,10 @@ Do **not** mix unrelated frontend changes (`ProgressRing.tsx`, `Home.tsx`, etc.)
 | # | Question | Options / notes |
 |---|----------|-----------------|
 | 1 | Single vs multi-household in v1 UI? | API supports multiple; frontend assumes one |
-| 2 | Migrate existing `localStorage` on first login? | Import blob vs fresh start |
+| 2 | Migrate existing `localStorage` on first login? | Resolved for pre-market: fresh start; import flow can be added later if needed |
 | 3 | Client-generated UUIDs vs server-assigned IDs? | UUIDs client-side recommended for offline-first |
 | 4 | Single-use invite codes vs reusable links? | Current: single-use, 7-day expiry |
-| 5 | Viewer data scope | Full household read vs filtered categories |
+| 5 | Viewer data scope | Resolved: full household read; writes/admin actions remain blocked |
 | 6 | Account holder transfer | Permanent owner vs transferable admin |
 | 7 | Add member + invite in one API call? | Matches `FamilyMembers.tsx` save flow |
 | 8 | Phone/SMS invites? | Email-only v1 vs Twilio |
@@ -379,7 +379,7 @@ flowchart TB
   subgraph client [Capacitor / Web / Electron]
     ZS[Zustand Store]
     API[API Client]
-    LS[(localStorage — PIN only)]
+    LS[(localStorage — cache + PIN)]
   end
 
   subgraph fastapi [FastAPI /v1]
