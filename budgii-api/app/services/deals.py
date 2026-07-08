@@ -77,7 +77,9 @@ async def run_deal_check(session: AsyncSession, household_id: uuid.UUID) -> dict
         updated_items.append(updated_item)
 
         existing = existing_by_watchlist_id.get(item_id, {})
-        action_status = existing.get("actionStatus") if isinstance(existing.get("actionStatus"), str) else "new"
+        action_status = (
+            existing.get("actionStatus") if isinstance(existing.get("actionStatus"), str) else "new"
+        )
         updated_deals_by_watchlist_id[item_id] = {
             **existing,
             "id": str(existing.get("id") or f"deal-{item_id}"),
@@ -95,9 +97,7 @@ async def run_deal_check(session: AsyncSession, household_id: uuid.UUID) -> dict
     current_watchlist_ids = {item["id"] for item in updated_items}
     updated_deals = list(updated_deals_by_watchlist_id.values())
     updated_deals.extend(
-        deal
-        for deal in existing_deals
-        if str(deal.get("watchlistItemId") or "") not in current_watchlist_ids
+        deal for deal in existing_deals if str(deal.get("watchlistItemId") or "") not in current_watchlist_ids
     )
 
     if watchlist_chunk:

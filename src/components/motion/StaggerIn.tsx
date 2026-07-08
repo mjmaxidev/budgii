@@ -18,11 +18,7 @@ export function StaggerIn({ children, className, staggerMs = 70 }: Props) {
   return (
     <div className={className}>
       {Children.map(children, (child, index) => (
-        <div
-          key={index}
-          className="motion-stagger-item"
-          style={{ animationDelay: `${index * staggerMs}ms` }}
-        >
+        <div key={index} className="motion-stagger-item" style={{ animationDelay: `${index * staggerMs}ms` }}>
           {child}
         </div>
       ))}

@@ -63,7 +63,9 @@ async def ensure_upload(
         )
     )
     if not upload:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household"
+        )
 
 
 async def get_upload_for_receipt(
@@ -99,7 +101,9 @@ async def ensure_persona(
         )
     )
     if not persona:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Persona is not in this household")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Persona is not in this household"
+        )
 
 
 async def create_receipt(
@@ -185,7 +189,9 @@ async def delete_receipt(
     await session.delete(receipt)
 
 
-async def list_receipt_items(session: AsyncSession, household_id: uuid.UUID, receipt_id: uuid.UUID) -> list[ReceiptItem]:
+async def list_receipt_items(
+    session: AsyncSession, household_id: uuid.UUID, receipt_id: uuid.UUID
+) -> list[ReceiptItem]:
     await get_receipt(session, household_id, receipt_id)
     result = await session.scalars(
         select(ReceiptItem)
@@ -287,7 +293,9 @@ async def analyze_receipt(
             receipt.status = "failed"
             receipt.analysis_error = "A default category is required"
             await session.flush()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A default category is required")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="A default category is required"
+            )
 
         item = ReceiptItem(
             id=uuid.uuid4(),

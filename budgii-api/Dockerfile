@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 COPY requirements.txt .
+COPY pyproject.toml .
 RUN pip install -r requirements.txt
 
 COPY app ./app

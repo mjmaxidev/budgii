@@ -17,7 +17,9 @@ async def list_personas(session: AsyncSession, household_id: uuid.UUID) -> list[
     return list(result.scalars().all())
 
 
-async def get_persona(session: AsyncSession, household_id: uuid.UUID, persona_id: uuid.UUID) -> HouseholdPersona:
+async def get_persona(
+    session: AsyncSession, household_id: uuid.UUID, persona_id: uuid.UUID
+) -> HouseholdPersona:
     persona = await session.scalar(
         select(HouseholdPersona).where(
             HouseholdPersona.id == persona_id,

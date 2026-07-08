@@ -13,7 +13,9 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_debug: bool = True
     api_prefix: str = "/v1"
-    cors_origins: str = "http://localhost:5173,http://localhost:5176,http://127.0.0.1:5173,http://127.0.0.1:5176"
+    cors_origins: str = (
+        "http://localhost:5173,http://localhost:5176,http://127.0.0.1:5173,http://127.0.0.1:5176"
+    )
 
     database_url: str = "postgresql+asyncpg://budgii:budgii@localhost:5432/budgii"
 
@@ -45,7 +47,11 @@ class Settings(BaseSettings):
     def validate_runtime(self) -> None:
         if not self.is_production:
             return
-        if self.jwt_secret in {"dev-secret-change-me", "dev-docker-secret-change-me", "change-me-in-production"}:
+        if self.jwt_secret in {
+            "dev-secret-change-me",
+            "dev-docker-secret-change-me",
+            "change-me-in-production",
+        }:
             raise RuntimeError("JWT_SECRET must be changed before running in production")
         if len(self.jwt_secret) < 32:
             raise RuntimeError("JWT_SECRET must be at least 32 characters in production")

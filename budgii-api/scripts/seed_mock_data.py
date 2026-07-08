@@ -97,7 +97,9 @@ async def get_or_create_user(
         return user, membership
 
     membership = await session.scalar(
-        select(HouseholdMembership).where(HouseholdMembership.user_id == user.id).order_by(HouseholdMembership.joined_at)
+        select(HouseholdMembership)
+        .where(HouseholdMembership.user_id == user.id)
+        .order_by(HouseholdMembership.joined_at)
     )
     if membership:
         return user, membership
@@ -140,7 +142,9 @@ async def get_or_create_persona(
 
 
 async def sync_chunks(session, household_id: uuid.UUID) -> dict[str, HouseholdSyncChunk]:
-    result = await session.scalars(select(HouseholdSyncChunk).where(HouseholdSyncChunk.household_id == household_id))
+    result = await session.scalars(
+        select(HouseholdSyncChunk).where(HouseholdSyncChunk.household_id == household_id)
+    )
     chunks = {chunk.chunk_key: chunk for chunk in result.all()}
     for key in SYNC_KEYS:
         if key in chunks:
@@ -159,8 +163,6 @@ async def sync_chunks(session, household_id: uuid.UUID) -> dict[str, HouseholdSy
 def mock_sync_document(personas: dict[str, HouseholdPersona]) -> dict[str, Any]:
     you_id = str(personas["you"].id)
     sam_id = str(personas["sam"].id)
-    mia_id = str(personas["mia"].id)
-    noah_id = str(personas["noah"].id)
 
     categories = [
         {"id": "cat-groceries", "name": "Groceries", "icon": "🛒", "color": "#16A34A"},
@@ -360,15 +362,31 @@ def mock_sync_document(personas: dict[str, HouseholdPersona]) -> dict[str, Any]:
             },
         ],
         "spendingAlerts": [
-            {"id": "alert-groceries-80", "categoryId": "cat-groceries", "threshold": 80, "alertType": "percentage"},
+            {
+                "id": "alert-groceries-80",
+                "categoryId": "cat-groceries",
+                "threshold": 80,
+                "alertType": "percentage",
+            },
             {"id": "alert-dining-300", "categoryId": "cat-dining", "threshold": 300, "alertType": "amount"},
         ],
     }
 
 
-def mock_expenses(household_id: uuid.UUID, user_id: uuid.UUID, personas: dict[str, HouseholdPersona]) -> list[Expense]:
+def mock_expenses(
+    household_id: uuid.UUID, user_id: uuid.UUID, personas: dict[str, HouseholdPersona]
+) -> list[Expense]:
     rows = [
-        ("groceries-1", -1, 137.42, "Coles Rundle Place", "cat-groceries", ["tag-family"], "sam", "Weekly groceries"),
+        (
+            "groceries-1",
+            -1,
+            137.42,
+            "Coles Rundle Place",
+            "cat-groceries",
+            ["tag-family"],
+            "sam",
+            "Weekly groceries",
+        ),
         ("dining-1", -2, 46.8, "Betty's Burgers", "cat-dining", ["tag-family"], "you", "Dinner after soccer"),
         ("transport-1", -3, 72.1, "Ampol", "cat-transport", [], "you", "Fuel"),
         ("bills-1", -4, 184.95, "Origin Energy", "cat-bills", ["tag-family"], "sam", "Electricity bill"),
@@ -376,7 +394,16 @@ def mock_expenses(household_id: uuid.UUID, user_id: uuid.UUID, personas: dict[st
         ("health-1", -7, 38.5, "Chemist Warehouse", "cat-health", ["tag-kids"], "noah", "Medicine"),
         ("groceries-2", -9, 89.2, "Woolworths", "cat-groceries", ["tag-family"], "you", "Top-up shop"),
         ("shopping-1", -11, 64.0, "Kmart", "cat-shopping", ["tag-kids"], "sam", "Kids clothes"),
-        ("entertainment-1", -14, 22.99, "Netflix", "cat-entertainment", ["tag-subscription"], "sam", "Monthly subscription"),
+        (
+            "entertainment-1",
+            -14,
+            22.99,
+            "Netflix",
+            "cat-entertainment",
+            ["tag-subscription"],
+            "sam",
+            "Monthly subscription",
+        ),
         ("dining-2", -18, 18.2, "Local Cafe", "cat-dining", ["tag-work"], "you", "Coffee meeting"),
         ("transport-2", -22, 31.45, "Uber", "cat-transport", [], "you", "Airport ride"),
         ("groceries-3", -29, 112.75, "Aldi", "cat-groceries", ["tag-family"], "sam", "Monthly pantry stock"),
@@ -498,7 +525,9 @@ async def seed_sync_data(session, household_id: uuid.UUID, personas: dict[str, H
             chunk.data = data
             changed += 1
 
-    meta = await session.scalar(select(HouseholdSyncMeta).where(HouseholdSyncMeta.household_id == household_id))
+    meta = await session.scalar(
+        select(HouseholdSyncMeta).where(HouseholdSyncMeta.household_id == household_id)
+    )
     if not meta:
         meta = HouseholdSyncMeta(household_id=household_id, revision=1)
         session.add(meta)
@@ -550,13 +579,21 @@ async def run(
 
         personas = {
             "you": account_persona,
-            "sam": await get_or_create_persona(session, household_id, name="Sam", relationship="Partner", avatar="👩"),
-            "mia": await get_or_create_persona(session, household_id, name="Mia", relationship="Child 1", avatar="👧"),
-            "noah": await get_or_create_persona(session, household_id, name="Noah", relationship="Child 2", avatar="👦"),
+            "sam": await get_or_create_persona(
+                session, household_id, name="Sam", relationship="Partner", avatar="👩"
+            ),
+            "mia": await get_or_create_persona(
+                session, household_id, name="Mia", relationship="Child 1", avatar="👧"
+            ),
+            "noah": await get_or_create_persona(
+                session, household_id, name="Noah", relationship="Child 2", avatar="👦"
+            ),
         }
 
         sync_changed = await seed_sync_data(session, household_id, personas)
-        expenses, receipts, receipt_items = await seed_normalized_rows(session, household_id, user.id, personas)
+        expenses, receipts, receipt_items = await seed_normalized_rows(
+            session, household_id, user.id, personas
+        )
         await session.commit()
 
         print("Seeded Budgii mock database:")

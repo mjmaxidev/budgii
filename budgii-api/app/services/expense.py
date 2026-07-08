@@ -58,7 +58,9 @@ async def ensure_persona(
         )
     )
     if not persona:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Persona is not in this household")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Persona is not in this household"
+        )
 
 
 async def ensure_receipt_upload(
@@ -75,7 +77,9 @@ async def ensure_receipt_upload(
         )
     )
     if not upload:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt upload is not in this household"
+        )
 
 
 async def ensure_receipt(
@@ -92,7 +96,9 @@ async def ensure_receipt(
         )
     )
     if not receipt:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt is not in this household")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt is not in this household"
+        )
 
 
 async def create_expense(

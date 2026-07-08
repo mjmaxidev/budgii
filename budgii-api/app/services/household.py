@@ -11,8 +11,8 @@ from app.models import Household, HouseholdInvite, HouseholdMembership, User
 from app.models.access import DEFAULT_EDITOR_LEVEL, DEFAULT_INVITE_ROLE, AccessRole, EditorLevel
 from app.services.permissions import normalize_editor_level, require_admin, require_can_pull
 from app.services.persona import create_account_holder_persona, create_join_persona
-from app.services.seed import seed_household_sync
 from app.services.security import invite_code
+from app.services.seed import seed_household_sync
 
 
 async def get_user_membership(
@@ -51,7 +51,9 @@ async def list_households(session: AsyncSession, user: User) -> list[tuple[House
     return list(result.all())
 
 
-async def create_household(session: AsyncSession, user: User, name: str) -> tuple[Household, HouseholdMembership]:
+async def create_household(
+    session: AsyncSession, user: User, name: str
+) -> tuple[Household, HouseholdMembership]:
     household = Household(name=name.strip(), owner_id=user.id)
     session.add(household)
     await session.flush()
@@ -81,7 +83,9 @@ async def create_invite(
     editor_level: EditorLevel | None = DEFAULT_EDITOR_LEVEL,
 ) -> HouseholdInvite:
     if access_role == "admin":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invites cannot grant admin access")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invites cannot grant admin access"
+        )
 
     if household_id:
         membership = await require_membership(session, user.id, household_id)
@@ -208,7 +212,9 @@ async def update_member(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
 
     if target.is_account_holder:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change account holder role")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change account holder role"
+        )
 
     target.access_role = access_role
     target.editor_level = normalize_editor_level(access_role, editor_level)
@@ -239,7 +245,9 @@ async def remove_member(
     await session.delete(target)
 
 
-async def join_household(session: AsyncSession, user: User, code: str) -> tuple[Household, HouseholdMembership]:
+async def join_household(
+    session: AsyncSession, user: User, code: str
+) -> tuple[Household, HouseholdMembership]:
     normalized = code.strip().upper()
     invite = await session.scalar(
         select(HouseholdInvite)

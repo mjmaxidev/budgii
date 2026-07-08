@@ -209,7 +209,11 @@ def extract_output_text(response: dict) -> str:
         if not isinstance(content, list):
             continue
         for part in content:
-            if isinstance(part, dict) and part.get("type") == "output_text" and isinstance(part.get("text"), str):
+            if (
+                isinstance(part, dict)
+                and part.get("type") == "output_text"
+                and isinstance(part.get("text"), str)
+            ):
                 chunks.append(part["text"])
 
     return "".join(chunks)

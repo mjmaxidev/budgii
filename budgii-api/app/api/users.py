@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.config import Settings, get_settings
+from app.db.session import get_db
 from app.models import User
 from app.schemas.auth import ChangePasswordRequest, UpdateUserRequest, UserResponse
-from app.db.session import get_db
 from app.services import auth as auth_service
 from app.services.security import hash_password, verify_password
 
@@ -42,7 +42,9 @@ async def update_me(
 ) -> UserResponse:
     if body.email is not None:
         normalized_email = str(body.email).lower().strip()
-        existing = await session.scalar(select(User).where(User.email == normalized_email, User.id != user.id))
+        existing = await session.scalar(
+            select(User).where(User.email == normalized_email, User.id != user.id)
+        )
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
         user.email = normalized_email
@@ -77,7 +79,9 @@ async def upload_avatar(
 
     content = await file.read()
     if len(content) > MAX_AVATAR_BYTES:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Avatar image is too large")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Avatar image is too large"
+        )
 
     upload_dir = Path(settings.receipt_storage_path) / "avatars" / str(user.id)
     upload_dir.mkdir(parents=True, exist_ok=True)

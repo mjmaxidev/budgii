@@ -14,8 +14,7 @@ export function PageTransition({ children }: Props) {
   const reduced = usePrefersReducedMotion()
   const prevPath = useRef(location.pathname)
 
-  const isTabSwitch =
-    TAB_ROOTS.has(location.pathname) && TAB_ROOTS.has(prevPath.current)
+  const isTabSwitch = TAB_ROOTS.has(location.pathname) && TAB_ROOTS.has(prevPath.current)
 
   useLayoutEffect(() => {
     prevPath.current = location.pathname
@@ -24,10 +23,7 @@ export function PageTransition({ children }: Props) {
   return (
     <div
       key={location.pathname}
-      className={cn(
-        'h-full',
-        !reduced && (isTabSwitch ? 'motion-page-tab' : 'motion-page-push'),
-      )}
+      className={cn('h-full', !reduced && (isTabSwitch ? 'motion-page-tab' : 'motion-page-push'))}
     >
       {children}
     </div>

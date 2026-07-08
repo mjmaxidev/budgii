@@ -11,13 +11,7 @@ type Props = {
   ariaLabel?: string
 }
 
-export function BudgiiLottie({
-  animationData,
-  className,
-  loop = true,
-  autoplay = true,
-  ariaLabel,
-}: Props) {
+export function BudgiiLottie({ animationData, className, loop = true, autoplay = true, ariaLabel }: Props) {
   const reduced = usePrefersReducedMotion()
   const ref = useRef<LottieRefCurrentProps>(null)
 

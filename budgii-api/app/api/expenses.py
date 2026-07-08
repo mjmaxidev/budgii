@@ -140,9 +140,7 @@ async def update_expense(
     membership = await require_membership(session, user.id, household_uuid)
 
     persona_id = (
-        parse_optional_uuid(body.persona_id, "persona_id")
-        if "persona_id" in body.model_fields_set
-        else ...
+        parse_optional_uuid(body.persona_id, "persona_id") if "persona_id" in body.model_fields_set else ...
     )
     receipt_upload_id = (
         parse_optional_uuid(body.receipt_upload_id, "receipt_upload_id")
@@ -150,9 +148,7 @@ async def update_expense(
         else ...
     )
     receipt_id = (
-        parse_optional_uuid(body.receipt_id, "receipt_id")
-        if "receipt_id" in body.model_fields_set
-        else ...
+        parse_optional_uuid(body.receipt_id, "receipt_id") if "receipt_id" in body.model_fields_set else ...
     )
     notes = body.notes if "notes" in body.model_fields_set else ...
 

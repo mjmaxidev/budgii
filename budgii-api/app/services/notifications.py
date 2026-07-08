@@ -34,10 +34,7 @@ async def spending_alert_notifications(
         is_exceeded = bool(limit and spent > limit)
         notification_type = "budget_exceeded" if is_exceeded else "budget_warning"
         title = "Budget Exceeded" if is_exceeded else "Budget Warning"
-        description = (
-            f"{category_name} is at {round(alert['progress'] * 100)}% "
-            f"with ${spent:.2f} spent"
-        )
+        description = f"{category_name} is at {round(alert['progress'] * 100)}% with ${spent:.2f} spent"
         if limit:
             description += f" of ${limit:.2f}"
 

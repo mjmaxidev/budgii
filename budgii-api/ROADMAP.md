@@ -36,6 +36,7 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 | Settings panel | `src/pages/Settings.tsx`, settings sub-pages | Settings flows are linked and backend-aware where applicable |
 | Receipt OCR | `app/services/ocr.py`, receipt pages, tests | OpenAI provider is wired, parser is hardened, and failed analysis is surfaced |
 | Dev operations | `scripts/reset_dev_db.sh`, README, roadmap | Local Docker dev database can be reset and reseeded with one guarded command |
+| Quality gates | `pyproject.toml`, `scripts/lint.sh`, backend Python files | Ruff lint/format checks are configured and the backend codebase is formatted |
 
 ### Database tables
 

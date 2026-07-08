@@ -11,6 +11,8 @@
     "lint": "eslint src vite.config.ts capacitor.config.ts",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,json,html}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,json,html}\"",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "precommit": "RUN_ALL=1 scripts/precommit.sh",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "electron:dev:app": "node electron/dev-app.cjs",

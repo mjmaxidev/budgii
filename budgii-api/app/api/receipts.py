@@ -139,7 +139,9 @@ async def analyze_receipt(
         default_persona_id=parse_optional_uuid(body.default_persona_id, "default_persona_id"),
         default_tag_ids=body.default_tag_ids,
     )
-    queued_receipt = receipt_response(receipt).model_copy(update={"status": "analyzing", "analysis_error": None})
+    queued_receipt = receipt_response(receipt).model_copy(
+        update={"status": "analyzing", "analysis_error": None}
+    )
     return ReceiptAnalyzeResponse(
         receipt=queued_receipt,
         items=[],
@@ -265,7 +267,9 @@ async def update_receipt(
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     membership = await require_membership(session, user.id, household_uuid)
 
-    upload_id = parse_optional_uuid(body.upload_id, "upload_id") if "upload_id" in body.model_fields_set else ...
+    upload_id = (
+        parse_optional_uuid(body.upload_id, "upload_id") if "upload_id" in body.model_fields_set else ...
+    )
     image_url = body.image_url if "image_url" in body.model_fields_set else ...
     ocr_text = body.ocr_text if "ocr_text" in body.model_fields_set else ...
 
@@ -340,7 +344,9 @@ async def create_receipt_item(
     return receipt_item_response(item)
 
 
-@household_router.patch("/{household_id}/receipts/{receipt_id}/items/{item_id}", response_model=ReceiptItemResponse)
+@household_router.patch(
+    "/{household_id}/receipts/{receipt_id}/items/{item_id}", response_model=ReceiptItemResponse
+)
 async def update_receipt_item(
     household_id: str,
     receipt_id: str,
@@ -353,7 +359,9 @@ async def update_receipt_item(
     receipt_uuid = parse_uuid(receipt_id, "receipt_id")
     item_uuid = parse_uuid(item_id, "item_id")
     membership = await require_membership(session, user.id, household_uuid)
-    persona_id = parse_optional_uuid(body.persona_id, "persona_id") if "persona_id" in body.model_fields_set else ...
+    persona_id = (
+        parse_optional_uuid(body.persona_id, "persona_id") if "persona_id" in body.model_fields_set else ...
+    )
 
     item = await receipt_service.update_receipt_item(
         session,

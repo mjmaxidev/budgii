@@ -9,7 +9,6 @@ from tests.helpers import (
     register_user,
 )
 
-
 DATE = "2026-07-07T00:00:00Z"
 
 

@@ -2,23 +2,22 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
 from app.config import get_settings
 from app.db.base import Base
 from app.models import (  # noqa: F401
     Household,
-    HouseholdSyncChunk,
-    HouseholdSyncMeta,
     HouseholdInvite,
     HouseholdMembership,
     HouseholdPersona,
+    HouseholdSyncChunk,
+    HouseholdSyncMeta,
     ReceiptUpload,
     RefreshToken,
     User,
 )
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 config = context.config
 if config.config_file_name is not None:

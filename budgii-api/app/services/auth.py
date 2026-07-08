@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
@@ -7,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
 from app.models import RefreshToken, User
+from app.schemas.auth import TokenResponse
 from app.services.oauth import OAuthVerificationError, verify_apple_id_token, verify_google_id_token
 from app.services.security import (
     create_access_token,
@@ -15,7 +15,6 @@ from app.services.security import (
     hash_token,
     verify_password,
 )
-from app.schemas.auth import TokenResponse
 
 
 async def issue_tokens(session: AsyncSession, user: User, settings: Settings) -> TokenResponse:
@@ -53,9 +52,7 @@ async def register_user(
     return await issue_tokens(session, user, settings)
 
 
-async def login_email(
-    session: AsyncSession, email: str, password: str, settings: Settings
-) -> TokenResponse:
+async def login_email(session: AsyncSession, email: str, password: str, settings: Settings) -> TokenResponse:
     normalized = email.lower().strip()
     user = await session.scalar(select(User).where(User.email == normalized))
     if not user or not user.password_hash or not verify_password(password, user.password_hash):
@@ -116,14 +113,18 @@ async def login_apple(session: AsyncSession, id_token: str, settings: Settings) 
     return await login_oauth(session, "apple", email, name, avatar, email, settings)
 
 
-async def refresh_access_token(session: AsyncSession, refresh_token: str, settings: Settings) -> TokenResponse:
+async def refresh_access_token(
+    session: AsyncSession, refresh_token: str, settings: Settings
+) -> TokenResponse:
     token_hash = hash_token(refresh_token)
     now = datetime.now(timezone.utc)
     record = await session.scalar(
         select(RefreshToken).where(RefreshToken.token_hash == token_hash, RefreshToken.expires_at > now)
     )
     if not record:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token"
+        )
 
     user = await session.get(User, record.user_id)
     if not user:

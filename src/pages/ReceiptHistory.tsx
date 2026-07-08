@@ -105,10 +105,7 @@ export function ReceiptHistory() {
 
       {filtered.length === 0 ? (
         <div className="mt-10">
-          <EmptyState
-            title="No receipts yet"
-            description="Scan your first receipt to get started."
-          />
+          <EmptyState title="No receipts yet" description="Scan your first receipt to get started." />
         </div>
       ) : (
         <div className="mt-4 space-y-3">

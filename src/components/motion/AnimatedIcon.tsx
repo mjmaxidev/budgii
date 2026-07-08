@@ -10,11 +10,7 @@ type Props = {
 export function AnimatedIcon({ children, active, className }: Props) {
   return (
     <span
-      className={cn(
-        'inline-flex transition-transform duration-200',
-        active && 'motion-icon-pop',
-        className,
-      )}
+      className={cn('inline-flex transition-transform duration-200', active && 'motion-icon-pop', className)}
     >
       {children}
     </span>

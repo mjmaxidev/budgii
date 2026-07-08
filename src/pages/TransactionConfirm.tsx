@@ -45,12 +45,7 @@ export function TransactionConfirm() {
       {/* Success icon */}
       <div className="flex justify-center mb-4">
         <div className="rounded-full bg-greenSoft p-2">
-          <BudgiiLottie
-            animationData={successCheck}
-            loop={false}
-            className="h-24 w-24"
-            ariaLabel="Success"
-          />
+          <BudgiiLottie animationData={successCheck} loop={false} className="h-24 w-24" ariaLabel="Success" />
         </div>
       </div>
 

@@ -32,6 +32,21 @@ cd budgii-api
 scripts/reset_dev_db.sh --yes
 ```
 
+## Checks
+
+```bash
+npm run hooks:install
+npm run precommit
+
+npm run lint
+npm run format:check
+npm run build
+
+cd budgii-api
+docker compose -f docker-compose.dev.yml exec -T api scripts/lint.sh
+docker compose -f docker-compose.dev.yml exec -T -e RECEIPT_OCR_PROVIDER=deterministic api python -m pytest
+```
+
 ## Desktop app (Electron)
 
 ```bash

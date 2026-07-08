@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from app.services.ocr import (
     OpenAiReceiptOcrProvider,
     get_receipt_ocr_provider,

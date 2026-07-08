@@ -1,5 +1,4 @@
 import pytest
-
 from app.config import Settings
 from app.services.email import EmailDeliveryError, InviteEmail, send_invite_email
 

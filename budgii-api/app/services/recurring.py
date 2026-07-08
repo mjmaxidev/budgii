@@ -2,7 +2,6 @@ import uuid
 from datetime import date, datetime, time, timezone
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Expense, HouseholdMembership, HouseholdSyncChunk, User
@@ -11,7 +10,9 @@ from app.services.permissions import require_expense_write
 
 
 def generated_expense_id(household_id: uuid.UUID, recurring_id: str, due_date: date) -> uuid.UUID:
-    return uuid.uuid5(uuid.NAMESPACE_URL, f"budgii:recurring:{household_id}:{recurring_id}:{due_date.isoformat()}")
+    return uuid.uuid5(
+        uuid.NAMESPACE_URL, f"budgii:recurring:{household_id}:{recurring_id}:{due_date.isoformat()}"
+    )
 
 
 def due_datetime(due_date: date) -> datetime:
@@ -64,7 +65,7 @@ def last_day_of_month(value: date) -> int:
         next_month = date(value.year + 1, 1, 1)
     else:
         next_month = date(value.year, value.month + 1, 1)
-    return (next_month.toordinal() - date(value.year, value.month, 1).toordinal())
+    return next_month.toordinal() - date(value.year, value.month, 1).toordinal()
 
 
 def valid_expense_payload(expense: Any) -> bool:
@@ -100,7 +101,11 @@ async def apply_due_recurring_transactions(
     for transaction in transactions:
         recurring_id = str(transaction.get("id") or "").strip()
         expense_payload = transaction.get("expense")
-        if not recurring_id or not is_recurring_due(transaction, due_date) or not valid_expense_payload(expense_payload):
+        if (
+            not recurring_id
+            or not is_recurring_due(transaction, due_date)
+            or not valid_expense_payload(expense_payload)
+        ):
             skipped_count += 1
             continue
 

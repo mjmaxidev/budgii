@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,9 @@ async def pull_sync(
     session: AsyncSession = Depends(get_db),
 ) -> SyncPullResponse:
     household_uuid = parse_uuid(household_id, "household_id")
-    snapshot, server_time, revision = await sync_service.pull_snapshot(session, user.id, household_uuid, since)
+    snapshot, server_time, revision = await sync_service.pull_snapshot(
+        session, user.id, household_uuid, since
+    )
     return SyncPullResponse(
         household_id=household_id,
         server_time=server_time,

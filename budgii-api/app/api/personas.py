@@ -54,9 +54,7 @@ async def list_personas(
     )
     membership_by_persona = {m.persona_id: m for m in links if m.persona_id}
 
-    return PersonaListResponse(
-        personas=[persona_response(p, membership_by_persona) for p in personas]
-    )
+    return PersonaListResponse(personas=[persona_response(p, membership_by_persona) for p in personas])
 
 
 @router.post("", response_model=PersonaResponse)

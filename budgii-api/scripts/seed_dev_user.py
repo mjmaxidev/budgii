@@ -21,12 +21,11 @@ from pathlib import Path
 # Allow `python scripts/seed_dev_user.py` from budgii-api/
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from sqlalchemy import select
-
 from app.db.session import async_session_factory
 from app.models import HouseholdSyncChunk, User
 from app.services.household import create_household
 from app.services.security import hash_password
+from sqlalchemy import select
 
 DEFAULT_EMAIL = "dev@mjproductions.app"
 DEFAULT_PASSWORD = "password"

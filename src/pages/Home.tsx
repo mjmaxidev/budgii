@@ -142,30 +142,30 @@ export function Home() {
 
         {/* Budget Progress Bar */}
         <Card className="py-3">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[14px] font-semibold text-ink">Budget Progress</p>
-          <p className="text-[13px] font-bold" style={{ color: getBudgetColor() }}>
-            {Math.min(budgetProgressPercent, 100).toFixed(1)}%
-          </p>
-        </div>
-        <ProgressBar
-          progress={Math.min(budgetProgressPercent / 100, 1)}
-          color={getBudgetColor()}
-          className="w-full"
-        />
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-[12px] text-muted">
-            {formatMoneyShort(spent)} of {formatMoneyShort(limit)}
-          </p>
-          <button
-            onClick={() => navigate('/spending-breakdown', withFrom('/home'))}
-            className="flex items-center gap-0.5 text-[13px] font-bold text-primary active:opacity-70"
-          >
-            Spending Breakdown
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </Card>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[14px] font-semibold text-ink">Budget Progress</p>
+            <p className="text-[13px] font-bold" style={{ color: getBudgetColor() }}>
+              {Math.min(budgetProgressPercent, 100).toFixed(1)}%
+            </p>
+          </div>
+          <ProgressBar
+            progress={Math.min(budgetProgressPercent / 100, 1)}
+            color={getBudgetColor()}
+            className="w-full"
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-[12px] text-muted">
+              {formatMoneyShort(spent)} of {formatMoneyShort(limit)}
+            </p>
+            <button
+              onClick={() => navigate('/spending-breakdown', withFrom('/home'))}
+              className="flex items-center gap-0.5 text-[13px] font-bold text-primary active:opacity-70"
+            >
+              Spending Breakdown
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </Card>
       </StaggerIn>
 
       {activeAlerts.length > 0 && (

@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from tests.helpers import auth_headers, create_household, register_user, unique_email
 
-
 PASSWORD = "password123"
 
 

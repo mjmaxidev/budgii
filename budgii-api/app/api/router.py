@@ -1,6 +1,18 @@
 from fastapi import APIRouter
 
-from app.api import alerts, auth, deals, expenses, health, households, notifications, personas, receipts, sync, users
+from app.api import (
+    alerts,
+    auth,
+    deals,
+    expenses,
+    health,
+    households,
+    notifications,
+    personas,
+    receipts,
+    sync,
+    users,
+)
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])

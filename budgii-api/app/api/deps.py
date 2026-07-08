@@ -1,5 +1,4 @@
 import uuid
-from pathlib import Path
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status

@@ -1,5 +1,4 @@
 import pytest
-
 from app.services.ocr import ocr_result_from_payload
 
 

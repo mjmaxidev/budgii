@@ -67,8 +67,12 @@ body {
 }
 
 @keyframes pageTabEnter {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pagePushEnter {
@@ -94,13 +98,20 @@ body {
 }
 
 @keyframes iconPop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes fabGlow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 12px 32px -12px rgba(255, 106, 0, 0.45);
   }
   50% {
@@ -109,7 +120,8 @@ body {
 }
 
 @keyframes logoBounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
