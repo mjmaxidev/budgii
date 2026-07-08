@@ -1,11 +1,5 @@
 import type { IncomeItem, OngoingIncome } from '@/types'
 
-export function getMonthRange(year: number, month: number) {
-  const firstDay = new Date(year, month, 1).toISOString().split('T')[0]
-  const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0]
-  return { firstDay, lastDay }
-}
-
 export function incomeInMonth(items: IncomeItem[], year: number, month: number) {
   return items.filter((i) => {
     const d = new Date(i.date)

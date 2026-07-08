@@ -18,8 +18,6 @@ import { SpendingBreakdown } from '@/pages/SpendingBreakdown'
 import { BudgetSetup } from '@/pages/BudgetSetup'
 import { BudgetNextMonth } from '@/pages/BudgetNextMonth'
 import { CategoriesTags } from '@/pages/CategoriesTags'
-import { CategoryCreation } from '@/pages/CategoryCreation'
-import { TagCreation } from '@/pages/TagCreation'
 import { FamilyMembers } from '@/pages/FamilyMembers'
 import { Settings } from '@/pages/Settings'
 import { DealWatchlist } from '@/pages/DealWatchlist'
@@ -84,6 +82,7 @@ export const appRoutes: RouteWithMeta[] = [
     meta: { label: 'Item Detail', description: 'Source receipt', section: 'app', hidden: true },
   },
   { path: '/transaction-confirm', element: <TransactionConfirm />, meta: { hidden: true } },
+  { path: '/transaction-confirm/:expenseId', element: <TransactionConfirm />, meta: { hidden: true } },
   {
     path: '/transactions',
     element: <Transactions />,
@@ -202,8 +201,6 @@ export const appRoutes: RouteWithMeta[] = [
     element: <BudgetComparison />,
     meta: { label: 'Budget Comparison', description: 'Compare periods', section: 'app' },
   },
-  { path: '/category-create', element: <CategoryCreation />, meta: { hidden: true } },
-  { path: '/tag-create', element: <TagCreation />, meta: { hidden: true } },
   {
     path: '/notifications',
     element: <Notifications />,

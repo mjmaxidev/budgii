@@ -206,7 +206,6 @@ export type AppStore = {
 
   // User Profile
   setUserProfile: (profile: Partial<UserProfile>) => void
-  getUserProfile: () => UserProfile
   updateUserPreferences: (preferences: Partial<UserProfile['preferences']>) => void
 
   // Budget
@@ -216,15 +215,11 @@ export type AppStore = {
   addBudgetGoal: (goal: Partial<BudgetGoal>) => string
   updateBudgetGoal: (id: string, patch: Partial<BudgetGoal>) => void
   deleteBudgetGoal: (id: string) => void
-  getBudgetGoalsByCategory: (categoryId: string) => BudgetGoal[]
-  getAllBudgetGoals: () => BudgetGoal[]
 
   // Recurring Transactions
   addRecurringTransaction: (transaction: Partial<RecurringTransaction>) => string
   updateRecurringTransaction: (id: string, patch: Partial<RecurringTransaction>) => void
   deleteRecurringTransaction: (id: string) => void
-  getRecurringTransactions: () => RecurringTransaction[]
-  applyRecurringTransaction: (id: string) => void
 
   // Spending Alerts
   addSpendingAlert: (alert: Partial<SpendingAlert>) => string
@@ -763,10 +758,6 @@ export const useStore = create<AppStore>()(
         }))
       },
 
-      getUserProfile: () => {
-        return get().userProfile
-      },
-
       updateUserPreferences: (preferences) => {
         set((s) => ({
           userProfile: {
@@ -800,14 +791,6 @@ export const useStore = create<AppStore>()(
 
       deleteBudgetGoal: (id) => set((s) => ({ budgetGoals: s.budgetGoals.filter((g) => g.id !== id) })),
 
-      getBudgetGoalsByCategory: (categoryId) => {
-        return get().budgetGoals.filter((g) => g.categoryId === categoryId)
-      },
-
-      getAllBudgetGoals: () => {
-        return get().budgetGoals
-      },
-
       addRecurringTransaction: (transaction) => {
         const id = transaction.id ?? uid('rt')
         const recurringTransaction: RecurringTransaction = {
@@ -833,22 +816,6 @@ export const useStore = create<AppStore>()(
         set((s) => ({
           recurringTransactions: s.recurringTransactions.filter((rt) => rt.id !== id),
         })),
-
-      getRecurringTransactions: () => {
-        return get().recurringTransactions
-      },
-
-      applyRecurringTransaction: (id) => {
-        const transaction = get().recurringTransactions.find((rt) => rt.id === id)
-        if (!transaction) return
-        const expenseData = {
-          amount: transaction.expense.amount ?? 0,
-          merchant: transaction.expense.merchant ?? '',
-          categoryId: transaction.expense.categoryId ?? '',
-          ...transaction.expense,
-        }
-        get().addExpense(expenseData)
-      },
 
       addSpendingAlert: (alert) => {
         const id = alert.id ?? uid('sa')

@@ -50,6 +50,7 @@ export function AddExpense() {
   }
 
   async function save() {
+    let savedExpenseId: string
     const expenseData = {
       amount: parseFloat(amount) || 0,
       date: new Date(date).toISOString(),
@@ -72,13 +73,14 @@ export function AddExpense() {
       try {
         const saved = apiExpenseToExpense(await createExpense(householdId, expenseData))
         addExpense(saved)
+        savedExpenseId = saved.id
       } catch (err) {
         setSubmitError(err instanceof ApiError ? err.message : 'Could not save expense')
         setSubmitting(false)
         return
       }
     } else {
-      addExpense(expenseData)
+      savedExpenseId = addExpense(expenseData)
     }
 
     // If recurring, also add to recurring transactions
@@ -93,8 +95,8 @@ export function AddExpense() {
       })
     }
 
-    navigate('/transaction-confirm', {
-      state: { transaction: expenseData },
+    navigate(`/transaction-confirm/${savedExpenseId}`, {
+      state: { transaction: { ...expenseData, id: savedExpenseId } },
     })
   }
 

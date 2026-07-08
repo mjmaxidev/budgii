@@ -25,8 +25,6 @@ const EXACT_PARENT: Record<string, string> = {
   '/budget-setup': '/settings',
   '/budget-next-month': '/reports',
   '/categories-tags': '/settings',
-  '/category-create': '/categories-tags',
-  '/tag-create': '/categories-tags',
   '/family-members': '/settings',
   '/family-invitation': '/family-members',
   '/join-family': '/login',
@@ -51,6 +49,7 @@ const EXACT_PARENT: Record<string, string> = {
 }
 
 const PATTERN_PARENT: Array<{ pattern: RegExp; parent: string | ((pathname: string) => string) }> = [
+  { pattern: /^\/transaction-confirm\//, parent: '/home' },
   { pattern: /^\/receipt-results\//, parent: '/scan-receipt' },
   {
     pattern: /^\/receipt-viewer\//,

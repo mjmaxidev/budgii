@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { BudgiiLottie } from '@/components/motion/BudgiiLottie'
@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { MoneyText } from '@/components/ui/MoneyText'
 import { formatDate } from '@/utils/dates'
+import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import type { Expense } from '@/types'
 
@@ -18,10 +19,13 @@ type TransactionConfirmState = {
 export function TransactionConfirm() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { expenseId } = useParams<{ expenseId: string }>()
   const state = location.state as TransactionConfirmState | null
+  const savedExpense = useStore((s) => (expenseId ? s.expenses.find((e) => e.id === expenseId) : undefined))
   const { category } = useLookups()
+  const transaction = state?.transaction ?? savedExpense
 
-  if (!state?.transaction) {
+  if (!transaction) {
     return (
       <AppShell>
         <p className="mt-10 text-center text-muted">Transaction data not found.</p>
@@ -29,7 +33,7 @@ export function TransactionConfirm() {
     )
   }
 
-  const { merchant, amount, categoryId, date } = state.transaction
+  const { merchant, amount, categoryId, date } = transaction
   const cat = category(categoryId)
 
   function handleBackHome() {

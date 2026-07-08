@@ -60,6 +60,8 @@ export function ReceiptResults() {
 
   async function confirm() {
     if (!receipt) return
+    let firstExpenseId: string
+
     if (isApiEnabled()) {
       if (!householdId) {
         setError('Sign in again to confirm this receipt.')
@@ -69,14 +71,14 @@ export function ReceiptResults() {
       setSaving(true)
       setError('')
       try {
-        const existing = new Set(
+        const existing = new Map(
           useStore
             .getState()
             .expenses.filter((expense) => expense.receiptId === receiptId && expense.source === 'receipt_ai')
-            .map(
-              (expense) =>
-                `${expense.merchant}:${expense.amount}:${expense.categoryId}:${expense.memberId ?? ''}`,
-            ),
+            .map((expense) => [
+              `${expense.merchant}:${expense.amount}:${expense.categoryId}:${expense.memberId ?? ''}`,
+              expense.id,
+            ]),
         )
         const savedExpenses = await Promise.all(
           items
@@ -106,6 +108,10 @@ export function ReceiptResults() {
           expenses: [...savedExpenses, ...state.expenses],
           receipts: state.receipts.map((r) => (r.id === receiptId ? { ...r, status: 'processed' } : r)),
         }))
+        const firstItemKey = items[0]
+          ? `${items[0].name}:${items[0].amount}:${items[0].categoryId}:${items[0].memberId ?? ''}`
+          : ''
+        firstExpenseId = savedExpenses[0]?.id ?? existing.get(firstItemKey) ?? ''
       } catch (err) {
         setError(err instanceof ApiError ? err.message : 'Could not confirm receipt')
         setSaving(false)
@@ -113,12 +119,14 @@ export function ReceiptResults() {
       }
     } else {
       confirmReceiptItems(receiptId)
+      firstExpenseId = items[0] ? `exp_${items[0].id}` : ''
     }
     const firstItemCategory = items[0]?.categoryId || ''
     const firstItemName = items[0]?.name || receipt.merchant
-    navigate('/transaction-confirm', {
+    navigate(firstExpenseId ? `/transaction-confirm/${firstExpenseId}` : '/transaction-confirm', {
       state: {
         transaction: {
+          id: firstExpenseId,
           merchant: firstItemName,
           amount: receipt.total,
           categoryId: firstItemCategory,

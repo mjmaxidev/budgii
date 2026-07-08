@@ -1,6 +1,5 @@
 import type { Expense, Period } from '@/types'
 import { withinPeriod } from '@/utils/dates'
-import { useStore } from './appStore'
 
 export function expensesInPeriod(expenses: Expense[], period: Period): Expense[] {
   return expenses.filter((e) => withinPeriod(e.date, period))
@@ -106,9 +105,4 @@ export function dailyCategoryBreakdownThisMonth(expenses: Expense[]): DailyCateg
       }))
       .sort((a, b) => b.amount - a.amount),
   }))
-}
-
-/** Hook: spent amount in a given period. */
-export function useSpent(period: Period): number {
-  return useStore((s) => sumExpenses(expensesInPeriod(s.expenses, period)))
 }
