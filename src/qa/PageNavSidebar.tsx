@@ -26,12 +26,24 @@ function NavSection({ title, items }: { title: string; items: Item[] }) {
               item.active ? 'bg-primary font-semibold text-white shadow-soft' : 'text-ink hover:bg-black/5',
             )}
           >
-            <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-[11px]', item.active ? 'bg-white/20' : 'bg-black/5')}>
+            <span
+              className={cn(
+                'grid h-8 w-8 shrink-0 place-items-center rounded-[11px]',
+                item.active ? 'bg-white/20' : 'bg-black/5',
+              )}
+            >
               <span className="h-2.5 w-2.5 rounded-full bg-current" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold">{item.label}</span>
-              <span className={cn('block truncate text-xs font-normal', item.active ? 'text-white/75' : 'text-muted')}>{item.sub}</span>
+              <span
+                className={cn(
+                  'block truncate text-xs font-normal',
+                  item.active ? 'text-white/75' : 'text-muted',
+                )}
+              >
+                {item.sub}
+              </span>
             </span>
           </button>
         ))}

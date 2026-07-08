@@ -44,12 +44,14 @@ export function MonthlySummary() {
 
   // Calculate totals
   const totalSpending = sumExpenses(monthExpenses)
-  const totalIncome = monthIncome.reduce((sum, item) => sum + item.amount, 0) + sumOngoingIncome(ongoingIncomes)
+  const totalIncome =
+    monthIncome.reduce((sum, item) => sum + item.amount, 0) + sumOngoingIncome(ongoingIncomes)
   const netAmount = totalIncome - totalSpending
 
   const prevTotalSpending = sumExpenses(prevMonthExpenses)
   const spendingChange = totalSpending - prevTotalSpending
-  const spendingChangePercent = prevTotalSpending > 0 ? Math.round((spendingChange / prevTotalSpending) * 100) : 0
+  const spendingChangePercent =
+    prevTotalSpending > 0 ? Math.round((spendingChange / prevTotalSpending) * 100) : 0
 
   // Category breakdown
   const categoryBreakdown = breakdownByCategory(monthExpenses)
@@ -67,10 +69,7 @@ export function MonthlySummary() {
   const prevMonthName = prevMonth.toLocaleDateString('en-US', { month: 'short' })
 
   return (
-    <AppShell
-      showBottomNav
-      topBar={<TopBar title="Monthly Summary" showBack />}
-    >
+    <AppShell showBottomNav topBar={<TopBar title="Monthly Summary" showBack />}>
       {/* Month Selector */}
       <div className="flex items-center justify-between px-4 py-4">
         <button
@@ -125,8 +124,11 @@ export function MonthlySummary() {
                   <TrendingDown size={20} className="text-green" />
                 )}
                 <MoneyText amount={Math.abs(spendingChange)} className="text-[18px] font-bold" />
-                <span className={`text-[14px] font-semibold ${spendingChange > 0 ? 'text-red' : 'text-green'}`}>
-                  {spendingChange > 0 ? '+' : '-'}{Math.abs(spendingChangePercent)}%
+                <span
+                  className={`text-[14px] font-semibold ${spendingChange > 0 ? 'text-red' : 'text-green'}`}
+                >
+                  {spendingChange > 0 ? '+' : '-'}
+                  {Math.abs(spendingChangePercent)}%
                 </span>
               </div>
             </div>
@@ -171,7 +173,10 @@ export function MonthlySummary() {
                 >
                   <div className="flex items-center gap-3">
                     {cat && (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: `${cat.color}20` }}>
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: `${cat.color}20` }}
+                      >
                         <CategoryIcon icon={cat.icon} color={cat.color} size={20} />
                       </div>
                     )}
@@ -211,7 +216,10 @@ export function MonthlySummary() {
                   const cat = category(breakdown.id)
                   return (
                     <div key={breakdown.id} className="flex items-center gap-1.5">
-                      <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat?.color ?? '#ccc' }} />
+                      <div
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: cat?.color ?? '#ccc' }}
+                      />
                       <span className="text-[11px] text-muted">{cat?.name ?? 'Other'}</span>
                     </div>
                   )

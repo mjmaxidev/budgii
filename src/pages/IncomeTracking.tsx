@@ -111,8 +111,7 @@ export function IncomeTracking() {
     [monthItems, memberId],
   )
 
-  const modalOngoingAmount =
-    memberSalaryMode && ongoingEnabled ? parseFloat(amount) || 0 : 0
+  const modalOngoingAmount = memberSalaryMode && ongoingEnabled ? parseFloat(amount) || 0 : 0
   const modalOneTimeTotal = sumIncomeItems(memberOneTimeItems)
   const modalMemberTotal = modalOngoingAmount + modalOneTimeTotal
 
@@ -149,9 +148,7 @@ export function IncomeTracking() {
 
   function openAddOneTimeForm() {
     resetOneTimeForm()
-    setOneTimeSourceId(
-      incomeSources.find((s) => s.id !== sourceId)?.id ?? incomeSources[0]?.id ?? '',
-    )
+    setOneTimeSourceId(incomeSources.find((s) => s.id !== sourceId)?.id ?? incomeSources[0]?.id ?? '')
     setOneTimeFormOpen(true)
   }
 
@@ -189,8 +186,7 @@ export function IncomeTracking() {
     resetOneTimeForm()
   }
 
-  const canSaveOneTime =
-    oneTimeAmount.trim() !== '' && !!oneTimeSourceId && !!memberId
+  const canSaveOneTime = oneTimeAmount.trim() !== '' && !!oneTimeSourceId && !!memberId
 
   function openAddModal(ongoing = false) {
     if (visibleMembers.length === 0) {
@@ -233,10 +229,7 @@ export function IncomeTracking() {
   }
 
   const canSave =
-    amount.trim() !== '' &&
-    !!sourceId &&
-    !!memberId &&
-    visibleMembers.some((m) => m.id === memberId)
+    amount.trim() !== '' && !!sourceId && !!memberId && visibleMembers.some((m) => m.id === memberId)
 
   function save() {
     if (!canSave) return
@@ -523,7 +516,9 @@ export function IncomeTracking() {
         </p>
         {monthItems.length === 0 ? (
           <Card className="py-6 text-center">
-            <p className="text-[14px] text-muted">No one-time income for {formatMonthYear(viewYear, viewMonth)}</p>
+            <p className="text-[14px] text-muted">
+              No one-time income for {formatMonthYear(viewYear, viewMonth)}
+            </p>
           </Card>
         ) : (
           <div className="space-y-2">
@@ -618,7 +613,10 @@ export function IncomeTracking() {
                     <span className="text-xl">{m.avatar}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-semibold text-ink">{m.name}</p>
-                      <MoneyText amount={fromOngoing + fromManual} className="text-[16px] font-bold text-green" />
+                      <MoneyText
+                        amount={fromOngoing + fromManual}
+                        className="text-[16px] font-bold text-green"
+                      />
                     </div>
                     <Pencil size={14} className="shrink-0 text-muted" />
                   </button>
@@ -739,7 +737,11 @@ export function IncomeTracking() {
             <div className="mb-2 flex items-center justify-between">
               <label className="text-[13px] font-bold text-ink">Source</label>
               {incomeSources.length > 1 && (
-                <button type="button" onClick={toggleSourceEdit} className="text-[14px] font-bold text-primary">
+                <button
+                  type="button"
+                  onClick={toggleSourceEdit}
+                  className="text-[14px] font-bold text-primary"
+                >
                   {sourceEditMode ? 'Done' : 'Edit'}
                 </button>
               )}
@@ -830,7 +832,11 @@ export function IncomeTracking() {
                     </button>
                   )}
                   {visibleMembers.length > 0 && (
-                    <button type="button" onClick={toggleMemberEdit} className="text-[14px] font-bold text-primary">
+                    <button
+                      type="button"
+                      onClick={toggleMemberEdit}
+                      className="text-[14px] font-bold text-primary"
+                    >
                       {memberEditMode ? 'Done' : 'Edit'}
                     </button>
                   )}
@@ -863,54 +869,54 @@ export function IncomeTracking() {
                   </button>
                 </Card>
               ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {visibleMembers.map((m) => {
-                  const marked = membersToRemove.has(m.id)
-                  const selected = memberId === m.id
-                  return (
+                <div className="grid grid-cols-2 gap-2">
+                  {visibleMembers.map((m) => {
+                    const marked = membersToRemove.has(m.id)
+                    const selected = memberId === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          if (memberEditMode) {
+                            toggleMemberRemove(m.id)
+                            return
+                          }
+                          setMemberId(m.id)
+                        }}
+                        className={`relative flex items-center gap-2 rounded-input border p-3 text-left text-[14px] font-bold transition ${
+                          memberEditMode && marked
+                            ? 'border-[#DC2626] bg-[#FEE2E2] text-[#DC2626]'
+                            : selected && !memberEditMode
+                              ? 'border-primary bg-primarySoft text-ink'
+                              : 'border-line bg-surface text-ink active:bg-line/40'
+                        }`}
+                      >
+                        <span className="text-xl">{m.avatar}</span>
+                        <span className="truncate">{m.name}</span>
+                        {memberEditMode && (
+                          <span
+                            className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                              marked ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-line bg-surface'
+                            }`}
+                          >
+                            {marked && <Check size={12} />}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                  {!memberEditMode && (
                     <button
-                      key={m.id}
                       type="button"
-                      onClick={() => {
-                        if (memberEditMode) {
-                          toggleMemberRemove(m.id)
-                          return
-                        }
-                        setMemberId(m.id)
-                      }}
-                      className={`relative flex items-center gap-2 rounded-input border p-3 text-left text-[14px] font-bold transition ${
-                        memberEditMode && marked
-                          ? 'border-[#DC2626] bg-[#FEE2E2] text-[#DC2626]'
-                          : selected && !memberEditMode
-                            ? 'border-primary bg-primarySoft text-ink'
-                            : 'border-line bg-surface text-ink active:bg-line/40'
-                      }`}
+                      onClick={() => setMemberAddOpen(true)}
+                      className="flex flex-col items-center justify-center gap-1 rounded-input border-2 border-dashed border-line bg-surfaceSoft p-3 text-[14px] font-bold text-primary active:bg-line/30"
                     >
-                      <span className="text-xl">{m.avatar}</span>
-                      <span className="truncate">{m.name}</span>
-                      {memberEditMode && (
-                        <span
-                          className={`absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                            marked ? 'border-[#DC2626] bg-[#DC2626] text-white' : 'border-line bg-surface'
-                          }`}
-                        >
-                          {marked && <Check size={12} />}
-                        </span>
-                      )}
+                      <Plus size={20} />
+                      Add
                     </button>
-                  )
-                })}
-                {!memberEditMode && (
-                  <button
-                    type="button"
-                    onClick={() => setMemberAddOpen(true)}
-                    className="flex flex-col items-center justify-center gap-1 rounded-input border-2 border-dashed border-line bg-surfaceSoft p-3 text-[14px] font-bold text-primary active:bg-line/30"
-                  >
-                    <Plus size={20} />
-                    Add
-                  </button>
-                )}
-              </div>
+                  )}
+                </div>
               )}
               {!memberId && visibleMembers.length > 0 && !memberEditMode && (
                 <p className="mt-2 text-[13px] font-semibold text-red">Select who earns this income</p>
@@ -989,11 +995,7 @@ export function IncomeTracking() {
                     <Calendar size={16} className="text-muted" />
                   </div>
                   <div className="flex gap-2">
-                    <ActionButton
-                      variant="ghost"
-                      fullWidth
-                      onClick={resetOneTimeForm}
-                    >
+                    <ActionButton variant="ghost" fullWidth onClick={resetOneTimeForm}>
                       Cancel
                     </ActionButton>
                     <ActionButton
@@ -1060,14 +1062,12 @@ export function IncomeTracking() {
                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-[13px] text-muted">
                   {ongoingEnabled && modalOngoingAmount > 0 && (
                     <span>
-                      Ongoing{' '}
-                      <span className="font-semibold text-ink">${modalOngoingAmount.toFixed(0)}</span>
+                      Ongoing <span className="font-semibold text-ink">${modalOngoingAmount.toFixed(0)}</span>
                     </span>
                   )}
                   {modalOneTimeTotal > 0 && (
                     <span>
-                      One-time{' '}
-                      <span className="font-semibold text-ink">${modalOneTimeTotal.toFixed(0)}</span>
+                      One-time <span className="font-semibold text-ink">${modalOneTimeTotal.toFixed(0)}</span>
                     </span>
                   )}
                 </div>
@@ -1105,11 +1105,7 @@ export function IncomeTracking() {
               Cancel
             </ActionButton>
             <ActionButton variant="green" fullWidth onClick={save} disabled={!canSave}>
-              {editingItemId || editingOngoingId
-                ? 'Save changes'
-                : isOngoing
-                  ? 'Save salary'
-                  : 'Save income'}
+              {editingItemId || editingOngoingId ? 'Save changes' : isOngoing ? 'Save salary' : 'Save income'}
             </ActionButton>
           </div>
         </div>
@@ -1146,9 +1142,7 @@ export function IncomeTracking() {
         title="Add Family Member"
         variant="center"
       >
-        <p className="mb-4 text-[14px] text-muted">
-          Choose a household member to show on Income Tracking.
-        </p>
+        <p className="mb-4 text-[14px] text-muted">Choose a household member to show on Income Tracking.</p>
         {hiddenMembers.length === 0 ? (
           <p className="text-center text-[14px] text-muted">All family members are already shown.</p>
         ) : (
@@ -1175,8 +1169,8 @@ export function IncomeTracking() {
         title={sourcesToDelete.size === 1 ? 'Delete source?' : 'Delete sources?'}
       >
         <p className="text-[14px] text-muted">
-          Income entries using {sourcesToDelete.size === 1 ? 'this source' : 'these sources'} will be
-          moved to another source.
+          Income entries using {sourcesToDelete.size === 1 ? 'this source' : 'these sources'} will be moved to
+          another source.
         </p>
         <div className="mt-5 flex gap-3">
           <ActionButton variant="outline" className="flex-1" onClick={() => setConfirmDeleteSources(false)}>

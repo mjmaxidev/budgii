@@ -71,11 +71,7 @@ export function FamilyInvitation() {
     }
   }
 
-  async function createApiInvite(
-    contact: string,
-    accessRole: MemberAccessRole,
-    editorLevel: EditorLevel,
-  ) {
+  async function createApiInvite(contact: string, accessRole: MemberAccessRole, editorLevel: EditorLevel) {
     if (!householdId) {
       setApiError('No household selected')
       return undefined
@@ -237,8 +233,8 @@ export function FamilyInvitation() {
 
   function inviteContact(invite: InviteResponse | FamilyInvite): string {
     return apiOn
-      ? (invite as InviteResponse).sent_to_contact ?? 'Not sent yet'
-      : (invite as FamilyInvite).sentToContact ?? 'Not sent yet'
+      ? ((invite as InviteResponse).sent_to_contact ?? 'Not sent yet')
+      : ((invite as FamilyInvite).sentToContact ?? 'Not sent yet')
   }
 
   function inviteExpiry(invite: InviteResponse | FamilyInvite): string {
@@ -254,10 +250,7 @@ export function FamilyInvitation() {
           (invite as InviteResponse).access_role,
           (invite as InviteResponse).editor_level ?? undefined,
         )
-      : formatMemberAccessLabel(
-          (invite as FamilyInvite).accessRole,
-          (invite as FamilyInvite).editorLevel,
-        )
+      : formatMemberAccessLabel((invite as FamilyInvite).accessRole, (invite as FamilyInvite).editorLevel)
   }
 
   const contactReady = isValidInviteContact(inviteeContact)
@@ -276,9 +269,7 @@ export function FamilyInvitation() {
         </Card>
 
         {apiError && (
-          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-            {apiError}
-          </p>
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{apiError}</p>
         )}
 
         <Card className="space-y-4">
@@ -323,7 +314,11 @@ export function FamilyInvitation() {
 
         <Card className="space-y-4">
           <div className="flex items-center gap-2">
-            {contactLooksLikePhone ? <Phone size={18} className="text-muted" /> : <Mail size={18} className="text-muted" />}
+            {contactLooksLikePhone ? (
+              <Phone size={18} className="text-muted" />
+            ) : (
+              <Mail size={18} className="text-muted" />
+            )}
             <h3 className="text-[15px] font-bold text-ink">Send invite</h3>
           </div>
           <FormField
@@ -335,9 +330,7 @@ export function FamilyInvitation() {
             }}
             leftIcon={contactLooksLikePhone ? <Phone size={18} /> : <Mail size={18} />}
           />
-          {contactError && (
-            <p className="text-[13px] font-semibold text-red">{contactError}</p>
-          )}
+          {contactError && <p className="text-[13px] font-semibold text-red">{contactError}</p>}
           {sentTo && (
             <p className="text-[13px] font-semibold text-green">
               Invite saved for {sentTo}
@@ -372,7 +365,9 @@ export function FamilyInvitation() {
           ) : (
             <div className="space-y-2">
               {pendingInvites.map((invite) => {
-                const id = apiOn ? ((invite as InviteResponse).id ?? invite.code) : (invite as FamilyInvite).id
+                const id = apiOn
+                  ? ((invite as InviteResponse).id ?? invite.code)
+                  : (invite as FamilyInvite).id
                 const code = invite.code
                 const selected = code === familyCode
                 return (
@@ -387,7 +382,9 @@ export function FamilyInvitation() {
                       onClick={() => selectInvite(invite)}
                       className="min-w-0 flex-1 text-left"
                     >
-                      <p className="font-mono text-[16px] font-extrabold tracking-[0.12em] text-ink">{code}</p>
+                      <p className="font-mono text-[16px] font-extrabold tracking-[0.12em] text-ink">
+                        {code}
+                      </p>
                       <p className="truncate text-[12px] text-muted">{inviteContact(invite)}</p>
                       <p className="text-[11px] font-semibold text-muted">
                         {inviteAccessLabel(invite)}

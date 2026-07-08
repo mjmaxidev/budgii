@@ -80,9 +80,7 @@ export function Home() {
       color: category(c.id)?.color ?? '#9CA3AF',
     }))
   const cats = categoryBreakdown.slice(0, 4)
-  const recent = [...periodExpenses]
-    .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-    .slice(0, 4)
+  const recent = [...periodExpenses].sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 4)
 
   useEffect(() => {
     if (!isApiEnabled() || !householdId) return
@@ -123,7 +121,9 @@ export function Home() {
             </button>
           </div>
           <div className="mt-3 flex items-center justify-between">
-            <h1 className="text-[20px] font-extrabold text-ink">This {period === 'daily' ? 'Day' : period === 'weekly' ? 'Week' : 'Month'} Overview</h1>
+            <h1 className="text-[20px] font-extrabold text-ink">
+              This {period === 'daily' ? 'Day' : period === 'weekly' ? 'Week' : 'Month'} Overview
+            </h1>
           </div>
         </div>
       }
@@ -148,7 +148,11 @@ export function Home() {
             {Math.min(budgetProgressPercent, 100).toFixed(1)}%
           </p>
         </div>
-        <ProgressBar progress={Math.min(budgetProgressPercent / 100, 1)} color={getBudgetColor()} className="w-full" />
+        <ProgressBar
+          progress={Math.min(budgetProgressPercent / 100, 1)}
+          color={getBudgetColor()}
+          className="w-full"
+        />
         <div className="mt-2 flex items-center justify-between">
           <p className="text-[12px] text-muted">
             {formatMoneyShort(spent)} of {formatMoneyShort(limit)}
@@ -184,12 +188,7 @@ export function Home() {
 
       {/* Budget ring */}
       <div className="mt-6 flex items-center justify-between">
-        <ProgressRing
-          progress={limit > 0 ? spent / limit : 0}
-          segments={ringSegments}
-          size={190}
-          stroke={16}
-        >
+        <ProgressRing progress={limit > 0 ? spent / limit : 0} segments={ringSegments} size={190} stroke={16}>
           <span className="text-[14px] text-muted">Spent</span>
           <MoneyText amount={spent} cents={false} className="text-[34px] font-extrabold text-ink" />
           <span className="text-[13px] text-muted">of {formatMoneyShort(limit)}</span>
@@ -259,7 +258,9 @@ export function Home() {
         {recent.map((e) => (
           <TransactionRow key={e.id} expense={e} onClick={() => navigate('/transactions')} />
         ))}
-        {recent.length === 0 && <p className="py-6 text-center text-[14px] text-muted">No transactions yet.</p>}
+        {recent.length === 0 && (
+          <p className="py-6 text-center text-[14px] text-muted">No transactions yet.</p>
+        )}
       </Card>
     </AppShell>
   )

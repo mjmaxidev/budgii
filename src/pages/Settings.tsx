@@ -1,9 +1,24 @@
 import { useNavigate } from 'react-router-dom'
 import { withFrom } from '@/utils/navigation'
 import {
-  User, SlidersHorizontal, Wallet, TrendingUp, Repeat, Tags, Users,
-  CalendarDays, BarChart3, Bell, ScanLine, Gift, Sparkles,
-  Download, LifeBuoy, LogOut, Trash2, ChevronRight,
+  User,
+  SlidersHorizontal,
+  Wallet,
+  TrendingUp,
+  Repeat,
+  Tags,
+  Users,
+  CalendarDays,
+  BarChart3,
+  Bell,
+  ScanLine,
+  Gift,
+  Sparkles,
+  Download,
+  LifeBuoy,
+  LogOut,
+  Trash2,
+  ChevronRight,
 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -14,7 +29,14 @@ import { useUserAvatarUrl } from '@/hooks/useUserAvatarUrl'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 
-type Item = { icon: typeof User; label: string; to?: string; soon?: boolean; danger?: boolean; action?: () => void }
+type Item = {
+  icon: typeof User
+  label: string
+  to?: string
+  soon?: boolean
+  danger?: boolean
+  action?: () => void
+}
 
 // avatar can be an emoji, remote image URL, local preview, or server-backed upload path
 const isImage = (a?: string) => !!a && /^(blob:|data:|https?:|\/)/.test(a)
@@ -38,9 +60,7 @@ export function Settings() {
   const sections: { title: string; items: Item[] }[] = [
     {
       title: 'Account',
-      items: [
-        { icon: SlidersHorizontal, label: 'App Preferences', to: '/preferences' },
-      ],
+      items: [{ icon: SlidersHorizontal, label: 'App Preferences', to: '/preferences' }],
     },
     {
       title: 'Money',
@@ -61,9 +81,7 @@ export function Settings() {
     },
     {
       title: 'Family',
-      items: [
-        { icon: Users, label: 'Manage Family Members', to: '/family-members' },
-      ],
+      items: [{ icon: Users, label: 'Manage Family Members', to: '/family-members' }],
     },
     {
       title: 'Receipts & Deals',
@@ -84,9 +102,7 @@ export function Settings() {
     },
     {
       title: 'Support',
-      items: [
-        { icon: LifeBuoy, label: 'Help Center', to: '/help' },
-      ],
+      items: [{ icon: LifeBuoy, label: 'Help Center', to: '/help' }],
     },
   ]
 
@@ -112,19 +128,29 @@ export function Settings() {
 
       {sections.map((section) => (
         <div key={section.title} className="mt-5">
-          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">{section.title}</h2>
+          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
+            {section.title}
+          </h2>
           <Card className="divide-y divide-line/70 px-4 py-0">
             {section.items.map((it) => {
               const Icon = it.icon
               return (
                 <button
                   key={it.label}
-                  onClick={() => (it.action ? it.action() : it.to ? navigate(it.to, withFrom('/settings')) : undefined)}
+                  onClick={() =>
+                    it.action ? it.action() : it.to ? navigate(it.to, withFrom('/settings')) : undefined
+                  }
                   className="flex w-full items-center gap-3 py-3.5 text-left active:bg-surfaceSoft"
                 >
                   <Icon size={20} className={it.danger ? 'text-red' : 'text-muted'} />
-                  <span className={`flex-1 text-[15px] font-semibold ${it.danger ? 'text-red' : 'text-ink'}`}>{it.label}</span>
-                  {it.soon && <span className="rounded-pill bg-line/50 px-2 py-0.5 text-[11px] font-bold text-muted">Later</span>}
+                  <span className={`flex-1 text-[15px] font-semibold ${it.danger ? 'text-red' : 'text-ink'}`}>
+                    {it.label}
+                  </span>
+                  {it.soon && (
+                    <span className="rounded-pill bg-line/50 px-2 py-0.5 text-[11px] font-bold text-muted">
+                      Later
+                    </span>
+                  )}
                   <ChevronRight size={18} className="text-muted" />
                 </button>
               )

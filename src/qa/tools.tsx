@@ -21,9 +21,34 @@ export type QaTool = {
 }
 
 export const qaTools: QaTool[] = [
-  { key: 'component-library', label: 'Component Library', description: 'Reusable components', element: <ToolPlaceholder name="Component Library" /> },
-  { key: 'mock-data', label: 'Mock Data', description: 'Test data setup', element: <ToolPlaceholder name="Mock Data Manager" /> },
-  { key: 'performance', label: 'Performance', description: 'Metrics & timing', element: <ToolPlaceholder name="Performance Monitor" /> },
-  { key: 'accessibility', label: 'Accessibility', description: 'A11y validation', element: <ToolPlaceholder name="Accessibility Checker" /> },
-  { key: 'design-tokens', label: 'Design Tokens', description: 'Colors, spacing, typography', element: <ToolPlaceholder name="Design Tokens" /> },
+  {
+    key: 'component-library',
+    label: 'Component Library',
+    description: 'Reusable components',
+    element: <ToolPlaceholder name="Component Library" />,
+  },
+  {
+    key: 'mock-data',
+    label: 'Mock Data',
+    description: 'Test data setup',
+    element: <ToolPlaceholder name="Mock Data Manager" />,
+  },
+  {
+    key: 'performance',
+    label: 'Performance',
+    description: 'Metrics & timing',
+    element: <ToolPlaceholder name="Performance Monitor" />,
+  },
+  {
+    key: 'accessibility',
+    label: 'Accessibility',
+    description: 'A11y validation',
+    element: <ToolPlaceholder name="Accessibility Checker" />,
+  },
+  {
+    key: 'design-tokens',
+    label: 'Design Tokens',
+    description: 'Colors, spacing, typography',
+    element: <ToolPlaceholder name="Design Tokens" />,
+  },
 ]

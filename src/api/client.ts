@@ -94,7 +94,10 @@ export async function apiUpload<T>(path: string, formData: FormData): Promise<T>
   return (await res.json()) as T
 }
 
-export async function apiBlob(path: string, options: Pick<RequestOptions, 'auth' | 'retry'> = {}): Promise<Blob> {
+export async function apiBlob(
+  path: string,
+  options: Pick<RequestOptions, 'auth' | 'retry'> = {},
+): Promise<Blob> {
   const { auth = true, retry = true } = options
   const url = `${getApiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`
   const headers: Record<string, string> = {}

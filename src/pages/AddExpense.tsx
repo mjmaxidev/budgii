@@ -184,7 +184,12 @@ export function AddExpense() {
             <span className="shrink-0 pt-1 text-[15px] font-bold text-ink">Tags</span>
             <div className="flex flex-1 flex-wrap gap-2">
               {tags.map((t) => (
-                <Chip key={t.id} color={t.color} active={tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
+                <Chip
+                  key={t.id}
+                  color={t.color}
+                  active={tagIds.includes(t.id)}
+                  onClick={() => toggleTag(t.id)}
+                >
                   {t.name}
                 </Chip>
               ))}
@@ -204,7 +209,12 @@ export function AddExpense() {
           <div className="mb-2 text-[15px] font-bold text-ink">Family member</div>
           <div className="flex flex-wrap gap-2">
             {familyMembers.map((m) => (
-              <Chip key={m.id} color="#FB8500" active={memberId === m.id} onClick={() => setMemberId(memberId === m.id ? undefined : m.id)}>
+              <Chip
+                key={m.id}
+                color="#FB8500"
+                active={memberId === m.id}
+                onClick={() => setMemberId(memberId === m.id ? undefined : m.id)}
+              >
                 {m.avatar} {m.name}
               </Chip>
             ))}
@@ -230,9 +240,7 @@ export function AddExpense() {
           </div>
           <button
             onClick={() => setIsRecurring(!isRecurring)}
-            className={`h-6 w-10 rounded-full transition-colors ${
-              isRecurring ? 'bg-green' : 'bg-line/50'
-            }`}
+            className={`h-6 w-10 rounded-full transition-colors ${isRecurring ? 'bg-green' : 'bg-line/50'}`}
           >
             <div
               className={`h-5 w-5 rounded-full bg-white transition-transform ${
@@ -252,9 +260,7 @@ export function AddExpense() {
                   key={freq}
                   onClick={() => setFrequency(freq)}
                   className={`rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
-                    frequency === freq
-                      ? 'bg-primary text-white'
-                      : 'bg-line/30 text-ink'
+                    frequency === freq ? 'bg-primary text-white' : 'bg-line/30 text-ink'
                   }`}
                 >
                   {freq.charAt(0).toUpperCase() + freq.slice(1)}
@@ -314,7 +320,12 @@ export function AddExpense() {
           placeholder="Tag name"
           className="w-full rounded-input border border-line bg-surface px-4 py-3 text-[15px] outline-none"
         />
-        <ColorPickerField value={newTagColor} onChange={setNewTagColor} presets={TAG_COLOR_CHOICES} label="Colour" />
+        <ColorPickerField
+          value={newTagColor}
+          onChange={setNewTagColor}
+          presets={TAG_COLOR_CHOICES}
+          label="Colour"
+        />
         {newTagName.trim() && (
           <div className="mt-4">
             <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted">Preview</p>

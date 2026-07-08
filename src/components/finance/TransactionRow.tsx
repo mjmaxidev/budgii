@@ -42,12 +42,24 @@ export function TransactionRow({ expense, onClick, showChips }: Props) {
         <p className="text-[13px] text-muted">{formatDate(expense.date)}</p>
         {showChips && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {cat && <Chip color={cat.color} size="sm">{cat.name}</Chip>}
+            {cat && (
+              <Chip color={cat.color} size="sm">
+                {cat.name}
+              </Chip>
+            )}
             {expense.tagIds.slice(0, 1).map((id) => {
               const t = tag(id)
-              return t ? <Chip key={id} color={t.color} size="sm">{t.name}</Chip> : null
+              return t ? (
+                <Chip key={id} color={t.color} size="sm">
+                  {t.name}
+                </Chip>
+              ) : null
             })}
-            {mem && <Chip color="#FB8500" size="sm">{mem.name}</Chip>}
+            {mem && (
+              <Chip color="#FB8500" size="sm">
+                {mem.name}
+              </Chip>
+            )}
           </div>
         )}
       </div>

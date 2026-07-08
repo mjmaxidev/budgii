@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CalendarClock, Wallet, AlertTriangle, PieChart, Bell, BellRing, LineChart, ChevronDown } from 'lucide-react'
+import {
+  CalendarClock,
+  Wallet,
+  AlertTriangle,
+  PieChart,
+  Bell,
+  BellRing,
+  LineChart,
+  ChevronDown,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -118,14 +127,33 @@ export function BudgetSetup() {
             <option value="weekly">Weekly</option>
             <option value="daily">Daily</option>
           </select>
-          <ChevronDown size={16} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-primary" />
+          <ChevronDown
+            size={16}
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-primary"
+          />
         </div>
       </Card>
 
       {/* Total + warning */}
       <Card className="mt-3 divide-y divide-line/70 py-0">
-        <AmountRow icon={<Wallet size={22} className="text-green" />} iconBg="#EAF8ED" title={`Total ${periodLabel} Budget`} sub="Set your total budget for this period." value={limit} placeholder="1000" onChange={commitLimit} />
-        <AmountRow icon={<AlertTriangle size={22} className="text-orange" />} iconBg="#FFF2DF" title="Warning Threshold" sub="You'll be alerted when spending reaches this." value={warning} placeholder="800" onChange={commitWarning} />
+        <AmountRow
+          icon={<Wallet size={22} className="text-green" />}
+          iconBg="#EAF8ED"
+          title={`Total ${periodLabel} Budget`}
+          sub="Set your total budget for this period."
+          value={limit}
+          placeholder="1000"
+          onChange={commitLimit}
+        />
+        <AmountRow
+          icon={<AlertTriangle size={22} className="text-orange" />}
+          iconBg="#FFF2DF"
+          title="Warning Threshold"
+          sub="You'll be alerted when spending reaches this."
+          value={warning}
+          placeholder="800"
+          onChange={commitWarning}
+        />
       </Card>
 
       {/* Allocations */}
@@ -166,9 +194,22 @@ export function BudgetSetup() {
 
       {/* Toggles */}
       <Card className="mt-3 space-y-2">
-        <ToggleRow icon={<Bell size={18} className="text-green" />} title="Warning Notifications" description="Get notified when you reach your warning threshold." checked={warnNotif} onChange={setWarnNotif} />
+        <ToggleRow
+          icon={<Bell size={18} className="text-green" />}
+          title="Warning Notifications"
+          description="Get notified when you reach your warning threshold."
+          checked={warnNotif}
+          onChange={setWarnNotif}
+        />
         <div className="h-px bg-line/70" />
-        <ToggleRow icon={<BellRing size={18} className="text-red" />} iconBg="#FEECEC" title="Over-Budget Alerts" description="Get notified when you exceed your budget." checked={overAlerts} onChange={setOverAlerts} />
+        <ToggleRow
+          icon={<BellRing size={18} className="text-red" />}
+          iconBg="#FEECEC"
+          title="Over-Budget Alerts"
+          description="Get notified when you exceed your budget."
+          checked={overAlerts}
+          onChange={setOverAlerts}
+        />
       </Card>
 
       {/* Live preview */}
@@ -181,19 +222,40 @@ export function BudgetSetup() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <PreviewRing amount={limitNum * 0.45} limit={limitNum} color={statusColor.good} title="Under Budget" caption="On track!" />
-          <PreviewRing amount={warningNum + 20} limit={limitNum} color={statusColor.warning} title="At Warning" caption="Approaching" />
-          <PreviewRing amount={limitNum * 1.15} limit={limitNum} color={statusColor.over} title="Over Budget" caption="Over limit" />
+          <PreviewRing
+            amount={limitNum * 0.45}
+            limit={limitNum}
+            color={statusColor.good}
+            title="Under Budget"
+            caption="On track!"
+          />
+          <PreviewRing
+            amount={warningNum + 20}
+            limit={limitNum}
+            color={statusColor.warning}
+            title="At Warning"
+            caption="Approaching"
+          />
+          <PreviewRing
+            amount={limitNum * 1.15}
+            limit={limitNum}
+            color={statusColor.over}
+            title="Over Budget"
+            caption="Over limit"
+          />
         </div>
       </Card>
 
       <div className="mt-3 rounded-card bg-primarySoft p-3 text-[13px] leading-snug text-ink">
-        When spending reaches your <span className="font-bold text-orange">warning threshold</span>, the ring turns{' '}
-        <span className="font-bold text-orange">orange</span>. When it exceeds your budget, it turns{' '}
-        <span className="font-bold text-red">red</span> and we'll ask if you'd like to increase this month's limit.
+        When spending reaches your <span className="font-bold text-orange">warning threshold</span>, the ring
+        turns <span className="font-bold text-orange">orange</span>. When it exceeds your budget, it turns{' '}
+        <span className="font-bold text-red">red</span> and we'll ask if you'd like to increase this month's
+        limit.
       </div>
 
-      {error && <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[14px] font-semibold text-red">{error}</p>}
+      {error && (
+        <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[14px] font-semibold text-red">{error}</p>
+      )}
 
       <ActionButton className="mt-4" onClick={save} disabled={saving}>
         {saving ? 'Saving...' : 'Save Budget'}
@@ -243,10 +305,24 @@ function AmountRow({
   )
 }
 
-function PreviewRing({ amount, limit, color, title, caption }: { amount: number; limit: number; color: string; title: string; caption: string }) {
+function PreviewRing({
+  amount,
+  limit,
+  color,
+  title,
+  caption,
+}: {
+  amount: number
+  limit: number
+  color: string
+  title: string
+  caption: string
+}) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <p className="text-[11px] font-bold" style={{ color }}>{title}</p>
+      <p className="text-[11px] font-bold" style={{ color }}>
+        {title}
+      </p>
       <ProgressRing progress={limit > 0 ? amount / limit : 0} size={84} stroke={9} color={color}>
         <span className="text-[13px] font-extrabold text-ink">{formatMoneyShort(amount)}</span>
         <span className="text-[10px] text-muted">{limit > 0 ? Math.round((amount / limit) * 100) : 0}%</span>

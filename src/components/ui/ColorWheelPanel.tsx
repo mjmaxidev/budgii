@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronLeft } from 'lucide-react'
 import { ActionButton } from '@/components/ui/ActionButton'
-import {
-  CHALK_LIGHTNESS_DEFAULT,
-  CHALK_LIGHTNESS_MAX,
-  CHALK_LIGHTNESS_MIN,
-} from '@/constants/chalkColors'
+import { CHALK_LIGHTNESS_DEFAULT, CHALK_LIGHTNESS_MAX, CHALK_LIGHTNESS_MIN } from '@/constants/chalkColors'
 import {
   drawColorWheel,
   hexToHsl,

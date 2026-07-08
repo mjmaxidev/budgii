@@ -124,10 +124,25 @@ export function AnnotationProvider({ pageKey, children }: { pageKey: string; chi
         onPointerCancel={onPointerUp}
       >
         {strokes.map((s, i) => (
-          <path key={i} d={toPath(s.points)} stroke={RED} strokeWidth={WIDTH} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            key={i}
+            d={toPath(s.points)}
+            stroke={RED}
+            strokeWidth={WIDTH}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         ))}
         {drawingRef.current && (
-          <path d={toPath(liveRef.current)} stroke={RED} strokeWidth={WIDTH} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d={toPath(liveRef.current)}
+            stroke={RED}
+            strokeWidth={WIDTH}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         )}
       </svg>
     </AnnotationContext.Provider>

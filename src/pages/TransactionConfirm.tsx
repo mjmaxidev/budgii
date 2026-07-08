@@ -39,11 +39,7 @@ export function TransactionConfirm() {
   }
 
   return (
-    <Modal
-      open={true}
-      onClose={handleBackHome}
-      variant="center"
-    >
+    <Modal open={true} onClose={handleBackHome} variant="center">
       {/* Success icon */}
       <div className="flex justify-center mb-4">
         <div className="rounded-full bg-greenSoft p-4">
@@ -52,12 +48,8 @@ export function TransactionConfirm() {
       </div>
 
       {/* Title */}
-      <h2 className="text-center text-[20px] font-extrabold text-ink mb-1">
-        Transaction Confirmed
-      </h2>
-      <p className="text-center text-[14px] text-muted mb-6">
-        Your expense has been saved
-      </p>
+      <h2 className="text-center text-[20px] font-extrabold text-ink mb-1">Transaction Confirmed</h2>
+      <p className="text-center text-[14px] text-muted mb-6">Your expense has been saved</p>
 
       {/* Transaction details card */}
       <Card className="mb-6 p-4 space-y-4">
@@ -71,10 +63,7 @@ export function TransactionConfirm() {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-[13px] text-muted mb-1">Amount</p>
-            <MoneyText
-              amount={amount}
-              className="text-[24px] font-extrabold text-primary"
-            />
+            <MoneyText amount={amount} className="text-[24px] font-extrabold text-primary" />
           </div>
           {cat && (
             <div className="flex items-center gap-2">

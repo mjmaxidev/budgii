@@ -104,19 +104,22 @@ export function BudgetComparison() {
   const spendingDiffPercent =
     comparisonMonth.totalExpenses > 0
       ? Math.round(
-          ((currentMonth.totalExpenses - comparisonMonth.totalExpenses) / comparisonMonth.totalExpenses) * 100
+          ((currentMonth.totalExpenses - comparisonMonth.totalExpenses) / comparisonMonth.totalExpenses) *
+            100,
         )
       : 0
 
   const incomeDiffPercent =
     comparisonMonth.totalIncome > 0
-      ? Math.round(((currentMonth.totalIncome - comparisonMonth.totalIncome) / comparisonMonth.totalIncome) * 100)
+      ? Math.round(
+          ((currentMonth.totalIncome - comparisonMonth.totalIncome) / comparisonMonth.totalIncome) * 100,
+        )
       : 0
 
   const netDiffPercent =
     Math.abs(comparisonMonth.netChange) > 0
       ? Math.round(
-          ((currentMonth.netChange - comparisonMonth.netChange) / Math.abs(comparisonMonth.netChange)) * 100
+          ((currentMonth.netChange - comparisonMonth.netChange) / Math.abs(comparisonMonth.netChange)) * 100,
         )
       : 0
 
@@ -177,7 +180,8 @@ export function BudgetComparison() {
                     className={`text-sm font-bold ${getDiffColor(incomeDiffPercent)}`}
                   />
                   <span className={`text-xs font-medium ${getDiffColor(incomeDiffPercent)}`}>
-                    {incomeDiffPercent >= 0 ? '+' : ''}{incomeDiffPercent}%
+                    {incomeDiffPercent >= 0 ? '+' : ''}
+                    {incomeDiffPercent}%
                   </span>
                 </div>
               </div>
@@ -204,7 +208,8 @@ export function BudgetComparison() {
                     className={`text-sm font-bold ${getDiffColor(spendingDiffPercent)}`}
                   />
                   <span className={`text-xs font-medium ${getDiffColor(spendingDiffPercent)}`}>
-                    {spendingDiffPercent >= 0 ? '+' : ''}{spendingDiffPercent}%
+                    {spendingDiffPercent >= 0 ? '+' : ''}
+                    {spendingDiffPercent}%
                   </span>
                 </div>
               </div>
@@ -241,7 +246,8 @@ export function BudgetComparison() {
                   className={`text-sm font-bold ${getDiffColor(netDiffPercent, true)}`}
                 />
                 <span className={`text-xs font-medium ${getDiffColor(netDiffPercent, true)}`}>
-                  {netDiffPercent >= 0 ? '+' : ''}{netDiffPercent}%
+                  {netDiffPercent >= 0 ? '+' : ''}
+                  {netDiffPercent}%
                 </span>
               </div>
             </div>
@@ -266,7 +272,9 @@ export function BudgetComparison() {
                       <CategoryIcon icon={catData?.icon ?? '📦'} color={catData?.color ?? '#999'} size={40} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-[15px] font-semibold text-ink">{catData?.name ?? 'Unknown'}</p>
+                      <p className="truncate text-[15px] font-semibold text-ink">
+                        {catData?.name ?? 'Unknown'}
+                      </p>
                       <div className="mt-1 grid grid-cols-2 gap-3 text-xs">
                         <div>
                           <p className="text-muted">{currentLabel}</p>
@@ -286,7 +294,8 @@ export function BudgetComparison() {
                         className={`text-xs font-medium ${getDiffColor(diffPercent)}`}
                       />
                       <p className={`text-[10px] font-medium ${getDiffColor(diffPercent)}`}>
-                        {diffPercent >= 0 ? '+' : ''}{diffPercent}%
+                        {diffPercent >= 0 ? '+' : ''}
+                        {diffPercent}%
                       </p>
                     </div>
                   </div>
@@ -303,7 +312,9 @@ export function BudgetComparison() {
         {/* All Categories from Comparison Month */}
         {comparisonMonth.categoryBreakdown.length > currentMonth.categoryBreakdown.length && (
           <div>
-            <h3 className="mb-2 text-[13px] font-semibold text-muted uppercase">Categories from {comparisonLabel}</h3>
+            <h3 className="mb-2 text-[13px] font-semibold text-muted uppercase">
+              Categories from {comparisonLabel}
+            </h3>
             <Card className="divide-y divide-line overflow-hidden">
               {comparisonMonth.categoryBreakdown.map((cat) => {
                 if (currentMonth.categoryBreakdown.some((c) => c.id === cat.id)) {
@@ -316,7 +327,9 @@ export function BudgetComparison() {
                       <CategoryIcon icon={catData?.icon ?? '📦'} color={catData?.color ?? '#999'} size={40} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="truncate text-[15px] font-semibold text-ink">{catData?.name ?? 'Unknown'}</p>
+                      <p className="truncate text-[15px] font-semibold text-ink">
+                        {catData?.name ?? 'Unknown'}
+                      </p>
                       <div className="mt-1 text-xs">
                         <p className="text-muted">{comparisonLabel}</p>
                         <MoneyText amount={cat.total} cents={false} className="font-bold text-ink" />

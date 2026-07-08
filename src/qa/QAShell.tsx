@@ -34,8 +34,8 @@ export function QAShell() {
 
   const currentLabel =
     selection.kind === 'app'
-      ? appPages.find((p) => p.path === selection.path)?.label ?? 'App'
-      : qaTools.find((t) => t.key === selection.key)?.label ?? 'QA Tool'
+      ? (appPages.find((p) => p.path === selection.path)?.label ?? 'App')
+      : (qaTools.find((t) => t.key === selection.key)?.label ?? 'QA Tool')
 
   // Annotations are keyed per view (app path, or tool key) so marks stay put.
   const pageKey = selection.kind === 'app' ? selection.path : `tool:${selection.key}`
@@ -61,7 +61,9 @@ export function QAShell() {
 
           <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[#efe2d2] p-0 min-[720px]:items-center min-[720px]:bg-[radial-gradient(circle,_#dad7cf_1px,_transparent_1px)] min-[720px]:bg-[length:18px_18px] min-[720px]:p-7">
             <div className="flex w-full flex-col items-center gap-3 min-[720px]:w-auto">
-              <p className="hidden text-xs font-bold text-muted min-[720px]:block">390 × 844 mobile preview</p>
+              <p className="hidden text-xs font-bold text-muted min-[720px]:block">
+                390 × 844 mobile preview
+              </p>
               <div className="relative h-[100dvh] w-full max-w-none overflow-hidden bg-bg shadow-ring min-[720px]:h-[844px] min-[720px]:max-h-[calc(100dvh-150px)] min-[720px]:w-[390px] min-[720px]:rounded-[40px] min-[720px]:border-[10px] min-[720px]:border-ink min-[720px]:shadow-[0_28px_80px_rgba(17,24,39,0.24)]">
                 <iframe
                   ref={frameRef}
@@ -69,7 +71,9 @@ export function QAShell() {
                   src={`./index.html#${DEFAULT_PATH}`}
                   className="h-full w-full border-0"
                 />
-                {activeTool && <div className="absolute inset-0 overflow-auto bg-bg">{activeTool.element}</div>}
+                {activeTool && (
+                  <div className="absolute inset-0 overflow-auto bg-bg">{activeTool.element}</div>
+                )}
               </div>
             </div>
           </div>

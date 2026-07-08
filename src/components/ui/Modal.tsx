@@ -17,7 +17,9 @@ export function Modal({ open, onClose, title, children, variant = 'sheet' }: Pro
   // Render inside the phone frame so the sheet/dialog is clipped to the device,
   // not the whole review-studio window. Falls back to the body (full-bleed phone
   // layout on small screens, where the frame fills the viewport anyway).
-  const host = (typeof document !== 'undefined' && document.getElementById('mobile-frame-root')) || (typeof document !== 'undefined' ? document.body : null)
+  const host =
+    (typeof document !== 'undefined' && document.getElementById('mobile-frame-root')) ||
+    (typeof document !== 'undefined' ? document.body : null)
   if (!host) return null
 
   const overlay = (
@@ -31,9 +33,7 @@ export function Modal({ open, onClose, title, children, variant = 'sheet' }: Pro
         }
         onClick={(e) => e.stopPropagation()}
       >
-        {variant === 'sheet' && (
-          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line" />
-        )}
+        {variant === 'sheet' && <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line" />}
         {title && (
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[18px] font-bold text-ink">{title}</h2>

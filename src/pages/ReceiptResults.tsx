@@ -73,11 +73,17 @@ export function ReceiptResults() {
           useStore
             .getState()
             .expenses.filter((expense) => expense.receiptId === receiptId && expense.source === 'receipt_ai')
-            .map((expense) => `${expense.merchant}:${expense.amount}:${expense.categoryId}:${expense.memberId ?? ''}`),
+            .map(
+              (expense) =>
+                `${expense.merchant}:${expense.amount}:${expense.categoryId}:${expense.memberId ?? ''}`,
+            ),
         )
         const savedExpenses = await Promise.all(
           items
-            .filter((item) => !existing.has(`${item.name}:${item.amount}:${item.categoryId}:${item.memberId ?? ''}`))
+            .filter(
+              (item) =>
+                !existing.has(`${item.name}:${item.amount}:${item.categoryId}:${item.memberId ?? ''}`),
+            )
             .map(async (item) => {
               const expense = apiExpenseToExpense(
                 await createExpense(householdId, {
@@ -229,9 +235,7 @@ export function ReceiptResults() {
 
       <div className="mt-5 space-y-3">
         {error && (
-          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-            {error}
-          </p>
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
         )}
         {receipt.status === 'failed' && receipt.analysisError && (
           <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
@@ -276,10 +280,15 @@ export function ReceiptResults() {
         </div>
       </div>
 
-      <Modal open={matchHelpOpen} onClose={() => setMatchHelpOpen(false)} title="Category match" variant="center">
+      <Modal
+        open={matchHelpOpen}
+        onClose={() => setMatchHelpOpen(false)}
+        title="Category match"
+        variant="center"
+      >
         <p className="text-[15px] leading-snug text-muted">
-          The <span className="font-bold text-ink">{matchHelpConfidence}%</span> shows how confident the AI is about
-          this item&apos;s category.
+          The <span className="font-bold text-ink">{matchHelpConfidence}%</span> shows how confident the AI is
+          about this item&apos;s category.
         </p>
         <p className="mt-3 text-[15px] leading-snug text-muted">
           {matchHelpConfidence !== null && matchHelpConfidence >= 90
@@ -316,7 +325,8 @@ export function ReceiptResults() {
             disabled={reanalyzing}
             className="flex w-full items-center gap-3 rounded-input border border-line bg-surface p-3 text-left text-[15px] font-bold text-ink active:bg-line/40 disabled:opacity-60"
           >
-            <RefreshCw size={18} className={reanalyzing ? 'animate-spin text-green' : 'text-green'} /> Re-analyze receipt
+            <RefreshCw size={18} className={reanalyzing ? 'animate-spin text-green' : 'text-green'} />{' '}
+            Re-analyze receipt
           </button>
           <button
             onClick={() => {
@@ -330,7 +340,12 @@ export function ReceiptResults() {
         </div>
       </Modal>
 
-      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title="Delete receipt?" variant="center">
+      <Modal
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title="Delete receipt?"
+        variant="center"
+      >
         <p className="text-[15px] text-muted">
           This will remove the receipt and all {items.length} scanned item{items.length === 1 ? '' : 's'}.
         </p>
@@ -338,11 +353,7 @@ export function ReceiptResults() {
           <ActionButton variant="ghost" onClick={() => setConfirmDelete(false)}>
             Cancel
           </ActionButton>
-          <ActionButton
-            variant="danger"
-            onClick={() => void removeReceipt()}
-            disabled={saving}
-          >
+          <ActionButton variant="danger" onClick={() => void removeReceipt()} disabled={saving}>
             {saving ? 'Deleting…' : 'Delete'}
           </ActionButton>
         </div>

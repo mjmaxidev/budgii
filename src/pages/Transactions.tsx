@@ -60,10 +60,19 @@ export function Transactions() {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <ActionButton size="md" leftIcon={<Plus size={18} />} onClick={() => navigate('/add-expense', withFrom('/transactions'))}>
+        <ActionButton
+          size="md"
+          leftIcon={<Plus size={18} />}
+          onClick={() => navigate('/add-expense', withFrom('/transactions'))}
+        >
           Add Expense
         </ActionButton>
-        <ActionButton size="md" variant="green" leftIcon={<ScanLine size={18} />} onClick={() => navigate('/scan-receipt', withFrom('/transactions'))}>
+        <ActionButton
+          size="md"
+          variant="green"
+          leftIcon={<ScanLine size={18} />}
+          onClick={() => navigate('/scan-receipt', withFrom('/transactions'))}
+        >
           Scan Receipt
         </ActionButton>
       </div>

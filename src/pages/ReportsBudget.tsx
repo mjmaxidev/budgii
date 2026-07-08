@@ -65,7 +65,10 @@ export function ReportsBudget() {
       {/* Spending overview chart */}
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Spending Overview</h2>
-        <button onClick={() => navigate('/spending-breakdown', withFrom('/reports'))} className="text-[14px] font-bold text-green">
+        <button
+          onClick={() => navigate('/spending-breakdown', withFrom('/reports'))}
+          className="text-[14px] font-bold text-green"
+        >
           View Report
         </button>
       </div>
@@ -116,14 +119,21 @@ export function ReportsBudget() {
           })}
         </div>
         <div className="mt-1 flex justify-between text-[11px] text-muted">
-          <span>1</span><span>8</span><span>15</span><span>22</span><span>{dailyBreakdown.length}</span>
+          <span>1</span>
+          <span>8</span>
+          <span>15</span>
+          <span>22</span>
+          <span>{dailyBreakdown.length}</span>
         </div>
       </Card>
 
       {/* Budget settings summary */}
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Budget Settings</h2>
-        <button onClick={() => navigate('/budget-setup', withFrom('/reports'))} className="text-[14px] font-bold text-primary">
+        <button
+          onClick={() => navigate('/budget-setup', withFrom('/reports'))}
+          className="text-[14px] font-bold text-primary"
+        >
           Adjust Budget
         </button>
       </div>
@@ -140,9 +150,30 @@ export function ReportsBudget() {
 
       {/* Three status rings */}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <MiniRing label="Good" amount={budget.limit * 0.45} limit={budget.limit} color={statusColor.good} caption="Good" active={status === 'good'} />
-        <MiniRing label="Warning" amount={budget.warningThreshold + 20} limit={budget.limit} color={statusColor.warning} caption="Caution" active={status === 'warning'} />
-        <MiniRing label="Over" amount={budget.limit * 1.12} limit={budget.limit} color={statusColor.over} caption="Over" active={status === 'over'} />
+        <MiniRing
+          label="Good"
+          amount={budget.limit * 0.45}
+          limit={budget.limit}
+          color={statusColor.good}
+          caption="Good"
+          active={status === 'good'}
+        />
+        <MiniRing
+          label="Warning"
+          amount={budget.warningThreshold + 20}
+          limit={budget.limit}
+          color={statusColor.warning}
+          caption="Caution"
+          active={status === 'warning'}
+        />
+        <MiniRing
+          label="Over"
+          amount={budget.limit * 1.12}
+          limit={budget.limit}
+          color={statusColor.over}
+          caption="Over"
+          active={status === 'over'}
+        />
       </div>
 
       {/* Over budget alert */}
@@ -156,7 +187,12 @@ export function ReportsBudget() {
             </div>
           </div>
           <div className="mt-3">
-            <ActionButton size="md" variant="outline" fullWidth onClick={() => navigate('/budget-next-month')}>
+            <ActionButton
+              size="md"
+              variant="outline"
+              fullWidth
+              onClick={() => navigate('/budget-next-month')}
+            >
               Adjust Next Month
             </ActionButton>
           </div>
@@ -164,7 +200,12 @@ export function ReportsBudget() {
       )}
 
       {status !== 'over' && (
-        <ActionButton size="md" variant="outline" className="mt-4" onClick={() => navigate('/budget-next-month')}>
+        <ActionButton
+          size="md"
+          variant="outline"
+          className="mt-4"
+          onClick={() => navigate('/budget-next-month')}
+        >
           Adjust Next Month
         </ActionButton>
       )}
@@ -172,10 +213,17 @@ export function ReportsBudget() {
       {/* Current spend summary */}
       <Card className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-[13px] text-muted">Spent this {period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}</p>
+          <p className="text-[13px] text-muted">
+            Spent this {period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}
+          </p>
           <MoneyText amount={spent} className="text-[22px] font-extrabold" />
         </div>
-        <ProgressRing progress={limit > 0 ? spent / limit : 0} size={72} stroke={9} color={statusColor[status]}>
+        <ProgressRing
+          progress={limit > 0 ? spent / limit : 0}
+          size={72}
+          stroke={9}
+          color={statusColor[status]}
+        >
           <span className="text-[12px] font-bold text-ink">{Math.round((spent / (limit || 1)) * 100)}%</span>
         </ProgressRing>
       </Card>
@@ -198,7 +246,10 @@ function MiniRing({
   active: boolean
 }) {
   return (
-    <Card className={`flex flex-col items-center gap-1 py-3 ${active ? 'ring-2' : ''}`} style={active ? { boxShadow: `0 0 0 2px ${color}` } : undefined}>
+    <Card
+      className={`flex flex-col items-center gap-1 py-3 ${active ? 'ring-2' : ''}`}
+      style={active ? { boxShadow: `0 0 0 2px ${color}` } : undefined}
+    >
       <ProgressRing progress={amount / limit} size={68} stroke={8} color={color}>
         <span className="text-[12px] font-extrabold text-ink">{formatMoneyShort(amount)}</span>
       </ProgressRing>

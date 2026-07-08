@@ -7,11 +7,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Modal } from '@/components/ui/Modal'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
-import {
-  apiReceiptToReceipt,
-  createReceipt,
-  uploadReceipt,
-} from '@/api/receipts'
+import { apiReceiptToReceipt, createReceipt, uploadReceipt } from '@/api/receipts'
 import { runReceiptAnalysis } from '@/api/receiptAnalysis'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
@@ -96,7 +92,8 @@ export function ScanReceipt() {
     const id = addReceipt(merchant, today, MOCK_RECEIPT_TOTAL, imageUrl)
 
     window.setTimeout(() => {
-      if (imageUrl) updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
+      if (imageUrl)
+        updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
       analyzeLocalReceipt(id)
       setAnalyzing(false)
       navigate(`/receipt-results/${id}`, withFrom('/scan-receipt'))
@@ -182,8 +179,21 @@ export function ScanReceipt() {
         >
           <ImageUp size={20} /> Upload Photo
         </button>
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => handleFile(e.target.files?.[0])} />
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => handleFile(e.target.files?.[0])} />
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
       </div>
 
       {analyzing && (
@@ -200,9 +210,7 @@ export function ScanReceipt() {
       )}
 
       {error && (
-        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
       {!analyzing && (
@@ -217,16 +225,16 @@ export function ScanReceipt() {
       <Modal open={showInfo} onClose={() => setShowInfo(false)} title="How scanning works" variant="center">
         <div className="space-y-3 text-[14px] leading-snug text-muted">
           <p>
-            <span className="font-bold text-ink">1. Capture or upload</span> — take a photo of your
-            receipt or choose one from your library.
+            <span className="font-bold text-ink">1. Capture or upload</span> — take a photo of your receipt or
+            choose one from your library.
           </p>
           <p>
-            <span className="font-bold text-ink">2. AI reads the items</span> — each line item is
-            extracted with a name, price, and suggested category.
+            <span className="font-bold text-ink">2. AI reads the items</span> — each line item is extracted
+            with a name, price, and suggested category.
           </p>
           <p>
-            <span className="font-bold text-ink">3. Review & confirm</span> — fix anything the AI got
-            wrong, then confirm to add everything to your expenses.
+            <span className="font-bold text-ink">3. Review & confirm</span> — fix anything the AI got wrong,
+            then confirm to add everything to your expenses.
           </p>
         </div>
       </Modal>

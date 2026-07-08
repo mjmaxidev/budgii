@@ -13,7 +13,11 @@ import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
-import { apiReceiptItemToReceiptItem, deleteReceiptItem, updateReceiptItem as apiUpdateReceiptItem } from '@/api/receipts'
+import {
+  apiReceiptItemToReceiptItem,
+  deleteReceiptItem,
+  updateReceiptItem as apiUpdateReceiptItem,
+} from '@/api/receipts'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
@@ -112,7 +116,12 @@ export function ItemDetail() {
   return (
     <AppShell topBar={<TopBar title="Item Detail" showBack />}>
       <div className="flex items-center gap-4 py-2">
-        <CategoryIcon icon={cat?.icon ?? '🧾'} color={cat?.color ?? '#16A34A'} size={88} className="rounded-full text-4xl" />
+        <CategoryIcon
+          icon={cat?.icon ?? '🧾'}
+          color={cat?.color ?? '#16A34A'}
+          size={88}
+          className="rounded-full text-4xl"
+        />
         <div>
           <h2 className="text-[24px] font-extrabold text-ink">{item.name}</h2>
           <MoneyText amount={item.amount} className="text-[30px] font-extrabold text-ink" />
@@ -134,7 +143,11 @@ export function ItemDetail() {
           <div className="flex items-center gap-2">
             {item.tagIds.map((id) => {
               const t = tag(id)
-              return t ? <Chip key={id} color={t.color}>{t.name}</Chip> : null
+              return t ? (
+                <Chip key={id} color={t.color}>
+                  {t.name}
+                </Chip>
+              ) : null
             })}
             <button
               onClick={() => setTagPickerOpen(true)}
@@ -150,9 +163,7 @@ export function ItemDetail() {
 
       <h3 className="mt-6 text-[19px] font-extrabold text-ink">Source Receipt</h3>
       {error && (
-        <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
       <div className="mt-3 flex gap-4">
         <button onClick={() => setOpenReceipt(true)} className="w-32 shrink-0">
@@ -164,8 +175,15 @@ export function ItemDetail() {
           />
         </button>
         <div className="flex-1">
-          <p className="text-[15px] leading-snug text-muted">This item was detected from your scanned receipt.</p>
-          <ActionButton variant="greenOutline" className="mt-4" leftIcon={<FileText size={18} />} onClick={() => setOpenReceipt(true)}>
+          <p className="text-[15px] leading-snug text-muted">
+            This item was detected from your scanned receipt.
+          </p>
+          <ActionButton
+            variant="greenOutline"
+            className="mt-4"
+            leftIcon={<FileText size={18} />}
+            onClick={() => setOpenReceipt(true)}
+          >
             Open Receipt
           </ActionButton>
         </div>
@@ -179,9 +197,18 @@ export function ItemDetail() {
       </button>
 
       {/* Receipt viewer */}
-      <Modal open={openReceipt} onClose={() => setOpenReceipt(false)} title={receipt?.merchant} variant="center">
+      <Modal
+        open={openReceipt}
+        onClose={() => setOpenReceipt(false)}
+        title={receipt?.merchant}
+        variant="center"
+      >
         {receiptImageUrl ? (
-          <img src={receiptImageUrl} alt="receipt" className="max-h-[70vh] w-full rounded-input object-contain" />
+          <img
+            src={receiptImageUrl}
+            alt="receipt"
+            className="max-h-[70vh] w-full rounded-input object-contain"
+          />
         ) : (
           <pre className="max-h-[70vh] overflow-auto rounded-input bg-[#FAF6F0] p-4 font-mono text-[12px] leading-relaxed text-ink/80">
             {receipt?.ocrText ?? 'No receipt image available.'}
@@ -192,7 +219,9 @@ export function ItemDetail() {
       {/* Tag picker */}
       <Modal open={tagPickerOpen} onClose={() => setTagPickerOpen(false)} title="Edit Tags" variant="center">
         {tags.length === 0 ? (
-          <p className="text-center text-[14px] text-muted">No tags yet — create some in Categories & Tags.</p>
+          <p className="text-center text-[14px] text-muted">
+            No tags yet — create some in Categories & Tags.
+          </p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {tags.map((t) => {
@@ -200,7 +229,9 @@ export function ItemDetail() {
               return (
                 <button
                   key={t.id}
-                  onClick={() => void updateTags(active ? item.tagIds.filter((id) => id !== t.id) : [...item.tagIds, t.id])}
+                  onClick={() =>
+                    void updateTags(active ? item.tagIds.filter((id) => id !== t.id) : [...item.tagIds, t.id])
+                  }
                   disabled={saving}
                   className={`inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-[13px] font-semibold transition ${
                     active ? 'border-transparent text-white' : 'border-line bg-surface text-ink'
@@ -220,17 +251,18 @@ export function ItemDetail() {
       </Modal>
 
       {/* Confirm remove */}
-      <Modal open={confirmRemove} onClose={() => setConfirmRemove(false)} title="Remove item?" variant="center">
+      <Modal
+        open={confirmRemove}
+        onClose={() => setConfirmRemove(false)}
+        title="Remove item?"
+        variant="center"
+      >
         <p className="text-[15px] text-muted">This will remove “{item.name}” from the receipt.</p>
         <div className="mt-5 flex gap-3">
           <ActionButton variant="ghost" onClick={() => setConfirmRemove(false)}>
             Cancel
           </ActionButton>
-          <ActionButton
-            variant="danger"
-            onClick={() => void removeItem()}
-            disabled={saving}
-          >
+          <ActionButton variant="danger" onClick={() => void removeItem()} disabled={saving}>
             {saving ? 'Removing…' : 'Remove'}
           </ActionButton>
         </div>

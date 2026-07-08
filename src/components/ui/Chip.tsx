@@ -19,7 +19,14 @@ function hexToSoft(hex: string, alpha = 0.16): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-export function Chip({ children, color = '#E5A97A', active = false, onClick, className, size = 'md' }: Props) {
+export function Chip({
+  children,
+  color = '#E5A97A',
+  active = false,
+  onClick,
+  className,
+  size = 'md',
+}: Props) {
   const interactive = !!onClick
   const textColor = active ? (hexToHsl(color).l > 62 ? '#3D3229' : '#fff') : color
   const style = active
@@ -41,12 +48,7 @@ export function Chip({ children, color = '#E5A97A', active = false, onClick, cla
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={style}
-      className={classes}
-    >
+    <button type="button" onClick={onClick} style={style} className={classes}>
       {children}
     </button>
   )

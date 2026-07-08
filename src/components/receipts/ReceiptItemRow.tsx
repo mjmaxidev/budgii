@@ -28,10 +28,7 @@ export function ReceiptItemRow({ item, onEdit, onMatchClick }: Props) {
           <MoneyText amount={item.amount} className="shrink-0 text-[15px] font-bold text-ink" />
         </div>
         <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-          <p
-            className="truncate text-[13px] font-semibold"
-            style={{ color: cat?.color ?? '#6B7280' }}
-          >
+          <p className="truncate text-[13px] font-semibold" style={{ color: cat?.color ?? '#6B7280' }}>
             {cat?.name ?? 'Uncategorized'}
           </p>
           {isManual ? (

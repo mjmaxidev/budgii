@@ -32,7 +32,9 @@ export function Verification() {
     <AppShell contentClassName="flex flex-col justify-between pb-20">
       <div className="mt-6 mb-8">
         <h1 className="text-[28px] font-extrabold text-ink">Verify Your Account</h1>
-        <p className="mt-2 text-[15px] text-muted">Choose how you'd like to receive your verification code.</p>
+        <p className="mt-2 text-[15px] text-muted">
+          Choose how you'd like to receive your verification code.
+        </p>
       </div>
 
       {!verificationType && (
@@ -75,7 +77,7 @@ export function Verification() {
               <div
                 className={cn(
                   'flex h-10 w-10 items-center justify-center rounded-xl',
-                  verificationType === 'phone' ? 'bg-blue-100' : 'bg-orange-100'
+                  verificationType === 'phone' ? 'bg-blue-100' : 'bg-orange-100',
                 )}
               >
                 {verificationType === 'phone' ? (
@@ -85,10 +87,17 @@ export function Verification() {
                 )}
               </div>
               <div className="flex-1">
-                <p className="text-[15px] font-bold text-ink">{verificationType === 'phone' ? 'Phone Number' : 'Email Address'}</p>
-                <p className="text-[12px] text-muted">{verificationType === 'phone' ? 'Enter your phone number' : 'Enter your email address'}</p>
+                <p className="text-[15px] font-bold text-ink">
+                  {verificationType === 'phone' ? 'Phone Number' : 'Email Address'}
+                </p>
+                <p className="text-[12px] text-muted">
+                  {verificationType === 'phone' ? 'Enter your phone number' : 'Enter your email address'}
+                </p>
               </div>
-              <button onClick={() => setVerificationType(null)} className="text-[13px] font-bold text-primary">
+              <button
+                onClick={() => setVerificationType(null)}
+                className="text-[13px] font-bold text-primary"
+              >
                 Change
               </button>
             </div>
@@ -120,7 +129,9 @@ export function Verification() {
                   className="flex-1 rounded-input border border-line bg-surfaceSoft px-3 py-2.5 text-center text-[20px] font-bold text-ink placeholder:text-muted/50 outline-none"
                 />
               </div>
-              <p className="mt-2 text-[12px] text-muted">Check your {verificationType === 'phone' ? 'SMS' : 'email'}</p>
+              <p className="mt-2 text-[12px] text-muted">
+                Check your {verificationType === 'phone' ? 'SMS' : 'email'}
+              </p>
             </Card>
           )}
 

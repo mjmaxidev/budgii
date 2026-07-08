@@ -21,12 +21,7 @@ export function sumOngoingIncome(ongoing: OngoingIncome[]) {
   return ongoing.filter((o) => o.enabled).reduce((sum, o) => sum + o.amount, 0)
 }
 
-export function monthIncomeTotal(
-  items: IncomeItem[],
-  ongoing: OngoingIncome[],
-  year: number,
-  month: number,
-) {
+export function monthIncomeTotal(items: IncomeItem[], ongoing: OngoingIncome[], year: number, month: number) {
   return sumIncomeItems(incomeInMonth(items, year, month)) + sumOngoingIncome(ongoing)
 }
 

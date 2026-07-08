@@ -1,5 +1,17 @@
 import { useState } from 'react'
-import { ChevronDown, Plus, ScanLine, Wallet, Users, Bell, MessageCircle, CreditCard, Zap, Lock, BarChart3 } from 'lucide-react'
+import {
+  ChevronDown,
+  Plus,
+  ScanLine,
+  Wallet,
+  Users,
+  Bell,
+  MessageCircle,
+  CreditCard,
+  Zap,
+  Lock,
+  BarChart3,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -16,61 +28,71 @@ const faqItems: FAQItem[] = [
     id: 'add-expense',
     icon: Plus,
     question: 'How do I add an expense?',
-    answer: 'Tap the "+" button to choose how to add an expense — enter it manually or scan a receipt. For manual entry, fill in the amount, category, tags, and who paid, then tap Save. For receipts, take a photo and Budgii will extract items and suggest categories for you to review.',
+    answer:
+      'Tap the "+" button to choose how to add an expense — enter it manually or scan a receipt. For manual entry, fill in the amount, category, tags, and who paid, then tap Save. For receipts, take a photo and Budgii will extract items and suggest categories for you to review.',
   },
   {
     id: 'scan-receipt',
     icon: ScanLine,
     question: 'How do I scan a receipt?',
-    answer: 'Go to Scan a Receipt, capture or upload the receipt image, and Budgii will extract the merchant, total, and line items. Review or edit the extracted items, then tap Confirm All Items to add them to your expenses. If OCR fails or looks wrong, use Re-analyze Receipt from the results page.',
+    answer:
+      'Go to Scan a Receipt, capture or upload the receipt image, and Budgii will extract the merchant, total, and line items. Review or edit the extracted items, then tap Confirm All Items to add them to your expenses. If OCR fails or looks wrong, use Re-analyze Receipt from the results page.',
   },
   {
     id: 'set-budget',
     icon: Wallet,
     question: 'How do I set my budget?',
-    answer: 'Go to Settings > Budget Setting. Enter your total budget limit, set a warning threshold for alerts, and optionally allocate amounts to specific categories. Choose whether you want monthly, weekly, or daily budget periods.',
+    answer:
+      'Go to Settings > Budget Setting. Enter your total budget limit, set a warning threshold for alerts, and optionally allocate amounts to specific categories. Choose whether you want monthly, weekly, or daily budget periods.',
   },
   {
     id: 'invite-family',
     icon: Users,
     question: 'How do I invite family members?',
-    answer: 'Ask your household admin for an invite code from Family Members → Generate Invitation Link. On your device, open Budgii, tap "Have an invite code?" on the login screen (or go to Join Family), enter the code and your name, then tap Join Household.',
+    answer:
+      'Ask your household admin for an invite code from Family Members → Generate Invitation Link. On your device, open Budgii, tap "Have an invite code?" on the login screen (or go to Join Family), enter the code and your name, then tap Join Household.',
   },
   {
     id: 'budget-alerts',
     icon: Bell,
     question: 'How do I set up budget alerts?',
-    answer: 'Go to Settings > Spending Alerts. Turn on notifications, choose fixed amount or percentage alerts, then create alerts for the categories you want to watch. Budgii checks those alerts against your current month spending.',
+    answer:
+      'Go to Settings > Spending Alerts. Turn on notifications, choose fixed amount or percentage alerts, then create alerts for the categories you want to watch. Budgii checks those alerts against your current month spending.',
   },
   {
     id: 'categories',
     icon: CreditCard,
     question: 'Can I customize categories?',
-    answer: 'Yes! Go to Settings > Categories & Tags to create, edit, or delete expense categories. You can also assign custom icons and colors to each category to match your preferences and make tracking more visual.',
+    answer:
+      'Yes! Go to Settings > Categories & Tags to create, edit, or delete expense categories. You can also assign custom icons and colors to each category to match your preferences and make tracking more visual.',
   },
   {
     id: 'view-reports',
     icon: BarChart3,
     question: 'How do I view spending reports?',
-    answer: 'Navigate to the Reports page to see your spending breakdown by category, spending trends over time, and budget progress. You can filter by date range and category. Reports update in real-time as you add expenses.',
+    answer:
+      'Navigate to the Reports page to see your spending breakdown by category, spending trends over time, and budget progress. You can filter by date range and category. Reports update in real-time as you add expenses.',
   },
   {
     id: 'deals',
     icon: Zap,
     question: 'What are the Deals features?',
-    answer: 'Deals help you save money! View today\'s deals in the "Today\'s Deal Report," browse all available deals, or add items to your shopping watchlist. Receive alerts when watched items go on sale.',
+    answer:
+      'Deals help you save money! View today\'s deals in the "Today\'s Deal Report," browse all available deals, or add items to your shopping watchlist. Receive alerts when watched items go on sale.',
   },
   {
     id: 'security',
     icon: Lock,
     question: 'How secure is my data?',
-    answer: 'Budgii uses account authentication for backend sync and keeps the app PIN lock local to your device. Household access is permission-based, so admins can control who can view or edit household data.',
+    answer:
+      'Budgii uses account authentication for backend sync and keeps the app PIN lock local to your device. Household access is permission-based, so admins can control who can view or edit household data.',
   },
   {
     id: 'export-data',
     icon: MessageCircle,
     question: 'Can I export or backup my data?',
-    answer: 'Yes. Go to Settings > Export Data to download transactions as CSV, a current-month HTML report, or a JSON backup of the app data currently loaded on your device.',
+    answer:
+      'Yes. Go to Settings > Export Data to download transactions as CSV, a current-month HTML report, or a JSON backup of the app data currently loaded on your device.',
   },
 ]
 

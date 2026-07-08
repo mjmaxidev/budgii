@@ -27,11 +27,7 @@ export function ReceiptImageViewer() {
       <AppShell showBottomNav topBar={<TopBar title="Receipt Image" showBack />}>
         <Card className="text-center py-8">
           <p className="text-[15px] font-semibold text-muted">Receipt not found</p>
-          <ActionButton
-            variant="primary"
-            onClick={() => navigate('/receipt-history')}
-            className="mt-4"
-          >
+          <ActionButton variant="primary" onClick={() => navigate('/receipt-history')} className="mt-4">
             Back to Receipts
           </ActionButton>
         </Card>
@@ -115,11 +111,7 @@ export function ReceiptImageViewer() {
           </div>
 
           {/* Download Button */}
-          <ActionButton
-            variant="primary"
-            leftIcon={<Download size={18} />}
-            onClick={handleDownload}
-          >
+          <ActionButton variant="primary" leftIcon={<Download size={18} />} onClick={handleDownload}>
             Download Image
           </ActionButton>
 
@@ -145,9 +137,7 @@ export function ReceiptImageViewer() {
       ) : (
         <Card className="text-center py-8">
           <p className="text-[15px] font-semibold text-muted">No image available</p>
-          <p className="text-[13px] text-muted/70 mt-1">
-            This receipt doesn't have an associated image
-          </p>
+          <p className="text-[13px] text-muted/70 mt-1">This receipt doesn't have an associated image</p>
         </Card>
       )}
 

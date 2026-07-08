@@ -132,12 +132,8 @@ export function ReceiptHistory() {
 
               {/* Receipt info */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-[16px] font-bold text-ink truncate">
-                  {receipt.merchant}
-                </h3>
-                <p className="text-[13px] text-muted">
-                  {formatDate(receipt.date)}
-                </p>
+                <h3 className="text-[16px] font-bold text-ink truncate">{receipt.merchant}</h3>
+                <p className="text-[13px] text-muted">{formatDate(receipt.date)}</p>
                 <p className="text-[13px] text-muted">
                   {receipt.itemIds.length} item{receipt.itemIds.length !== 1 ? 's' : ''}
                 </p>
@@ -145,10 +141,7 @@ export function ReceiptHistory() {
 
               {/* Total amount */}
               <div className="shrink-0 text-right">
-                <MoneyText
-                  amount={receipt.total}
-                  className="text-[18px] font-extrabold text-ink"
-                />
+                <MoneyText amount={receipt.total} className="text-[18px] font-extrabold text-ink" />
               </div>
 
               {/* Status indicator */}
@@ -240,9 +233,7 @@ export function ReceiptHistory() {
                         className="w-full flex items-center justify-between rounded-lg bg-line/10 p-3 text-left hover:bg-line/20 transition-colors"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-[14px] font-semibold text-ink truncate">
-                            {item.name}
-                          </p>
+                          <p className="text-[14px] font-semibold text-ink truncate">{item.name}</p>
                           <p className="text-[12px] text-muted">
                             AI {Math.round(item.aiConfidence * 100)}% confident
                           </p>
@@ -289,9 +280,7 @@ export function ReceiptHistory() {
         title="Delete receipt?"
         variant="center"
       >
-        <p className="text-[15px] text-muted">
-          This will permanently remove the receipt and all its items.
-        </p>
+        <p className="text-[15px] text-muted">This will permanently remove the receipt and all its items.</p>
         {error && (
           <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
             {error}

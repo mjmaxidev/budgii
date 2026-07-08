@@ -20,14 +20,7 @@ type Props = {
  * yet at the end — a scroll affordance so users know there's more below the fold.
  * It fades out automatically once you reach the bottom.
  */
-export function AppShell({
-  children,
-  topBar,
-  showBottomNav,
-  fab,
-  contentClassName,
-  scrollClassName,
-}: Props) {
+export function AppShell({ children, topBar, showBottomNav, fab, contentClassName, scrollClassName }: Props) {
   const scrollRef = useRef<HTMLElement>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
 

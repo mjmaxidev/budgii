@@ -178,9 +178,7 @@ export function FamilyJoin() {
           </p>
         )}
         {apiError && (
-          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-            {apiError}
-          </p>
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{apiError}</p>
         )}
 
         <ActionButton onClick={() => void handleJoin()} disabled={!canJoin || loading}>

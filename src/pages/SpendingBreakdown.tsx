@@ -38,9 +38,7 @@ export function SpendingBreakdown() {
   const details = [...periodExpenses].sort((a, b) => +new Date(b.date) - +new Date(a.date)).slice(0, 6)
 
   return (
-    <AppShell
-      topBar={<TopBar title="Spending Breakdown" showBack />}
-    >
+    <AppShell topBar={<TopBar title="Spending Breakdown" showBack />}>
       <SegmentedControl
         value={period}
         onChange={setPeriod}
@@ -58,7 +56,11 @@ export function SpendingBreakdown() {
         </div>
         <div className="flex-1">
           <p className="text-[18px] font-extrabold text-ink">
-            {period === 'monthly' ? monthLabel(new Date().toISOString()) : period === 'weekly' ? 'This Week' : 'Today'}
+            {period === 'monthly'
+              ? monthLabel(new Date().toISOString())
+              : period === 'weekly'
+                ? 'This Week'
+                : 'Today'}
           </p>
           <p className="text-[13px] text-muted">Total Spent</p>
           <MoneyText amount={total} cents={false} className="text-[26px] font-extrabold text-ink" />

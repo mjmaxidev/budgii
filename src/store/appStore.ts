@@ -181,7 +181,12 @@ export type AppStore = {
   keepWatchingDeal: (dealId: string) => void
   toggleShoppingItem: (id: string) => void
   removeShoppingItem: (id: string) => void
-  addShoppingItem: (item: { name: string; merchant?: string; expectedPrice?: number; categoryId?: string }) => void
+  addShoppingItem: (item: {
+    name: string
+    merchant?: string
+    expectedPrice?: number
+    categoryId?: string
+  }) => void
 
   // ── New store methods ────────────────────────────────────────────────
 
@@ -366,9 +371,7 @@ export const useStore = create<AppStore>()(
 
       analyzeReceipt: (receiptId) => {
         set((s) => ({
-          receipts: s.receipts.map((r) =>
-            r.id === receiptId ? { ...r, status: 'analyzing' as const } : r,
-          ),
+          receipts: s.receipts.map((r) => (r.id === receiptId ? { ...r, status: 'analyzing' as const } : r)),
         }))
 
         const { receipts } = get()
@@ -467,8 +470,7 @@ export const useStore = create<AppStore>()(
       updateCategory: (id, patch) =>
         set((s) => ({ categories: s.categories.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
 
-      deleteCategory: (id) =>
-        set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
+      deleteCategory: (id) => set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
 
       addTag: (name, color) => {
         const id = uid('tag')
@@ -564,8 +566,7 @@ export const useStore = create<AppStore>()(
           },
         })),
 
-      updateSettings: (patch) =>
-        set((s) => ({ settings: { ...s.settings, ...patch } })),
+      updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       addWatchlistItem: (item) => {
         const id = uid('wl')
@@ -621,16 +622,12 @@ export const useStore = create<AppStore>()(
 
       skipDeal: (dealId) =>
         set((s) => ({
-          deals: s.deals.map((d) =>
-            d.id === dealId ? { ...d, actionStatus: 'skipped' as const } : d,
-          ),
+          deals: s.deals.map((d) => (d.id === dealId ? { ...d, actionStatus: 'skipped' as const } : d)),
         })),
 
       keepWatchingDeal: (dealId) =>
         set((s) => ({
-          deals: s.deals.map((d) =>
-            d.id === dealId ? { ...d, actionStatus: 'keep_watching' as const } : d,
-          ),
+          deals: s.deals.map((d) => (d.id === dealId ? { ...d, actionStatus: 'keep_watching' as const } : d)),
         })),
 
       toggleShoppingItem: (id) =>
@@ -638,10 +635,14 @@ export const useStore = create<AppStore>()(
           shoppingList: s.shoppingList.map((i) => (i.id === id ? { ...i, checked: !i.checked } : i)),
         })),
 
-      removeShoppingItem: (id) =>
-        set((s) => ({ shoppingList: s.shoppingList.filter((i) => i.id !== id) })),
+      removeShoppingItem: (id) => set((s) => ({ shoppingList: s.shoppingList.filter((i) => i.id !== id) })),
 
-      addShoppingItem: (item: { name: string; merchant?: string; expectedPrice?: number; categoryId?: string }) => {
+      addShoppingItem: (item: {
+        name: string
+        merchant?: string
+        expectedPrice?: number
+        categoryId?: string
+      }) => {
         const id = `shop_${Date.now()}`
         const newItem: ShoppingListItem = {
           id,
@@ -678,9 +679,7 @@ export const useStore = create<AppStore>()(
         set((s) => ({
           incomeSources: s.incomeSources.filter((src) => src.id !== id),
           incomeItems: fallback
-            ? s.incomeItems.map((item) =>
-                item.sourceId === id ? { ...item, sourceId: fallback.id } : item,
-              )
+            ? s.incomeItems.map((item) => (item.sourceId === id ? { ...item, sourceId: fallback.id } : item))
             : s.incomeItems,
         }))
       },
@@ -708,8 +707,7 @@ export const useStore = create<AppStore>()(
         }))
       },
 
-      deleteIncomeItem: (id) =>
-        set((s) => ({ incomeItems: s.incomeItems.filter((i) => i.id !== id) })),
+      deleteIncomeItem: (id) => set((s) => ({ incomeItems: s.incomeItems.filter((i) => i.id !== id) })),
 
       addOngoingIncome: (item) => {
         if (!item.memberId) return ''
@@ -738,9 +736,7 @@ export const useStore = create<AppStore>()(
 
       upsertOngoingIncome: ({ sourceId, amount, memberId, notes }) => {
         if (!memberId) return ''
-        const existing = get().ongoingIncomes.find(
-          (o) => o.sourceId === sourceId && o.memberId === memberId,
-        )
+        const existing = get().ongoingIncomes.find((o) => o.sourceId === sourceId && o.memberId === memberId)
         if (existing) {
           get().updateOngoingIncome(existing.id, { amount, notes, enabled: true })
           return existing.id
@@ -788,8 +784,7 @@ export const useStore = create<AppStore>()(
         }))
       },
 
-      updateBudget: (patch) =>
-        set((s) => ({ budget: { ...s.budget, ...patch } })),
+      updateBudget: (patch) => set((s) => ({ budget: { ...s.budget, ...patch } })),
 
       addBudgetGoal: (goal) => {
         const id = goal.id ?? uid('bg')
@@ -808,8 +803,7 @@ export const useStore = create<AppStore>()(
           budgetGoals: s.budgetGoals.map((g) => (g.id === id ? { ...g, ...patch } : g)),
         })),
 
-      deleteBudgetGoal: (id) =>
-        set((s) => ({ budgetGoals: s.budgetGoals.filter((g) => g.id !== id) })),
+      deleteBudgetGoal: (id) => set((s) => ({ budgetGoals: s.budgetGoals.filter((g) => g.id !== id) })),
 
       getBudgetGoalsByCategory: (categoryId) => {
         return get().budgetGoals.filter((g) => g.categoryId === categoryId)
@@ -1069,9 +1063,7 @@ export const useStore = create<AppStore>()(
             state.incomeItems = items.map((item) => {
               const { source, ...rest } = item
               const sourceId =
-                (rest.sourceId as string | undefined) ??
-                legacyMap[String(source)] ??
-                'incsrc_other'
+                (rest.sourceId as string | undefined) ?? legacyMap[String(source)] ?? 'incsrc_other'
               return { ...rest, sourceId }
             })
           }
@@ -1090,9 +1082,7 @@ export const useStore = create<AppStore>()(
           const receiptItems = state.receiptItems as ReceiptItem[] | undefined
           if (receiptItems) {
             const brokenIds = new Set(
-              receiptItems
-                .filter((i) => i.name === 'New Item' && i.amount === 0)
-                .map((i) => i.id),
+              receiptItems.filter((i) => i.name === 'New Item' && i.amount === 0).map((i) => i.id),
             )
             if (brokenIds.size > 0) {
               state.receiptItems = receiptItems.filter((i) => !brokenIds.has(i.id))
@@ -1160,7 +1150,7 @@ export const useStore = create<AppStore>()(
               accessRole: invite.accessRole ?? 'editor',
               editorLevel:
                 (invite.accessRole ?? 'editor') === 'editor'
-                  ? invite.editorLevel ?? defaultEditorLevel()
+                  ? (invite.editorLevel ?? defaultEditorLevel())
                   : undefined,
             }))
           }

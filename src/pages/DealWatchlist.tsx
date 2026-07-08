@@ -123,14 +123,21 @@ export function DealWatchlist() {
           title="Deal Watchlist"
           showBack
           right={
-            <button className="relative" onClick={() => navigate('/notifications', withFrom('/deal-watchlist'))}>
+            <button
+              className="relative"
+              onClick={() => navigate('/notifications', withFrom('/deal-watchlist'))}
+            >
               <Bell size={22} className="text-ink" />
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-bg" />
             </button>
           }
         />
       }
-      fab={edit ? undefined : <FloatingActionButton onClick={() => setModal(true)} icon={<Plus size={20} />} label="Add Item" />}
+      fab={
+        edit ? undefined : (
+          <FloatingActionButton onClick={() => setModal(true)} icon={<Plus size={20} />} label="Add Item" />
+        )
+      }
     >
       {/* Deal check */}
       <Card className="flex items-center gap-3">
@@ -144,7 +151,8 @@ export function DealWatchlist() {
             <span className="h-2 w-2 rounded-full bg-green" />{' '}
             {lastCheckedAt ? (
               <>
-                Last checked: <span className="text-green">{new Date(lastCheckedAt).toLocaleDateString()}</span>
+                Last checked:{' '}
+                <span className="text-green">{new Date(lastCheckedAt).toLocaleDateString()}</span>
               </>
             ) : (
               <span className="text-green">Ready to check</span>
@@ -192,9 +200,7 @@ export function DealWatchlist() {
             disabled={selected.size === 0}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-[14px] font-bold transition',
-              selected.size > 0
-                ? 'bg-[#FEE2E2] text-[#DC2626] active:bg-[#FBCFCF]'
-                : 'bg-line/40 text-muted',
+              selected.size > 0 ? 'bg-[#FEE2E2] text-[#DC2626] active:bg-[#FBCFCF]' : 'bg-line/40 text-muted',
             )}
           >
             <Trash2 size={16} />
@@ -210,7 +216,9 @@ export function DealWatchlist() {
             item={item}
             selectable={edit}
             selected={selected.has(item.id)}
-            onClick={edit ? () => toggleSelect(item.id) : () => navigate('/deal-cards', withFrom('/deal-watchlist'))}
+            onClick={
+              edit ? () => toggleSelect(item.id) : () => navigate('/deal-cards', withFrom('/deal-watchlist'))
+            }
           />
         ))}
         {items.length === 0 && (
@@ -247,7 +255,12 @@ export function DealWatchlist() {
         </ActionButton>
       </Modal>
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} variant="center" title="Delete tracked items?">
+      <Modal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        variant="center"
+        title="Delete tracked items?"
+      >
         <p className="text-[15px] text-muted">
           {selected.size === 1
             ? 'This will remove 1 item from your watchlist.'

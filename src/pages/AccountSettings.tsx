@@ -170,7 +170,10 @@ export function AccountSettings() {
         <Card className="mt-3">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-[15px] font-bold text-ink">Choose Avatar</h3>
-            <button onClick={() => setShowEmoji(false)} className="rounded-full p-1 text-muted active:bg-line/40">
+            <button
+              onClick={() => setShowEmoji(false)}
+              className="rounded-full p-1 text-muted active:bg-line/40"
+            >
               <X size={18} />
             </button>
           </div>
@@ -227,9 +230,7 @@ export function AccountSettings() {
           >
             <Shield size={20} className="text-primary" />
             <div className="flex-1">
-              <p className="text-[15px] font-semibold text-ink">
-                {hasPin ? 'Change PIN' : 'Set PIN'}
-              </p>
+              <p className="text-[15px] font-semibold text-ink">{hasPin ? 'Change PIN' : 'Set PIN'}</p>
               <p className="text-[13px] text-muted">
                 {hasPin ? 'Update your 4-digit unlock code' : 'Require a PIN when you return to Budgii'}
               </p>
@@ -240,7 +241,9 @@ export function AccountSettings() {
       </div>
 
       <div className="mt-5">
-        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Email &amp; Password</h2>
+        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
+          Email &amp; Password
+        </h2>
         <Card className="space-y-3">
           {apiOn && (
             <FormField
@@ -274,23 +277,21 @@ export function AccountSettings() {
 
       {/* Save */}
       <div className="mt-6">
-        <ActionButton variant="primary" onClick={handleSave} disabled={saving} className={saved ? 'bg-green' : ''}>
+        <ActionButton
+          variant="primary"
+          onClick={handleSave}
+          disabled={saving}
+          className={saved ? 'bg-green' : ''}
+        >
           {saving ? 'Saving...' : saved ? 'Saved' : 'Save Changes'}
         </ActionButton>
       </div>
 
-      <button
-        onClick={handleLogout}
-        className="mt-3 w-full py-3 text-center text-[15px] font-bold text-red"
-      >
+      <button onClick={handleLogout} className="mt-3 w-full py-3 text-center text-[15px] font-bold text-red">
         Log Out
       </button>
 
-      <PinSetupModal
-        open={pinModal}
-        onClose={() => setPinModal(false)}
-        mode={hasPin ? 'change' : 'create'}
-      />
+      <PinSetupModal open={pinModal} onClose={() => setPinModal(false)} mode={hasPin ? 'change' : 'create'} />
     </AppShell>
   )
 }

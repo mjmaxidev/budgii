@@ -44,9 +44,7 @@ export function TodaysDealReport() {
   const inList = (id: string) => shoppingList.some((s) => s.dealId === id)
 
   return (
-    <AppShell
-      topBar={<TopBar title="Today's Deal Report" showBack />}
-    >
+    <AppShell topBar={<TopBar title="Today's Deal Report" showBack />}>
       <SegmentedControl
         value={filter}
         onChange={setFilter}
@@ -90,7 +88,9 @@ export function TodaysDealReport() {
         ))}
         {visible.length === 0 && (
           <p className="py-10 text-center text-muted">
-            {todaysDeals.length === 0 ? "Run a deal check from your watchlist to refresh today's deals." : 'No deals in this filter.'}
+            {todaysDeals.length === 0
+              ? "Run a deal check from your watchlist to refresh today's deals."
+              : 'No deals in this filter.'}
           </p>
         )}
       </div>

@@ -198,10 +198,7 @@ export function Notifications() {
   }
 
   return (
-    <AppShell
-      showBottomNav
-      topBar={<TopBar title="Notifications" showBack />}
-    >
+    <AppShell showBottomNav topBar={<TopBar title="Notifications" showBack />}>
       <div className="space-y-3 py-4">
         {/* Unread summary */}
         {unreadCount > 0 && (
@@ -211,7 +208,9 @@ export function Notifications() {
                 <Bell size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-ink">{unreadCount} new notification{unreadCount > 1 ? 's' : ''}</p>
+                <p className="font-bold text-ink">
+                  {unreadCount} new notification{unreadCount > 1 ? 's' : ''}
+                </p>
                 <p className="text-sm text-muted">Tap a notification to mark it read</p>
               </div>
               <button
@@ -254,7 +253,12 @@ export function Notifications() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-ink">{notif.title}</p>
-                      <span className={cn('rounded-full px-2 py-0.5 text-xs font-bold', getTypeBadgeColor(notif.type))}>
+                      <span
+                        className={cn(
+                          'rounded-full px-2 py-0.5 text-xs font-bold',
+                          getTypeBadgeColor(notif.type),
+                        )}
+                      >
                         {notif.type.replace('_', ' ').toUpperCase()}
                       </span>
                     </div>

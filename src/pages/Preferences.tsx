@@ -49,9 +49,7 @@ export function Preferences() {
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.label || 'English'
 
   const dirty =
-    currency !== savedCurrency ||
-    language !== prefs.language ||
-    notifications !== savedNotifications
+    currency !== savedCurrency || language !== prefs.language || notifications !== savedNotifications
 
   async function handleSave() {
     if (saving) return
@@ -83,13 +81,19 @@ export function Preferences() {
               label="Currency"
               value={currencyLabel}
               left={<DollarSign size={18} className="text-muted" />}
-              onClick={() => { setOpenCurrency((v) => !v); setOpenLanguage(false) }}
+              onClick={() => {
+                setOpenCurrency((v) => !v)
+                setOpenLanguage(false)
+              }}
             />
             {openCurrency && (
               <OptionList
                 options={CURRENCIES}
                 selected={currency}
-                onSelect={(code) => { setCurrency(code); setOpenCurrency(false) }}
+                onSelect={(code) => {
+                  setCurrency(code)
+                  setOpenCurrency(false)
+                }}
               />
             )}
 
@@ -98,14 +102,20 @@ export function Preferences() {
                 label="Language"
                 value={languageLabel}
                 left={<Languages size={18} className="text-muted" />}
-                onClick={() => { setOpenLanguage((v) => !v); setOpenCurrency(false) }}
+                onClick={() => {
+                  setOpenLanguage((v) => !v)
+                  setOpenCurrency(false)
+                }}
               />
             </div>
             {openLanguage && (
               <OptionList
                 options={LANGUAGES}
                 selected={language}
-                onSelect={(code) => { setLanguage(code); setOpenLanguage(false) }}
+                onSelect={(code) => {
+                  setLanguage(code)
+                  setOpenLanguage(false)
+                }}
               />
             )}
           </Card>
@@ -113,7 +123,9 @@ export function Preferences() {
 
         {/* Notifications */}
         <div>
-          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Notifications</h2>
+          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
+            Notifications
+          </h2>
           <Card className="p-4">
             <ToggleRow
               icon={<Bell size={20} />}
@@ -127,7 +139,9 @@ export function Preferences() {
         </div>
 
         {/* Save */}
-        {error && <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>}
+        {error && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
+        )}
         <button
           onClick={handleSave}
           disabled={saving || (!dirty && !saved)}

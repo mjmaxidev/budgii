@@ -23,10 +23,7 @@ export const EDITOR_LEVEL_DESCRIPTIONS: Record<EditorLevel, string> = {
   limited: 'Add expenses only',
 }
 
-export function formatMemberAccessLabel(
-  accessRole: MemberAccessRole,
-  editorLevel?: EditorLevel,
-): string {
+export function formatMemberAccessLabel(accessRole: MemberAccessRole, editorLevel?: EditorLevel): string {
   if (accessRole === 'editor' && editorLevel) {
     return `Editor · ${EDITOR_LEVEL_LABELS[editorLevel]}`
   }

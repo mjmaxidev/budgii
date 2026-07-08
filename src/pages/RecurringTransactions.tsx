@@ -63,7 +63,9 @@ export function RecurringTransactions() {
   const [dayOfWeek, setDayOfWeek] = useState(String(new Date().getDay()))
   const [monthOfYear, setMonthOfYear] = useState(String(new Date().getMonth() + 1))
   const [categoryId, setCategoryId] = useState(categories[0]?.id || '')
-  const [memberId, setMemberId] = useState(familyMembers.find((item) => item.isDefault)?.id ?? familyMembers[0]?.id ?? '')
+  const [memberId, setMemberId] = useState(
+    familyMembers.find((item) => item.isDefault)?.id ?? familyMembers[0]?.id ?? '',
+  )
   const [tagIds, setTagIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -71,7 +73,9 @@ export function RecurringTransactions() {
   const isValid = merchant.trim() !== '' && amount.trim() !== '' && !!categoryId
 
   function toggleTag(id: string) {
-    setTagIds((current) => (current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id]))
+    setTagIds((current) =>
+      current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id],
+    )
   }
 
   const handleAddOrUpdate = () => {
@@ -84,8 +88,7 @@ export function RecurringTransactions() {
           ? parseInt(dayOfMonth)
           : undefined,
       dayOfWeek: frequency === 'weekly' || frequency === 'biweekly' ? parseInt(dayOfWeek) : undefined,
-      monthOfYear:
-        frequency === 'quarterly' || frequency === 'yearly' ? parseInt(monthOfYear) : undefined,
+      monthOfYear: frequency === 'quarterly' || frequency === 'yearly' ? parseInt(monthOfYear) : undefined,
       expense: {
         merchant,
         amount: parseFloat(amount),
@@ -115,7 +118,12 @@ export function RecurringTransactions() {
     setDayOfWeek(transaction.dayOfWeek?.toString() || String(new Date().getDay()))
     setMonthOfYear(transaction.monthOfYear?.toString() || String(new Date().getMonth() + 1))
     setCategoryId(transaction.expense.categoryId || categories[0]?.id || '')
-    setMemberId(transaction.expense.memberId || familyMembers.find((item) => item.isDefault)?.id || familyMembers[0]?.id || '')
+    setMemberId(
+      transaction.expense.memberId ||
+        familyMembers.find((item) => item.isDefault)?.id ||
+        familyMembers[0]?.id ||
+        '',
+    )
     setTagIds(transaction.expense.tagIds ?? [])
     setNotes(transaction.expense.notes || '')
     setShowForm(true)
@@ -328,9 +336,7 @@ export function RecurringTransactions() {
       {recurringTransactions.length === 0 && !showForm ? (
         <Card className="text-center py-8">
           <p className="text-[15px] font-semibold text-muted">No recurring transactions</p>
-          <p className="text-[13px] text-muted/70 mt-1">
-            Add recurring expenses like subscriptions here
-          </p>
+          <p className="text-[13px] text-muted/70 mt-1">Add recurring expenses like subscriptions here</p>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -405,7 +411,9 @@ export function RecurringTransactions() {
         title="Delete recurring transaction?"
         variant="center"
       >
-        <p className="text-[15px] text-muted">This will stop future automatic entries. Past expenses are kept.</p>
+        <p className="text-[15px] text-muted">
+          This will stop future automatic entries. Past expenses are kept.
+        </p>
         <div className="mt-5 flex gap-3">
           <ActionButton variant="ghost" onClick={() => setConfirmDeleteId(null)}>
             Cancel

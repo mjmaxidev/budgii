@@ -134,7 +134,10 @@ export async function analyzeReceipt(
   })
 }
 
-export async function getReceiptStatus(householdId: string, receiptId: string): Promise<ReceiptStatusResponse> {
+export async function getReceiptStatus(
+  householdId: string,
+  receiptId: string,
+): Promise<ReceiptStatusResponse> {
   return apiRequest<ReceiptStatusResponse>(
     `/receipts/${receiptId}/status?household_id=${encodeURIComponent(householdId)}`,
   )
@@ -199,7 +202,10 @@ export async function deleteReceipt(householdId: string, receiptId: string): Pro
   })
 }
 
-export async function listReceiptItems(householdId: string, receiptId: string): Promise<ReceiptItemListResponse> {
+export async function listReceiptItems(
+  householdId: string,
+  receiptId: string,
+): Promise<ReceiptItemListResponse> {
   return apiRequest<ReceiptItemListResponse>(`/households/${householdId}/receipts/${receiptId}/items`)
 }
 
@@ -226,7 +232,11 @@ export async function updateReceiptItem(
   })
 }
 
-export async function deleteReceiptItem(householdId: string, receiptId: string, itemId: string): Promise<void> {
+export async function deleteReceiptItem(
+  householdId: string,
+  receiptId: string,
+  itemId: string,
+): Promise<void> {
   await apiRequest<void>(`/households/${householdId}/receipts/${receiptId}/items/${itemId}`, {
     method: 'DELETE',
   })

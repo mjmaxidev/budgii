@@ -60,7 +60,11 @@ export async function runReceiptAnalysis(
   await waitForReceiptAnalysis(householdId, receiptId, options.maxAttempts ?? 18)
 }
 
-async function waitForReceiptAnalysis(householdId: string, receiptId: string, maxAttempts: number): Promise<void> {
+async function waitForReceiptAnalysis(
+  householdId: string,
+  receiptId: string,
+  maxAttempts: number,
+): Promise<void> {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     await new Promise((resolve) => window.setTimeout(resolve, 700))
     const status = await getReceiptStatus(householdId, receiptId)

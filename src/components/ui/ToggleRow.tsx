@@ -29,10 +29,7 @@ export function ToggleRow({ icon, title, description, checked, onChange, iconBg 
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={cn(
-          'relative h-7 w-12 shrink-0 rounded-pill transition',
-          checked ? 'bg-green' : 'bg-line',
-        )}
+        className={cn('relative h-7 w-12 shrink-0 rounded-pill transition', checked ? 'bg-green' : 'bg-line')}
       >
         <span
           className={cn(

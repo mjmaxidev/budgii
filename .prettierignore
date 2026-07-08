@@ -1,0 +1,10 @@
+dist
+release
+node_modules
+ios
+android
+coverage
+*.tsbuildinfo
+package-lock.json
+budgii-api/.venv
+budgii-api/uploads

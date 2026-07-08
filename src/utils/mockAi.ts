@@ -38,7 +38,8 @@ Thank you for shopping!`
 function categoryForItem(name: string): { categoryName: string; confidence: number } {
   const n = name.toLowerCase()
   if (/(uber|trip|taxi|lyft|fuel|gas)/.test(n)) return { categoryName: 'Transport', confidence: 0.99 }
-  if (/(coffee|latte|espresso|beans|dining|restaurant)/.test(n)) return { categoryName: 'Dining', confidence: 0.9 }
+  if (/(coffee|latte|espresso|beans|dining|restaurant)/.test(n))
+    return { categoryName: 'Dining', confidence: 0.9 }
   return { categoryName: 'Groceries', confidence: 0.9 + Math.min(0.09, n.length / 200) }
 }
 

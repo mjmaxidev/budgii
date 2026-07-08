@@ -162,9 +162,7 @@ export function ReceiptItemEditor({ itemId, onDone }: Props) {
       </div>
 
       {error && (
-        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
       <div className="flex gap-3 pt-1">
@@ -175,7 +173,11 @@ export function ReceiptItemEditor({ itemId, onDone }: Props) {
         >
           <Trash2 size={18} /> Remove
         </button>
-        <ActionButton variant="green" onClick={() => void save()} disabled={saving || current.amount < 0 || !current.name.trim()}>
+        <ActionButton
+          variant="green"
+          onClick={() => void save()}
+          disabled={saving || current.amount < 0 || !current.name.trim()}
+        >
           {saving ? 'Saving…' : 'Done'}
         </ActionButton>
       </div>

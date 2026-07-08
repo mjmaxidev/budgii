@@ -57,9 +57,7 @@ export function ProgressRing({
   const clamped = Math.max(0, Math.min(1, progress))
 
   const preparedSegments =
-    segments && segments.length > 0
-      ? mergeSmallSegments(segments.filter((seg) => seg.value > 0))
-      : []
+    segments && segments.length > 0 ? mergeSmallSegments(segments.filter((seg) => seg.value > 0)) : []
 
   let arcCursor = 0
   const segmentArcs =
@@ -102,14 +100,7 @@ export function ProgressRing({
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={trackColor}
-          strokeWidth={stroke}
-        />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={trackColor} strokeWidth={stroke} />
         {segmentArcs ?? (
           <circle
             cx={size / 2}
@@ -125,9 +116,7 @@ export function ProgressRing({
           />
         )}
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        {children}
-      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
     </div>
   )
 }

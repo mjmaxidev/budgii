@@ -54,7 +54,9 @@ export function BudgetNextMonth() {
   const remaining = limitNum - allocated
   const limitDelta = limitNum - budget.limit
   const warningDelta = warningNum - budget.warningThreshold
-  const adjustedCategories = categories.filter((c) => (allocations[c.id] ?? 0) !== (budget.categoryAllocations[c.id] ?? 0)).length
+  const adjustedCategories = categories.filter(
+    (c) => (allocations[c.id] ?? 0) !== (budget.categoryAllocations[c.id] ?? 0),
+  ).length
 
   const spendingBasedLimit = Math.max(budget.limit, Math.ceil(spentThisMonth / 50) * 50)
 
@@ -97,7 +99,11 @@ export function BudgetNextMonth() {
       for (const c of categories) {
         nextAlloc[c.id] = Math.round((budget.categoryAllocations[c.id] ?? 0) * scale)
       }
-      distributeRemainder(nextAlloc, limitNum, categories.map((c) => c.id))
+      distributeRemainder(
+        nextAlloc,
+        limitNum,
+        categories.map((c) => c.id),
+      )
     } else {
       const totalSpent = Array.from(categorySpent.values()).reduce((a, b) => a + b, 0)
       if (totalSpent > 0) {
@@ -105,7 +111,11 @@ export function BudgetNextMonth() {
           const spent = categorySpent.get(c.id) ?? 0
           nextAlloc[c.id] = spent > 0 ? Math.round((spent / totalSpent) * limitNum) : 0
         }
-        distributeRemainder(nextAlloc, limitNum, categories.map((c) => c.id))
+        distributeRemainder(
+          nextAlloc,
+          limitNum,
+          categories.map((c) => c.id),
+        )
       } else {
         const each = Math.floor(limitNum / categories.length)
         let leftover = limitNum - each * categories.length
@@ -361,12 +371,16 @@ export function BudgetNextMonth() {
               : `${formatMoneyShort(remaining)} unallocated`}
           </p>
           {adjustedCategories > 0 && (
-            <p className="text-muted">{adjustedCategories} categor{adjustedCategories === 1 ? 'y' : 'ies'} changed</p>
+            <p className="text-muted">
+              {adjustedCategories} categor{adjustedCategories === 1 ? 'y' : 'ies'} changed
+            </p>
           )}
         </div>
       </Card>
 
-      {error && <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[14px] font-semibold text-red">{error}</p>}
+      {error && (
+        <p className="mt-3 rounded-input bg-redSoft px-4 py-2 text-[14px] font-semibold text-red">{error}</p>
+      )}
 
       <ActionButton className="mt-4" leftIcon={<ArrowRight size={18} />} onClick={apply}>
         Apply to {nextMonthLabel.split(' ')[0]}
@@ -403,7 +417,15 @@ function distributeRemainder(alloc: Record<string, number>, target: number, ids:
   }
 }
 
-function QuickChip({ label, onClick, highlight }: { label: string; onClick: () => void; highlight?: boolean }) {
+function QuickChip({
+  label,
+  onClick,
+  highlight,
+}: {
+  label: string
+  onClick: () => void
+  highlight?: boolean
+}) {
   return (
     <button
       type="button"

@@ -27,11 +27,7 @@ export function rgbToHex(r: number, g: number, b: number): string {
     .toUpperCase()}`
 }
 
-import {
-  CHALK_LIGHTNESS_MAX,
-  CHALK_LIGHTNESS_MIN,
-  CHALK_WHEEL_MAX_SATURATION,
-} from '@/constants/chalkColors'
+import { CHALK_LIGHTNESS_MAX, CHALK_LIGHTNESS_MIN, CHALK_WHEEL_MAX_SATURATION } from '@/constants/chalkColors'
 
 export function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const rgb = hexToRgb(hex)

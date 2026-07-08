@@ -44,8 +44,7 @@ export const useAuthStore = create<AuthState>()(
 
       setHouseholdId: (householdId) => set({ householdId }),
 
-      setSyncMeta: (revision, serverTime) =>
-        set({ syncRevision: revision, lastSyncedAt: serverTime }),
+      setSyncMeta: (revision, serverTime) => set({ syncRevision: revision, lastSyncedAt: serverTime }),
 
       setStatus: (status, error = null) => set({ status, error }),
 

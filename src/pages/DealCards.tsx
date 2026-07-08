@@ -59,13 +59,17 @@ export function DealCards() {
       }
       scrollClassName="overflow-hidden"
     >
-      <p className="mb-4 text-center text-[14px] font-semibold text-muted">Review new deals from your watchlist</p>
+      <p className="mb-4 text-center text-[14px] font-semibold text-muted">
+        Review new deals from your watchlist
+      </p>
 
       {done ? (
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <PartyPopper size={48} className="text-primary" />
           <h2 className="text-[20px] font-extrabold text-ink">You're all caught up!</h2>
-          <p className="max-w-[260px] text-[15px] text-muted">You've reviewed every deal for today. Check your shopping list for what you saved.</p>
+          <p className="max-w-[260px] text-[15px] text-muted">
+            You've reviewed every deal for today. Check your shopping list for what you saved.
+          </p>
           <div className="mt-3 w-full max-w-[280px] space-y-3">
             <ActionButton variant="green" onClick={() => navigate('/shopping-list')}>
               View Shopping List
@@ -131,17 +135,17 @@ export function DealCards() {
 
       <Modal open={showInfo} onClose={() => setShowInfo(false)} title="How deal cards work" variant="center">
         <div className="space-y-3 text-[14px] leading-snug text-muted">
-          <p>
-            Each card is a deal found on an item from your watchlist. Review them one at a time:
-          </p>
+          <p>Each card is a deal found on an item from your watchlist. Review them one at a time:</p>
           <p>
             <span className="font-bold text-[#EF4444]">Skip</span> — not interested, hide this deal.
           </p>
           <p>
-            <span className="font-bold text-[#6B7280]">Keep Watching</span> — not yet, keep tracking the price.
+            <span className="font-bold text-[#6B7280]">Keep Watching</span> — not yet, keep tracking the
+            price.
           </p>
           <p>
-            <span className="font-bold text-green">Add to List</span> — good deal, add it to your shopping list.
+            <span className="font-bold text-green">Add to List</span> — good deal, add it to your shopping
+            list.
           </p>
         </div>
       </Modal>
@@ -149,7 +153,17 @@ export function DealCards() {
   )
 }
 
-function SwipeAction({ color, icon, label, onClick }: { color: string; icon: React.ReactNode; label: string; onClick: () => void }) {
+function SwipeAction({
+  color,
+  icon,
+  label,
+  onClick,
+}: {
+  color: string
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-2">
       <span

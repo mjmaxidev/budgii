@@ -65,7 +65,11 @@ export function ShoppingList() {
                 <ActionButton variant="green" onClick={() => setModal(true)} leftIcon={<Plus size={18} />}>
                   Add Item
                 </ActionButton>
-                <ActionButton variant="outline" onClick={() => navigate('/deal-watchlist')} leftIcon={<Zap size={18} />}>
+                <ActionButton
+                  variant="outline"
+                  onClick={() => navigate('/deal-watchlist')}
+                  leftIcon={<Zap size={18} />}
+                >
                   View Watchlist
                 </ActionButton>
               </div>
@@ -109,7 +113,9 @@ export function ShoppingList() {
                       {item.checked && <span className="text-[14px] leading-none">✓</span>}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <p className={`truncate text-[15px] font-semibold ${item.checked ? 'text-muted line-through' : 'text-ink'}`}>
+                      <p
+                        className={`truncate text-[15px] font-semibold ${item.checked ? 'text-muted line-through' : 'text-ink'}`}
+                      >
                         {item.name}
                       </p>
                       {item.merchant && <p className="text-[13px] text-muted">{item.merchant}</p>}
@@ -117,7 +123,10 @@ export function ShoppingList() {
                     {item.expectedPrice != null && (
                       <MoneyText amount={item.expectedPrice} className="text-[15px] font-bold text-ink" />
                     )}
-                    <button onClick={() => remove(item.id)} className="rounded-full p-1.5 text-muted active:bg-line/40">
+                    <button
+                      onClick={() => remove(item.id)}
+                      className="rounded-full p-1.5 text-muted active:bg-line/40"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -152,20 +161,32 @@ export function ShoppingList() {
                         <p className="text-[13px] text-muted">{watch.merchant}</p>
                       </div>
                       <div className="ml-2 text-right">
-                        {watch.currentPrice && <MoneyText amount={watch.currentPrice} className="text-[14px] font-bold text-primary" />}
+                        {watch.currentPrice && (
+                          <MoneyText
+                            amount={watch.currentPrice}
+                            className="text-[14px] font-bold text-primary"
+                          />
+                        )}
                         <p className="text-[11px] text-muted">Watching</p>
                       </div>
                     </div>
                   ))}
               </Card>
               {watchlist.filter((w) => w.status === 'watching').length > 3 && (
-                <p className="mt-2 text-center text-[13px] text-muted">+{watchlist.filter((w) => w.status === 'watching').length - 3} more</p>
+                <p className="mt-2 text-center text-[13px] text-muted">
+                  +{watchlist.filter((w) => w.status === 'watching').length - 3} more
+                </p>
               )}
             </>
           )}
 
           {/* Add More Button */}
-          <ActionButton variant="outline" className="mt-4" leftIcon={<Plus size={18} />} onClick={() => navigate('/todays-deal-report')}>
+          <ActionButton
+            variant="outline"
+            className="mt-4"
+            leftIcon={<Plus size={18} />}
+            onClick={() => navigate('/todays-deal-report')}
+          >
             Explore Deals
           </ActionButton>
         </>
@@ -217,7 +238,7 @@ export function ShoppingList() {
               disabled={!name.trim()}
               className={cn(
                 'flex-1 rounded-lg px-4 py-2.5 text-[15px] font-semibold text-white active:scale-95',
-                name.trim() ? 'bg-primary' : 'bg-muted opacity-50 cursor-not-allowed'
+                name.trim() ? 'bg-primary' : 'bg-muted opacity-50 cursor-not-allowed',
               )}
             >
               Add Item

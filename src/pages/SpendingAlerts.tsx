@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Bell, AlertTriangle, Plus, Trash2, CheckCircle2, AlertCircle, ChevronRight, Check } from 'lucide-react'
+import {
+  Bell,
+  AlertTriangle,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  ChevronRight,
+  Check,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -21,7 +30,9 @@ export function SpendingAlerts() {
   const [newCategoryId, setNewCategoryId] = useState('')
   const [newThreshold, setNewThreshold] = useState('')
   const [newAlertType, setNewAlertType] = useState<'amount' | 'percentage'>('amount')
-  const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'default'>('default')
+  const [notificationPermission, setNotificationPermission] = useState<'granted' | 'denied' | 'default'>(
+    'default',
+  )
   const [error, setError] = useState('')
   const [catModal, setCatModal] = useState(false)
   const [catCreateModal, setCatCreateModal] = useState(false)
@@ -70,7 +81,9 @@ export function SpendingAlerts() {
     toDelete.forEach((id) => {
       // reassign this category's expenses to a category that survives the delete
       if (fallbackCat) {
-        expenses.filter((e) => e.categoryId === id).forEach((e) => updateExpense(e.id, { categoryId: fallbackCat.id }))
+        expenses
+          .filter((e) => e.categoryId === id)
+          .forEach((e) => updateExpense(e.id, { categoryId: fallbackCat.id }))
       }
       deleteCategory(id)
       if (newCategoryId === id) setNewCategoryId('')
@@ -171,9 +184,7 @@ export function SpendingAlerts() {
     }
 
     // Check if alert already exists for this category and type
-    const exists = spendingAlerts.some(
-      (a) => a.categoryId === newCategoryId && a.alertType === newAlertType,
-    )
+    const exists = spendingAlerts.some((a) => a.categoryId === newCategoryId && a.alertType === newAlertType)
     if (exists) {
       setError('An alert for this category and type already exists.')
       return
@@ -190,7 +201,6 @@ export function SpendingAlerts() {
     setNewAlertType('amount')
     setError('')
   }
-
 
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name ?? 'Unknown'
@@ -250,9 +260,7 @@ export function SpendingAlerts() {
 
       {/* Notifications Section */}
       <div className="mt-4">
-        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
-          Notifications
-        </h2>
+        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Notifications</h2>
         <Card className="space-y-3 p-4">
           <ToggleRow
             icon={<Bell size={20} />}
@@ -288,9 +296,7 @@ export function SpendingAlerts() {
 
       {/* Alert Types Section */}
       <div className="mt-4">
-        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
-          Alert Types
-        </h2>
+        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Alert Types</h2>
         <Card className="divide-y divide-line/70 px-4 py-0">
           <ToggleRow
             icon="💰"
@@ -313,9 +319,7 @@ export function SpendingAlerts() {
 
       {/* Add New Alert */}
       <div className="mt-4">
-        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
-          Add New Alert
-        </h2>
+        <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Add New Alert</h2>
         <Card className="space-y-3 p-4">
           {/* Category Selector — opens a picker sheet that scales to any number of categories */}
           <div>
@@ -380,12 +384,7 @@ export function SpendingAlerts() {
             />
           </div>
 
-          <ActionButton
-            leftIcon={<Plus size={20} />}
-            onClick={handleAddAlert}
-            variant="green"
-            size="md"
-          >
+          <ActionButton leftIcon={<Plus size={20} />} onClick={handleAddAlert} variant="green" size="md">
             Add Alert
           </ActionButton>
         </Card>
@@ -426,9 +425,7 @@ export function SpendingAlerts() {
                               💰 {formatMoney(alert.threshold)}
                             </span>
                           ) : (
-                            <span className="text-[13px] font-semibold text-ink">
-                              📊 {alert.threshold}%
-                            </span>
+                            <span className="text-[13px] font-semibold text-ink">📊 {alert.threshold}%</span>
                           )}
                           <span className="rounded-pill bg-greenSoft px-2 py-0.5 text-[11px] font-bold text-green">
                             Active
@@ -473,14 +470,18 @@ export function SpendingAlerts() {
       <Modal open={catModal} onClose={() => setCatModal(false)} title="Choose Category">
         {/* Edit / multi-select toolbar */}
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-[13px] text-muted">{editMode ? 'Select categories to delete' : 'Tap to choose'}</p>
+          <p className="text-[13px] text-muted">
+            {editMode ? 'Select categories to delete' : 'Tap to choose'}
+          </p>
           <div className="flex items-center gap-3">
             {editMode && (
               <button
                 onClick={() => setConfirmDelete(true)}
                 disabled={toDelete.size === 0}
                 className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-[13px] font-bold transition ${
-                  toDelete.size > 0 ? 'bg-[#FEE2E2] text-[#DC2626] active:bg-[#FBCFCF]' : 'bg-line/40 text-muted'
+                  toDelete.size > 0
+                    ? 'bg-[#FEE2E2] text-[#DC2626] active:bg-[#FBCFCF]'
+                    : 'bg-line/40 text-muted'
                 }`}
               >
                 <Trash2 size={14} />
@@ -505,7 +506,10 @@ export function SpendingAlerts() {
                 key={c.id}
                 type="button"
                 onClick={() => {
-                  if (editMode) { toggleToDelete(c.id); return }
+                  if (editMode) {
+                    toggleToDelete(c.id)
+                    return
+                  }
                   if (hasAlert && !isSelected) return // already has an alert — not selectable
                   setNewCategoryId(c.id)
                   setCatModal(false)
@@ -523,7 +527,9 @@ export function SpendingAlerts() {
                 <CategoryIcon icon={c.icon} color={c.color} size={40} />
                 <span className="truncate text-[12px] font-semibold text-ink">{c.name}</span>
                 {!editMode && hasAlert && !isSelected && (
-                  <span className="absolute right-1 top-1 text-[9px] font-bold uppercase text-muted">set</span>
+                  <span className="absolute right-1 top-1 text-[9px] font-bold uppercase text-muted">
+                    set
+                  </span>
                 )}
                 {editMode && (
                   <span

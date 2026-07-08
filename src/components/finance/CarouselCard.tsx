@@ -11,7 +11,14 @@ type Props = {
 }
 
 /** Used for both "By Tags" and "By Members" horizontal carousels. */
-export function CarouselCard({ top, label, amount, percent, percentColor = '#16A34A', bg = '#FFFFFF' }: Props) {
+export function CarouselCard({
+  top,
+  label,
+  amount,
+  percent,
+  percentColor = '#16A34A',
+  bg = '#FFFFFF',
+}: Props) {
   return (
     <div
       className="flex w-[116px] shrink-0 flex-col items-center gap-1 rounded-card border border-line/60 px-3 py-4 text-center shadow-card"

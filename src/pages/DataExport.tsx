@@ -105,7 +105,11 @@ export function DataExport() {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
       downloadFile(blob, `transactions_${new Date().toISOString().split('T')[0]}.csv`)
 
-      addToHistory('csv', `transactions_${new Date().toISOString().split('T')[0]}.csv`, (blob.size / 1024).toFixed(1))
+      addToHistory(
+        'csv',
+        `transactions_${new Date().toISOString().split('T')[0]}.csv`,
+        (blob.size / 1024).toFixed(1),
+      )
     } finally {
       setExporting(null)
     }
@@ -193,7 +197,11 @@ export function DataExport() {
       const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' })
       downloadFile(blob, `monthly_report_${new Date().toISOString().split('T')[0]}.html`)
 
-      addToHistory('html', `monthly_report_${new Date().toISOString().split('T')[0]}.html`, (blob.size / 1024).toFixed(1))
+      addToHistory(
+        'html',
+        `monthly_report_${new Date().toISOString().split('T')[0]}.html`,
+        (blob.size / 1024).toFixed(1),
+      )
     } finally {
       setExporting(null)
     }
@@ -231,14 +239,19 @@ export function DataExport() {
           totalIncomeItems: incomeItems.length,
           totalShoppingItems: shoppingList.length,
           totalAmount: expenses.reduce((sum, e) => sum + e.amount, 0),
-          dateRange: expenses.length > 0 ? `${expenses[expenses.length - 1].date} to ${expenses[0].date}` : 'N/A',
+          dateRange:
+            expenses.length > 0 ? `${expenses[expenses.length - 1].date} to ${expenses[0].date}` : 'N/A',
         },
       }
 
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8;' })
       downloadFile(blob, `budget_backup_${new Date().toISOString().split('T')[0]}.json`)
 
-      addToHistory('json', `budget_backup_${new Date().toISOString().split('T')[0]}.json`, (blob.size / 1024).toFixed(1))
+      addToHistory(
+        'json',
+        `budget_backup_${new Date().toISOString().split('T')[0]}.json`,
+        (blob.size / 1024).toFixed(1),
+      )
     } finally {
       setExporting(null)
     }
@@ -281,7 +294,12 @@ export function DataExport() {
         <h2 className="px-1 text-[15px] font-bold text-ink">Export Options</h2>
 
         {/* CSV Export */}
-        <Card className="cursor-pointer active:bg-surfaceSoft" onClick={exportAsCSV} role="button" tabIndex={0}>
+        <Card
+          className="cursor-pointer active:bg-surfaceSoft"
+          onClick={exportAsCSV}
+          role="button"
+          tabIndex={0}
+        >
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue/10">
               <FileSpreadsheet size={24} className="text-blue-600" />
@@ -305,7 +323,12 @@ export function DataExport() {
         </Card>
 
         {/* HTML Report Export */}
-        <Card className="cursor-pointer active:bg-surfaceSoft" onClick={exportAsHtmlReport} role="button" tabIndex={0}>
+        <Card
+          className="cursor-pointer active:bg-surfaceSoft"
+          onClick={exportAsHtmlReport}
+          role="button"
+          tabIndex={0}
+        >
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red/10">
               <FileText size={24} className="text-red-600" />
@@ -313,7 +336,9 @@ export function DataExport() {
             <div className="flex-1">
               <h3 className="text-[15px] font-bold text-ink">Export Monthly Report</h3>
               <p className="text-[13px] text-muted">Current month report (HTML)</p>
-              <p className="mt-1 text-[12px] font-semibold text-red-600">{getCurrentMonthExpenses().length} transactions this month</p>
+              <p className="mt-1 text-[12px] font-semibold text-red-600">
+                {getCurrentMonthExpenses().length} transactions this month
+              </p>
             </div>
             <button
               onClick={(e) => {
@@ -329,7 +354,12 @@ export function DataExport() {
         </Card>
 
         {/* JSON Export */}
-        <Card className="cursor-pointer active:bg-surfaceSoft" onClick={exportAsJSON} role="button" tabIndex={0}>
+        <Card
+          className="cursor-pointer active:bg-surfaceSoft"
+          onClick={exportAsJSON}
+          role="button"
+          tabIndex={0}
+        >
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green/10">
               <FileJson size={24} className="text-green-600" />

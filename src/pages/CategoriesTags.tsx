@@ -58,7 +58,9 @@ export function CategoriesTags() {
       expenses: expenses.filter((expense) => expense.categoryId === id),
       receiptItems: receiptItems.filter((item) => item.categoryId === id),
       budgetGoals: budgetGoals.filter((goal) => goal.categoryId === id),
-      recurringTransactions: recurringTransactions.filter((transaction) => transaction.expense.categoryId === id),
+      recurringTransactions: recurringTransactions.filter(
+        (transaction) => transaction.expense.categoryId === id,
+      ),
       spendingAlerts: spendingAlerts.filter((alert) => alert.categoryId === id),
       hasAllocation: budget.categoryAllocations[id] !== undefined,
     }
@@ -68,7 +70,9 @@ export function CategoriesTags() {
     return {
       expenses: expenses.filter((expense) => expense.tagIds.includes(id)),
       receiptItems: receiptItems.filter((item) => item.tagIds.includes(id)),
-      recurringTransactions: recurringTransactions.filter((transaction) => transaction.expense.tagIds?.includes(id)),
+      recurringTransactions: recurringTransactions.filter((transaction) =>
+        transaction.expense.tagIds?.includes(id),
+      ),
     }
   }
 
@@ -139,7 +143,9 @@ export function CategoriesTags() {
       if (apiOn) {
         if (!householdId) throw new Error('No household selected.')
         await Promise.all([
-          ...usage.expenses.map((expense) => apiUpdateExpense(householdId, expense.id, { categoryId: replacementId })),
+          ...usage.expenses.map((expense) =>
+            apiUpdateExpense(householdId, expense.id, { categoryId: replacementId }),
+          ),
           ...usage.receiptItems.map((item) =>
             apiUpdateReceiptItem(householdId, item.receiptId, item.id, { categoryId: replacementId }),
           ),
@@ -176,7 +182,11 @@ export function CategoriesTags() {
   function requestTagDelete(id: string) {
     setDeleteError('')
     const usage = tagUsage(id)
-    if (usage.expenses.length === 0 && usage.receiptItems.length === 0 && usage.recurringTransactions.length === 0) {
+    if (
+      usage.expenses.length === 0 &&
+      usage.receiptItems.length === 0 &&
+      usage.recurringTransactions.length === 0
+    ) {
       deleteTag(id)
       return
     }
@@ -196,7 +206,9 @@ export function CategoriesTags() {
         if (!householdId) throw new Error('No household selected.')
         await Promise.all([
           ...usage.expenses.map((expense) =>
-            apiUpdateExpense(householdId, expense.id, { tagIds: expense.tagIds.filter((tagId) => tagId !== id) }),
+            apiUpdateExpense(householdId, expense.id, {
+              tagIds: expense.tagIds.filter((tagId) => tagId !== id),
+            }),
           ),
           ...usage.receiptItems.map((item) =>
             apiUpdateReceiptItem(householdId, item.receiptId, item.id, {
@@ -252,7 +264,9 @@ export function CategoriesTags() {
             className="relative flex flex-col items-center gap-2 rounded-card border border-line/60 bg-surface py-5 shadow-card active:bg-surfaceSoft"
           >
             <CategoryIcon icon={c.icon} color={c.color} size={48} className="rounded-2xl text-2xl" />
-            <span className="truncate w-full px-1 text-center text-[14px] font-semibold text-ink">{c.name}</span>
+            <span className="truncate w-full px-1 text-center text-[14px] font-semibold text-ink">
+              {c.name}
+            </span>
             {editCats && (
               <span
                 onClick={(e) => {
@@ -305,7 +319,11 @@ export function CategoriesTags() {
       </div>
 
       {/* Category modal */}
-      <Modal open={catModal.open} onClose={() => setCatModal({ open: false })} title={catModal.id ? 'Edit Category' : 'New Category'}>
+      <Modal
+        open={catModal.open}
+        onClose={() => setCatModal({ open: false })}
+        title={catModal.id ? 'Edit Category' : 'New Category'}
+      >
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -327,7 +345,12 @@ export function CategoriesTags() {
           ))}
         </div>
         <div className="mt-4">
-          <ColorPickerField value={color} onChange={setColor} presets={CATEGORY_COLOR_CHOICES} label="Colour" />
+          <ColorPickerField
+            value={color}
+            onChange={setColor}
+            presets={CATEGORY_COLOR_CHOICES}
+            label="Colour"
+          />
         </div>
         <div className="mt-5 flex gap-3">
           {catModal.id && (
@@ -364,8 +387,8 @@ export function CategoriesTags() {
         {categoryDelete && (
           <div className="space-y-4">
             <p className="text-[14px] text-muted">
-              This category is used by transactions, receipt items, budget goals, or alerts. Choose where those records
-              should move before deleting it.
+              This category is used by transactions, receipt items, budget goals, or alerts. Choose where
+              those records should move before deleting it.
             </p>
             <select
               value={categoryDelete.replacementId}
@@ -397,9 +420,10 @@ export function CategoriesTags() {
           <div className="space-y-4">
             <p className="text-[14px] text-muted">
               This tag is used by {tagUsage(tagDelete).expenses.length} transaction
-              {tagUsage(tagDelete).expenses.length === 1 ? '' : 's'} and {tagUsage(tagDelete).receiptItems.length} receipt
-              item{tagUsage(tagDelete).receiptItems.length === 1 ? '' : 's'}. Deleting it will remove the tag from those
-              records.
+              {tagUsage(tagDelete).expenses.length === 1 ? '' : 's'} and{' '}
+              {tagUsage(tagDelete).receiptItems.length} receipt item
+              {tagUsage(tagDelete).receiptItems.length === 1 ? '' : 's'}. Deleting it will remove the tag from
+              those records.
             </p>
             <div className="flex gap-3">
               <ActionButton variant="outline" onClick={() => setTagDelete(null)} disabled={deleting}>

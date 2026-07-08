@@ -11,17 +11,17 @@ type Props = {
 }
 
 /** Shows the receipt image preview, or a styled faux-receipt placeholder. */
-export function ReceiptThumbnail({ receiptId, uploadId, imageUrl, className, rounded = 'rounded-2xl' }: Props) {
+export function ReceiptThumbnail({
+  receiptId,
+  uploadId,
+  imageUrl,
+  className,
+  rounded = 'rounded-2xl',
+}: Props) {
   const resolvedImageUrl = useReceiptImageUrl({ receiptId, uploadId, imageUrl })
 
   if (resolvedImageUrl) {
-    return (
-      <img
-        src={resolvedImageUrl}
-        alt="Receipt"
-        className={cn('object-cover', rounded, className)}
-      />
-    )
+    return <img src={resolvedImageUrl} alt="Receipt" className={cn('object-cover', rounded, className)} />
   }
   return (
     <div

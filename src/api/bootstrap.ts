@@ -105,10 +105,7 @@ export async function joinHouseholdAndBootstrap(code: string): Promise<void> {
   await bootstrapSession()
 }
 
-export async function pullAndHydrate(
-  householdId: string,
-  isAccountHolder?: boolean,
-): Promise<void> {
+export async function pullAndHydrate(householdId: string, isAccountHolder?: boolean): Promise<void> {
   const auth = useAuthStore.getState()
   const since = auth.lastSyncedAt ?? undefined
   const pull = await pullSync(householdId, since)
@@ -145,10 +142,7 @@ function hydrateFromBootstrap(bootstrap: HouseholdBootstrapResponse): void {
   })
 }
 
-async function hydrateNormalizedData(
-  householdId: string,
-  patch: Partial<AppStore> = {},
-): Promise<void> {
+async function hydrateNormalizedData(householdId: string, patch: Partial<AppStore> = {}): Promise<void> {
   try {
     const applied = await applyDueRecurringTransactions(householdId)
     if (applied.applied_count > 0) {
@@ -161,8 +155,9 @@ async function hydrateNormalizedData(
   const expenses = apiExpensesToExpenses(await listAllExpenses(householdId))
   const apiReceipts = await listAllReceipts(householdId)
   const receiptItems = apiReceiptItemsToReceiptItems(
-    (await Promise.all(apiReceipts.map((receipt) => listReceiptItems(householdId, receipt.id))))
-      .flatMap((response) => response.items),
+    (await Promise.all(apiReceipts.map((receipt) => listReceiptItems(householdId, receipt.id)))).flatMap(
+      (response) => response.items,
+    ),
   )
 
   useStore.setState({
@@ -183,10 +178,7 @@ function hydrateFromSnapshot(snapshot: Record<string, unknown>): void {
   useStore.setState(patch)
 }
 
-export function buildChangesForKeys(
-  state: AppStore,
-  keys: Iterable<SyncKey>,
-): Record<string, unknown> {
+export function buildChangesForKeys(state: AppStore, keys: Iterable<SyncKey>): Record<string, unknown> {
   const changes: Record<string, unknown> = {}
   for (const key of keys) {
     changes[key] = state[key]

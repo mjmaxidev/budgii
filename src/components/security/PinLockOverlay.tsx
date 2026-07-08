@@ -52,7 +52,9 @@ export function PinLockOverlay({ onUnlock }: Props) {
         </div>
       </div>
 
-      <p className="text-center text-[12px] text-muted">Budgii keeps your household budget private on this device.</p>
+      <p className="text-center text-[12px] text-muted">
+        Budgii keeps your household budget private on this device.
+      </p>
     </div>
   )
 }

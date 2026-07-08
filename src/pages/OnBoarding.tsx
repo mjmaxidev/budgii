@@ -1,10 +1,16 @@
 import { useRef, useState, useEffect, type KeyboardEvent, type ClipboardEvent, type ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ChevronLeft, ChevronRight, Check,
-  Mail, User, Users,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Mail,
+  User,
+  Users,
   Shield,
-  PieChart, Receipt, Camera,
+  PieChart,
+  Receipt,
+  Camera,
 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { withFrom } from '@/utils/navigation'
@@ -44,10 +50,12 @@ function ProgressDots({ step, total }: { step: number; total: number }) {
         const filled = n <= step
         return (
           <div key={n} className={cn('flex items-center', i < total - 1 && 'flex-1')}>
-            <div className={cn(
-              'h-3.5 w-3.5 shrink-0 rounded-full border-2 transition-colors',
-              filled ? 'border-primary bg-primary' : 'border-line bg-surface',
-            )} />
+            <div
+              className={cn(
+                'h-3.5 w-3.5 shrink-0 rounded-full border-2 transition-colors',
+                filled ? 'border-primary bg-primary' : 'border-line bg-surface',
+              )}
+            />
             {i < total - 1 && (
               <div className={cn('h-0.5 flex-1 transition-colors', n < step ? 'bg-primary' : 'bg-line')} />
             )}
@@ -124,14 +132,16 @@ function OTPInput({ value, onChange }: { value: string; onChange: (v: string) =>
         return (
           <input
             key={idx}
-            ref={el => { refs.current[idx] = el }}
+            ref={(el) => {
+              refs.current[idx] = el
+            }}
             type="text"
             inputMode="numeric"
             maxLength={1}
             value={digit}
-            onChange={e => handleChange(e, idx)}
-            onKeyDown={e => handleKeyDown(e, idx)}
-            onFocus={e => e.target.select()}
+            onChange={(e) => handleChange(e, idx)}
+            onKeyDown={(e) => handleKeyDown(e, idx)}
+            onFocus={(e) => e.target.select()}
             className={cn(
               'h-14 w-11 rounded-xl border-2 bg-white text-center text-xl font-bold text-ink outline-none transition-colors',
               digit ? 'border-primary' : 'border-line',
@@ -147,7 +157,7 @@ function ResendTimer({ onResend }: { onResend: () => void }) {
   const [secs, setSecs] = useState(30)
   useEffect(() => {
     if (secs <= 0) return
-    const id = setInterval(() => setSecs(s => s - 1), 1000)
+    const id = setInterval(() => setSecs((s) => s - 1), 1000)
     return () => clearInterval(id)
   }, [secs])
   const mm = String(Math.floor(secs / 60)).padStart(2, '0')
@@ -156,9 +166,17 @@ function ResendTimer({ onResend }: { onResend: () => void }) {
     <p className="text-center text-sm text-muted">
       Didn't receive a code?{' '}
       {secs > 0 ? (
-        <span className="font-semibold text-primary">Resend in {mm}:{ss}</span>
+        <span className="font-semibold text-primary">
+          Resend in {mm}:{ss}
+        </span>
       ) : (
-        <button onClick={() => { setSecs(30); onResend() }} className="font-semibold text-primary">
+        <button
+          onClick={() => {
+            setSecs(30)
+            onResend()
+          }}
+          className="font-semibold text-primary"
+        >
           Resend now
         </button>
       )}
@@ -178,10 +196,22 @@ function AppleLogo() {
 function GoogleLogo() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
     </svg>
   )
 }
@@ -191,8 +221,8 @@ function GoogleLogo() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function OnBoarding() {
-  const addFamilyMember = useStore(s => s.addFamilyMember)
-  const triggerPinSetupPrompt = useStore(s => s.triggerPinSetupPrompt)
+  const addFamilyMember = useStore((s) => s.addFamilyMember)
+  const triggerPinSetupPrompt = useStore((s) => s.triggerPinSetupPrompt)
   const navigate = useNavigate()
   const apiOn = isApiEnabled()
 
@@ -273,7 +303,9 @@ export function OnBoarding() {
           const isPhone = !apiOn && /^[+\d\s()-]{4,}$/.test(c)
           goToVerify(isPhone ? 'phone' : 'email', c)
         }}
-        onSocial={(method) => goToVerify(method, method === 'apple' ? 'your Apple account' : 'your Google account')}
+        onSocial={(method) =>
+          goToVerify(method, method === 'apple' ? 'your Apple account' : 'your Google account')
+        }
         onLogin={() => navigate('/login')}
       />
     )
@@ -336,7 +368,12 @@ export function OnBoarding() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Step1CreateAccount({
-  contact, setContact, apiMode, onContinue, onSocial, onLogin,
+  contact,
+  setContact,
+  apiMode,
+  onContinue,
+  onSocial,
+  onLogin,
 }: {
   contact: string
   setContact: (v: string) => void
@@ -385,7 +422,7 @@ function Step1CreateAccount({
         <input
           type={apiMode ? 'email' : 'text'}
           value={contact}
-          onChange={e => setContact(e.target.value)}
+          onChange={(e) => setContact(e.target.value)}
           placeholder={apiMode ? 'Email address' : 'Email address or phone number'}
           inputMode={apiMode ? 'email' : 'text'}
           autoComplete="email"
@@ -450,7 +487,13 @@ function Step1CreateAccount({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Step2Verify({
-  contactMethod, contact, otp, setOtp, onBack, onContinue, onChangeContact,
+  contactMethod,
+  contact,
+  otp,
+  setOtp,
+  onBack,
+  onContinue,
+  onChangeContact,
 }: {
   contactMethod: ContactMethod
   contact: string
@@ -478,9 +521,7 @@ function Step2Verify({
           <h1 className="text-center text-[28px] font-extrabold" style={{ color: '#1A3B2E' }}>
             {isPhone ? 'Check your phone' : 'Check your email'}
           </h1>
-          <p className="mt-2 text-center text-[15px] text-muted">
-            We sent a 6-digit verification code to
-          </p>
+          <p className="mt-2 text-center text-[15px] text-muted">We sent a 6-digit verification code to</p>
           <p className="mt-0.5 text-center text-[15px] font-bold text-ink">{contact}</p>
 
           {/* OTP */}
@@ -496,7 +537,9 @@ function Step2Verify({
               </div>
               <div>
                 <p className="text-[13px] font-bold text-green-900">Keep your code safe</p>
-                <p className="text-[12px] text-green-700">Never share your code with anyone. Budgii will never ask for it.</p>
+                <p className="text-[12px] text-green-700">
+                  Never share your code with anyone. Budgii will never ask for it.
+                </p>
               </div>
             </div>
           )}
@@ -528,7 +571,11 @@ function Step2Verify({
           )}
 
           <div className="flex justify-center">
-            <button onClick={onChangeContact} className="text-[14px] font-semibold" style={{ color: '#1A3B2E' }}>
+            <button
+              onClick={onChangeContact}
+              className="text-[14px] font-semibold"
+              style={{ color: '#1A3B2E' }}
+            >
               Change {isPhone ? 'phone number' : 'email address'}
             </button>
           </div>
@@ -543,8 +590,17 @@ function Step2Verify({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Step3AboutYou({
-  managingFor, setManagingFor, name, setName, password, setPassword, showPassword,
-  submitError, submitting, onBack, onContinue,
+  managingFor,
+  setManagingFor,
+  name,
+  setName,
+  password,
+  setPassword,
+  showPassword,
+  submitError,
+  submitting,
+  onBack,
+  onContinue,
 }: {
   managingFor: ManagingFor
   setManagingFor: (v: ManagingFor) => void
@@ -570,17 +626,31 @@ function Step3AboutYou({
           <Illustration name="about" className="h-40" alt="" />
         </div>
 
-        <h1 className="text-center text-[28px] font-extrabold" style={{ color: '#1A3B2E' }}>Tell us about you</h1>
-        <p className="mt-1.5 text-center text-[15px] text-muted">Help us personalise your Budgii experience.</p>
+        <h1 className="text-center text-[28px] font-extrabold" style={{ color: '#1A3B2E' }}>
+          Tell us about you
+        </h1>
+        <p className="mt-1.5 text-center text-[15px] text-muted">
+          Help us personalise your Budgii experience.
+        </p>
 
         {/* Managing for */}
         <div className="mt-6">
           <p className="mb-3 text-[15px] font-bold text-ink">Who are you managing for?</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { value: 'individual' as ManagingFor, img: 'individual', label: "I'm managing just for me", sub: 'Individual' },
-              { value: 'household' as ManagingFor, img: 'family', label: "I'm managing for my household", sub: 'Family / Household' },
-            ].map(opt => {
+              {
+                value: 'individual' as ManagingFor,
+                img: 'individual',
+                label: "I'm managing just for me",
+                sub: 'Individual',
+              },
+              {
+                value: 'household' as ManagingFor,
+                img: 'family',
+                label: "I'm managing for my household",
+                sub: 'Family / Household',
+              },
+            ].map((opt) => {
               const selected = managingFor === opt.value
               return (
                 <button
@@ -591,17 +661,23 @@ function Step3AboutYou({
                     selected ? 'border-primary bg-primarySoft' : 'border-line bg-surface',
                   )}
                 >
-                  <div className={cn(
-                    'absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2',
-                    selected ? 'border-primary bg-primary' : 'border-line bg-surface',
-                  )}>
+                  <div
+                    className={cn(
+                      'absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2',
+                      selected ? 'border-primary bg-primary' : 'border-line bg-surface',
+                    )}
+                  >
                     {selected && <Check size={14} className="text-white" />}
                   </div>
                   <div className="mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-green-50">
                     <Illustration name={opt.img} className="h-20 w-20" alt="" />
                   </div>
                   <p className="text-[13px] font-bold leading-tight text-ink">{opt.label}</p>
-                  <p className={cn('mt-1 text-[12px] font-semibold', selected ? 'text-primary' : 'text-muted')}>{opt.sub}</p>
+                  <p
+                    className={cn('mt-1 text-[12px] font-semibold', selected ? 'text-primary' : 'text-muted')}
+                  >
+                    {opt.sub}
+                  </p>
                 </button>
               )
             })}
@@ -616,7 +692,7 @@ function Step3AboutYou({
             <input
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name"
               className="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
             />
@@ -631,7 +707,7 @@ function Step3AboutYou({
               <input
                 type="password"
                 value={password ?? ''}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters"
                 className="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
                 autoComplete="new-password"
@@ -659,7 +735,10 @@ function Step3AboutYou({
         >
           {submitting ? 'Creating account…' : 'Continue'}
         </button>
-        <button onClick={onBack} className="mt-3 w-full py-1 text-center text-[15px] font-semibold text-muted">
+        <button
+          onClick={onBack}
+          className="mt-3 w-full py-1 text-center text-[15px] font-semibold text-muted"
+        >
           Back
         </button>
       </div>
@@ -671,7 +750,15 @@ function Step3AboutYou({
 // Step 4 — Welcome
 // ─────────────────────────────────────────────────────────────────────────────
 
-function Step4Welcome({ name, onBack, onAction }: { name: string; onBack: () => void; onAction: (action: string) => void }) {
+function Step4Welcome({
+  name,
+  onBack,
+  onAction,
+}: {
+  name: string
+  onBack: () => void
+  onAction: (action: string) => void
+}) {
   const ACTIONS = [
     {
       key: 'budget',
@@ -721,13 +808,15 @@ function Step4Welcome({ name, onBack, onAction }: { name: string; onBack: () => 
 
         {/* Action cards */}
         <div className="mt-6 space-y-3">
-          {ACTIONS.map(a => (
+          {ACTIONS.map((a) => (
             <button
               key={a.key}
               onClick={() => onAction(a.key)}
               className="flex w-full items-center gap-4 rounded-2xl border border-line bg-surface px-4 py-4 text-left active:bg-surfaceSoft"
             >
-              <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', a.iconBg)}>
+              <div
+                className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', a.iconBg)}
+              >
                 {a.icon}
               </div>
               <div className="flex-1 min-w-0">

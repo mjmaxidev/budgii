@@ -33,7 +33,12 @@ export function CategoryCreation() {
       <div className="space-y-5 px-4 py-5">
         {/* Preview */}
         <div className="flex justify-center py-6">
-          <CategoryIcon icon={selectedIcon} color={selectedColor} size={80} className="rounded-3xl text-4xl" />
+          <CategoryIcon
+            icon={selectedIcon}
+            color={selectedColor}
+            size={80}
+            className="rounded-3xl text-4xl"
+          />
         </div>
 
         {/* Name Input */}

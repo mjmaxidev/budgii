@@ -23,9 +23,7 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
   const [amount, setAmount] = useState('')
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
   const [tagIds, setTagIds] = useState<string[]>([])
-  const [memberId, setMemberId] = useState<string | undefined>(
-    familyMembers.find((m) => m.isDefault)?.id,
-  )
+  const [memberId, setMemberId] = useState<string | undefined>(familyMembers.find((m) => m.isDefault)?.id)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -55,7 +53,12 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
           receiptItems: [saved, ...state.receiptItems],
           receipts: state.receipts.map((receipt) =>
             receipt.id === receiptId
-              ? { ...receipt, itemIds: receipt.itemIds.includes(saved.id) ? receipt.itemIds : [...receipt.itemIds, saved.id] }
+              ? {
+                  ...receipt,
+                  itemIds: receipt.itemIds.includes(saved.id)
+                    ? receipt.itemIds
+                    : [...receipt.itemIds, saved.id],
+                }
               : receipt,
           ),
         }))
@@ -126,9 +129,7 @@ export function ReceiptItemCreateForm({ receiptId, onDone }: Props) {
       </div>
 
       {error && (
-        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
       <ActionButton variant="green" onClick={() => void save()} disabled={!canSave || saving}>

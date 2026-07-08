@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Info, Tag, Wand2, Users, Trash2, Link as LinkIcon, Shield, Mail, UserMinus } from 'lucide-react'
+import {
+  Plus,
+  Info,
+  Tag,
+  Wand2,
+  Users,
+  Trash2,
+  Link as LinkIcon,
+  Shield,
+  Mail,
+  UserMinus,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -332,7 +343,10 @@ export function FamilyMembers() {
         </p>
       )}
 
-      <ActionButton onClick={() => navigate('/family-invitation', withFrom('/family-members'))} className="mb-4">
+      <ActionButton
+        onClick={() => navigate('/family-invitation', withFrom('/family-members'))}
+        className="mb-4"
+      >
         <LinkIcon size={18} /> Generate Invitation Link
       </ActionButton>
 
@@ -350,7 +364,9 @@ export function FamilyMembers() {
             className={`relative flex items-center gap-3 py-3 ${edit ? 'cursor-pointer active:bg-surfaceSoft' : ''}`}
             onClick={edit ? () => openEdit(m) : undefined}
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surfaceSoft text-2xl">{m.avatar}</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surfaceSoft text-2xl">
+              {m.avatar}
+            </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[15px] font-extrabold text-ink">{m.name}</p>
               <p className="truncate text-[13px] text-muted">{m.relationship}</p>
@@ -397,8 +413,8 @@ export function FamilyMembers() {
         <div>
           <p className="text-[15px] font-bold text-ink">How it works</p>
           <p className="text-[13px] leading-snug text-muted">
-            Tag-only members are for expense labels. Members with app access can sign in as viewer, editor, or admin.
-            The account creator is always admin.
+            Tag-only members are for expense labels. Members with app access can sign in as viewer, editor, or
+            admin. The account creator is always admin.
           </p>
         </div>
       </Card>
@@ -416,7 +432,10 @@ export function FamilyMembers() {
                 const locked = member.is_account_holder || member.access_role === 'admin'
                 const canRemove = !member.is_account_holder && member.user_id !== currentUserId
                 return (
-                  <div key={member.user_id} className="flex items-center gap-3 rounded-input bg-surfaceSoft px-3 py-3">
+                  <div
+                    key={member.user_id}
+                    className="flex items-center gap-3 rounded-input bg-surfaceSoft px-3 py-3"
+                  >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl">
                       {member.avatar || '👤'}
                     </div>
@@ -486,7 +505,10 @@ export function FamilyMembers() {
               {m.name}
             </Chip>
           ))}
-          <button onClick={openAdd} className="inline-flex items-center gap-1 rounded-pill border-2 border-dashed border-line px-3 py-1.5 text-[13px] font-bold text-muted">
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-1 rounded-pill border-2 border-dashed border-line px-3 py-1.5 text-[13px] font-bold text-muted"
+          >
             <Plus size={14} /> Add
           </button>
         </div>
@@ -549,7 +571,13 @@ export function FamilyMembers() {
           </>
         )}
         <ActionButton className="mt-5" onClick={() => void saveAdd()} disabled={saving}>
-          {saving ? 'Saving…' : apiOn ? 'Add Tag Member' : willSendInvite ? 'Add Member & Send Invite' : 'Add Member'}
+          {saving
+            ? 'Saving…'
+            : apiOn
+              ? 'Add Tag Member'
+              : willSendInvite
+                ? 'Add Member & Send Invite'
+                : 'Add Member'}
         </ActionButton>
       </Modal>
 

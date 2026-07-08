@@ -7,7 +7,11 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { ReceiptThumbnail } from '@/components/receipts/ReceiptThumbnail'
 import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
-import { apiExpenseToExpense, deleteExpense as apiDeleteExpense, updateExpense as apiUpdateExpense } from '@/api/expenses'
+import {
+  apiExpenseToExpense,
+  deleteExpense as apiDeleteExpense,
+  updateExpense as apiUpdateExpense,
+} from '@/api/expenses'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
@@ -51,7 +55,9 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
   }
 
   function toggleTag(id: string) {
-    const next = current!.tagIds.includes(id) ? current!.tagIds.filter((t) => t !== id) : [...current!.tagIds, id]
+    const next = current!.tagIds.includes(id)
+      ? current!.tagIds.filter((t) => t !== id)
+      : [...current!.tagIds, id]
     patchDraft({ tagIds: next })
   }
 
@@ -191,7 +197,12 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
         <span className="mb-2 block text-[13px] font-semibold text-muted">Tags</span>
         <div className="flex flex-wrap gap-2">
           {tags.map((t) => (
-            <Chip key={t.id} color={t.color} active={current.tagIds.includes(t.id)} onClick={() => toggleTag(t.id)}>
+            <Chip
+              key={t.id}
+              color={t.color}
+              active={current.tagIds.includes(t.id)}
+              onClick={() => toggleTag(t.id)}
+            >
               {t.name}
             </Chip>
           ))}
@@ -215,9 +226,7 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
       </div>
 
       {error && (
-        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
       {confirmDelete ? (
@@ -227,11 +236,7 @@ export function ExpenseEditor({ expenseId, onDone }: Props) {
             <ActionButton variant="ghost" onClick={() => setConfirmDelete(false)}>
               Cancel
             </ActionButton>
-            <ActionButton
-              variant="danger"
-              onClick={() => void remove()}
-              disabled={saving}
-            >
+            <ActionButton variant="danger" onClick={() => void remove()} disabled={saving}>
               {saving ? 'Deleting…' : 'Delete'}
             </ActionButton>
           </div>

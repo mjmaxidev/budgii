@@ -48,7 +48,8 @@ export function Login() {
       </div>
 
       <h1 className="text-[34px] font-extrabold leading-tight text-ink">
-        Track Smarter<br />
+        Track Smarter
+        <br />
         <span className="text-primary">Spending</span>
       </h1>
       <p className="mt-3 text-[16px] leading-snug text-muted">
@@ -80,9 +81,7 @@ export function Login() {
       </div>
 
       {error && (
-        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">
-          {error}
-        </p>
+        <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
       <div className="mt-5 space-y-3">
@@ -102,9 +101,7 @@ export function Login() {
       </div>
 
       {!apiOn && (
-        <p className="mt-4 text-center text-[12px] text-muted">
-          Offline mode — data stays in local storage.
-        </p>
+        <p className="mt-4 text-center text-[12px] text-muted">Offline mode — data stays in local storage.</p>
       )}
 
       {!apiOn && (
