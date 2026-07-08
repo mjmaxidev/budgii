@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { isApiEnabled } from '@/api/config'
 import { bootstrapSession } from '@/api/bootstrap'
 import { startSyncEngine, stopSyncEngine } from '@/api/syncEngine'
+import { PageTransition } from '@/components/motion/PageTransition'
 import { useAuthStore } from '@/store/authStore'
 
 const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/verification'])
@@ -41,7 +42,11 @@ export function AuthGate() {
   }, [apiOn, accessToken, status])
 
   if (!apiOn) {
-    return <Outlet />
+    return (
+      <PageTransition>
+        <Outlet />
+      </PageTransition>
+    )
   }
 
   if (!accessToken && !isPublic && !isJoin) {
@@ -52,5 +57,9 @@ export function AuthGate() {
     return <Navigate to="/login" replace state={{ from: '/join-family', join: true }} />
   }
 
-  return <Outlet />
+  return (
+    <PageTransition>
+      <Outlet />
+    </PageTransition>
+  )
 }

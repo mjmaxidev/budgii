@@ -1,6 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ChevronRight } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
+import { BudgiiLottie } from '@/components/motion/BudgiiLottie'
+import successCheck from '@/assets/lottie/success-check.json'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
@@ -46,8 +48,13 @@ export function TransactionConfirm() {
     >
       {/* Success icon */}
       <div className="flex justify-center mb-4">
-        <div className="rounded-full bg-greenSoft p-4">
-          <CheckCircle2 size={48} className="text-green" />
+        <div className="rounded-full bg-greenSoft p-2">
+          <BudgiiLottie
+            animationData={successCheck}
+            loop={false}
+            className="h-24 w-24"
+            ariaLabel="Success"
+          />
         </div>
       </div>
 

@@ -62,7 +62,6 @@ export function Transactions() {
       {groups.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            icon="🧾"
             title="No transactions"
             description="Add your first expense or scan a receipt to get started."
           />

@@ -64,7 +64,6 @@ export function ReceiptHistory() {
       {filtered.length === 0 ? (
         <div className="mt-10">
           <EmptyState
-            icon="🧾"
             title="No receipts yet"
             description="Scan your first receipt to get started."
           />

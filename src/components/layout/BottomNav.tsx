@@ -1,5 +1,6 @@
 import { Home, ListChecks, PieChart, Settings as SettingsIcon, Plus } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { AnimatedIcon } from '@/components/motion/AnimatedIcon'
 import { cn } from '@/utils/cn'
 
 const items = [
@@ -21,9 +22,9 @@ export function BottomNav() {
           <button
             onClick={() => navigate('/add-expense-choice')}
             aria-label="Add expense"
-            className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-ring active:scale-95"
+            className="motion-fab-glow -mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-ring active:scale-95 transition-transform"
           >
-            <Plus size={28} />
+            <Plus size={28} className="transition-transform duration-200 group-active:rotate-90" />
           </button>
         </div>
         {items.slice(2).map((it) => (
@@ -40,14 +41,16 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: t
       to={to}
       className={({ isActive }) =>
         cn(
-          'flex w-16 flex-col items-center gap-1 py-1 text-[11px] font-medium transition',
+          'flex w-16 flex-col items-center gap-1 py-1 text-[11px] font-medium transition-colors duration-200',
           isActive ? 'text-primary' : 'text-muted',
         )
       }
     >
       {({ isActive }) => (
         <>
-          <Icon size={22} className={isActive ? 'text-primary' : 'text-muted'} />
+          <AnimatedIcon key={isActive ? `${to}-on` : `${to}-off`} active={isActive}>
+            <Icon size={22} className={isActive ? 'text-primary' : 'text-muted'} />
+          </AnimatedIcon>
           <span>{label}</span>
         </>
       )}

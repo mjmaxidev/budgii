@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Telescope, Bell, ChevronRight } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { AppShell } from '@/components/layout/AppShell'
+import { StaggerIn } from '@/components/motion/StaggerIn'
 import { Card } from '@/components/ui/Card'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { ProgressRing } from '@/components/ui/ProgressRing'
@@ -103,7 +104,7 @@ export function Home() {
         </div>
       }
     >
-      <div className="mt-3">
+      <StaggerIn className="mt-3 space-y-3" staggerMs={80}>
         <SegmentedControl
           value={period}
           onChange={setPeriod}
@@ -113,10 +114,9 @@ export function Home() {
             { value: 'monthly', label: 'Monthly' },
           ]}
         />
-      </div>
 
-      {/* Budget Progress Bar */}
-      <Card className="mt-3 py-3">
+        {/* Budget Progress Bar */}
+        <Card className="py-3">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[14px] font-semibold text-ink">Budget Progress</p>
           <p className="text-[13px] font-bold" style={{ color: getBudgetColor() }}>
@@ -137,6 +137,7 @@ export function Home() {
           </button>
         </div>
       </Card>
+      </StaggerIn>
 
       {/* Budget ring */}
       <div className="mt-6 flex items-center justify-between">
