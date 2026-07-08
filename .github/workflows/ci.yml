@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/**
+      - codex/**
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build
+        run: npm run build
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: budgii
+          POSTGRES_PASSWORD: budgii
+          POSTGRES_DB: budgii
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U budgii -d budgii"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: budgii-api
+
+    env:
+      APP_ENV: development
+      APP_DEBUG: 'true'
+      API_PREFIX: /v1
+      DATABASE_URL: postgresql+asyncpg://budgii:budgii@localhost:5432/budgii
+      JWT_SECRET: ci-secret-change-me
+      INVITE_EMAIL_PROVIDER: log
+      RECEIPT_STORAGE_PATH: /tmp/budgii-receipt-uploads
+      RECEIPT_OCR_PROVIDER: deterministic
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: budgii-api/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Ruff check
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Run migrations
+        run: alembic upgrade head
+
+      - name: Run tests
+        run: python -m pytest

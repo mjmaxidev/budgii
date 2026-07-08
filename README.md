@@ -34,6 +34,8 @@ scripts/reset_dev_db.sh --yes
 
 ## Checks
 
+GitHub Actions runs the same frontend and backend gates on pushes and pull requests.
+
 ```bash
 npm run hooks:install
 npm run precommit
