@@ -5,11 +5,13 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { cn } from '@/utils/cn'
+import { isApiEnabled } from '@/api/config'
 
 type VerificationType = 'phone' | 'email' | null
 
 export function Verification() {
   const navigate = useNavigate()
+  const apiOn = isApiEnabled()
   const [verificationType, setVerificationType] = useState<VerificationType>(null)
   const [contactInput, setContactInput] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
@@ -37,7 +39,8 @@ export function Verification() {
         <div className="space-y-3">
           <button
             onClick={() => setVerificationType('phone')}
-            className="flex w-full items-center gap-3 rounded-xl border-2 border-line bg-surface p-4 transition-all hover:border-primary hover:bg-primarySoft"
+            disabled={apiOn}
+            className="flex w-full items-center gap-3 rounded-xl border-2 border-line bg-surface p-4 transition-all hover:border-primary hover:bg-primarySoft disabled:hidden"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
               <MessageSquare size={24} className="text-primary" />

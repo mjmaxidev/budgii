@@ -67,7 +67,7 @@ receipt_items
 | Notifications mock-only | **Done** — `GET /households/{id}/notifications` generates spending/deal notifications from backend data |
 | Deals/watchlist backend | **Done** — `POST /households/{id}/deals/check` refreshes synced watchlist/deals and frontend report/cards consume backend-generated deal data |
 | Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
-| OAuth deferred | Apple/Google verification exists; client wiring and production IDs move to the end |
+| OAuth deferred | Apple/Google server verification exists; client UI/wiring and production IDs move to the end |
 
 ---
 
@@ -364,10 +364,10 @@ Do **not** mix unrelated frontend changes (`ProgressRing.tsx`, `Home.tsx`, etc.)
 | 5 | Viewer data scope | Resolved: full household read; writes/admin actions remain blocked |
 | 6 | Account holder transfer | Permanent owner vs transferable admin |
 | 7 | Add member + invite in one API call? | Matches `FamilyMembers.tsx` save flow |
-| 8 | Phone/SMS invites? | Email-only v1 vs Twilio |
-| 9 | OCR provider | Textract, GPT-4V, or on-device first |
-| 10 | Electron vs mobile backend | Both share API, or desktop stays local-only? |
-| 11 | Deals/watchlist backend | Real features later vs stay mock |
+| 8 | Phone/SMS invites? | Resolved for v1: email-only; Twilio can be added later |
+| 9 | OCR provider | Resolved for Phase 2: OpenAI vision with deterministic fallback for tests/dev |
+| 10 | Electron vs mobile backend | Resolved: web/Electron/mobile share the API when `VITE_API_ENABLED=true` |
+| 11 | Deals/watchlist backend | Resolved for Phase 2: backend-generated deterministic deal checks; real retailer integrations later |
 | 12 | Conflict resolution | Per-key LWW (v1) vs per-entity merge |
 
 ---

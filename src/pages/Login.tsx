@@ -11,6 +11,7 @@ export function Login() {
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/home'
+  const apiOn = isApiEnabled()
 
   const [email, setEmail] = useState('dev@mjproductions.app')
   const [password, setPassword] = useState('password')
@@ -19,7 +20,7 @@ export function Login() {
   const [error, setError] = useState('')
 
   async function handleLogin() {
-    if (!isApiEnabled()) {
+    if (!apiOn) {
       navigate(from)
       return
     }
@@ -100,34 +101,36 @@ export function Login() {
         </button>
       </div>
 
-      {!isApiEnabled() && (
+      {!apiOn && (
         <p className="mt-4 text-center text-[12px] text-muted">
           Offline mode — data stays in local storage.
         </p>
       )}
 
-      <div className="my-5 flex items-center gap-3 text-[13px] text-muted">
-        <span className="h-px flex-1 bg-line" />
-        or continue with
-        <span className="h-px flex-1 bg-line" />
-      </div>
+      {!apiOn && (
+        <>
+          <div className="my-5 flex items-center gap-3 text-[13px] text-muted">
+            <span className="h-px flex-1 bg-line" />
+            or continue with
+            <span className="h-px flex-1 bg-line" />
+          </div>
 
-      <div className="space-y-3">
-        <button
-          onClick={() => !isApiEnabled() && navigate(from)}
-          disabled={isApiEnabled()}
-          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft disabled:opacity-50"
-        >
-          <Apple size={20} fill="currentColor" /> Continue with Apple
-        </button>
-        <button
-          onClick={() => !isApiEnabled() && navigate(from)}
-          disabled={isApiEnabled()}
-          className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft disabled:opacity-50"
-        >
-          <span className="text-[18px] font-extrabold text-[#4285F4]">G</span> Continue with Google
-        </button>
-      </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate(from)}
+              className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft"
+            >
+              <Apple size={20} fill="currentColor" /> Continue with Apple
+            </button>
+            <button
+              onClick={() => navigate(from)}
+              className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft"
+            >
+              <span className="text-[18px] font-extrabold text-[#4285F4]">G</span> Continue with Google
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

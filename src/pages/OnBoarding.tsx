@@ -194,6 +194,7 @@ export function OnBoarding() {
   const addFamilyMember = useStore(s => s.addFamilyMember)
   const triggerPinSetupPrompt = useStore(s => s.triggerPinSetupPrompt)
   const navigate = useNavigate()
+  const apiOn = isApiEnabled()
 
   const [step, setStep] = useState<Step>(1)
   const [contact, setContact] = useState('')
@@ -219,7 +220,7 @@ export function OnBoarding() {
   async function completeProfile() {
     if (!name.trim()) return
 
-    if (isApiEnabled()) {
+    if (apiOn) {
       if (!contact.includes('@')) {
         setSubmitError('API sign-up requires an email address.')
         return
@@ -267,8 +268,9 @@ export function OnBoarding() {
       <Step1CreateAccount
         contact={contact}
         setContact={setContact}
+        apiMode={apiOn}
         onContinue={(c) => {
-          const isPhone = /^[+\d\s()-]{4,}$/.test(c)
+          const isPhone = !apiOn && /^[+\d\s()-]{4,}$/.test(c)
           goToVerify(isPhone ? 'phone' : 'email', c)
         }}
         onSocial={(method) => goToVerify(method, method === 'apple' ? 'your Apple account' : 'your Google account')}
@@ -300,10 +302,10 @@ export function OnBoarding() {
         setName={setName}
         password={password}
         setPassword={setPassword}
-        showPassword={isApiEnabled()}
+        showPassword={apiOn}
         submitError={submitError}
         submitting={submitting}
-        onBack={() => setStep(isApiEnabled() ? 1 : 2)}
+        onBack={() => setStep(apiOn ? 1 : 2)}
         onContinue={() => void completeProfile()}
       />
     )
@@ -334,15 +336,17 @@ export function OnBoarding() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function Step1CreateAccount({
-  contact, setContact, onContinue, onSocial, onLogin,
+  contact, setContact, apiMode, onContinue, onSocial, onLogin,
 }: {
   contact: string
   setContact: (v: string) => void
+  apiMode: boolean
   onContinue: (c: string) => void
   onSocial: (m: 'apple' | 'google') => void
   onLogin: () => void
 }) {
-  const canContinue = contact.trim().length >= 4
+  const trimmedContact = contact.trim()
+  const canContinue = apiMode ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContact) : trimmedContact.length >= 4
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col bg-bg px-6 pt-6 pb-8">
@@ -379,10 +383,12 @@ function Step1CreateAccount({
       <div className="mt-7 flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-4 shadow-sm">
         <Mail size={20} className="shrink-0 text-muted" />
         <input
-          type="text"
+          type={apiMode ? 'email' : 'text'}
           value={contact}
           onChange={e => setContact(e.target.value)}
-          placeholder="Email address or phone number"
+          placeholder={apiMode ? 'Email address' : 'Email address or phone number'}
+          inputMode={apiMode ? 'email' : 'text'}
+          autoComplete="email"
           className="flex-1 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted"
         />
       </div>
@@ -399,30 +405,34 @@ function Step1CreateAccount({
         Continue
       </button>
 
-      {/* Divider */}
-      <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-line" />
-        <span className="text-sm font-medium text-muted">or continue with</span>
-        <div className="h-px flex-1 bg-line" />
-      </div>
+      {!apiMode && (
+        <>
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-line" />
+            <span className="text-sm font-medium text-muted">or continue with</span>
+            <div className="h-px flex-1 bg-line" />
+          </div>
 
-      {/* Google */}
-      <button
-        onClick={() => onSocial('google')}
-        className="mb-3 flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
-      >
-        <GoogleLogo />
-        <span className="text-[15px] font-bold text-ink">Continue with Google</span>
-      </button>
+          {/* Google */}
+          <button
+            onClick={() => onSocial('google')}
+            className="mb-3 flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
+          >
+            <GoogleLogo />
+            <span className="text-[15px] font-bold text-ink">Continue with Google</span>
+          </button>
 
-      {/* Apple */}
-      <button
-        onClick={() => onSocial('apple')}
-        className="flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
-      >
-        <AppleLogo />
-        <span className="text-[15px] font-bold text-ink">Continue with Apple</span>
-      </button>
+          {/* Apple */}
+          <button
+            onClick={() => onSocial('apple')}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
+          >
+            <AppleLogo />
+            <span className="text-[15px] font-bold text-ink">Continue with Apple</span>
+          </button>
+        </>
+      )}
 
       {/* Log in */}
       <p className="mt-6 text-center text-[15px] text-muted">
