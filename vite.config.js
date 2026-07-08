@@ -18,6 +18,14 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         qa: path.resolve(__dirname, 'qa.html'),
       },
+      output: {
+        manualChunks: function (id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('lottie')) return 'lottie'
+          if (id.includes('lucide-react')) return 'icons'
+          if (id.includes('react') || id.includes('scheduler') || id.includes('zustand')) return 'vendor'
+        },
+      },
     },
   },
 })

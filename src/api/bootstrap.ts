@@ -1,4 +1,4 @@
-import { getMe } from '@/api/auth'
+import { getMe, loginEmail, register } from '@/api/auth'
 import { createHousehold, getHouseholdBootstrap, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
 import { apiExpensesToExpenses, applyDueRecurringTransactions, listAllExpenses } from '@/api/expenses'
@@ -86,7 +86,6 @@ export async function registerAndCreateHousehold(
   householdName: string,
   migrateLocal = false,
 ): Promise<void> {
-  const { register } = await import('@/api/auth')
   await register(email, password, name)
   const household = await createHousehold(householdName)
   useAuthStore.getState().setHouseholdId(household.id)
@@ -94,7 +93,6 @@ export async function registerAndCreateHousehold(
 }
 
 export async function loginAndBootstrap(email: string, password: string): Promise<void> {
-  const { loginEmail } = await import('@/api/auth')
   await loginEmail(email, password)
   await bootstrapSession()
 }
