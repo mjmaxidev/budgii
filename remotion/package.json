@@ -1,0 +1,27 @@
+{
+  "name": "budgii-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Budgii marketing / demo videos (Remotion)",
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "render": "remotion render",
+    "render:promo": "remotion render BudgiiPromo out/budgii-promo.mp4",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.485",
+    "@remotion/zod-types": "4.0.485",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.485",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/web": "^0.0.166",
+    "typescript": "^5.6.3"
+  }
+}

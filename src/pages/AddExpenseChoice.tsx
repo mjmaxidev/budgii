@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { withFrom } from '@/utils/navigation'
 import { Camera, ChevronRight, PenLine, Sparkles } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
+import { StaggerIn } from '@/components/motion/StaggerIn'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 
@@ -14,7 +15,7 @@ export function AddExpenseChoice() {
         How would you like to add this expense?
       </p>
 
-      <div className="space-y-3">
+      <StaggerIn className="space-y-3">
         <button
           type="button"
           onClick={() => navigate('/add-expense', withFrom('/add-expense-choice'))}
@@ -52,7 +53,7 @@ export function AddExpenseChoice() {
             <ChevronRight size={20} className="shrink-0 text-muted" />
           </Card>
         </button>
-      </div>
+      </StaggerIn>
 
       <Card soft className="mt-5 flex items-start gap-3">
         <Sparkles size={20} className="mt-0.5 shrink-0 text-green" />

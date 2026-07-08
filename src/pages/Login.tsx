@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react'
+import { LoginBrandLogo } from '@/components/auth/LoginBrandLogo'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { isApiEnabled } from '@/api/config'
@@ -39,12 +40,8 @@ export function Login() {
 
   return (
     <div className="no-scrollbar mx-auto flex h-full w-full max-w-[390px] flex-col overflow-y-auto bg-bg px-6 pb-8 pt-6">
-      <div className="mb-8 flex justify-center">
-        <img
-          src="/budgii-logo.png"
-          alt="Budgii — Smart Budgets. Better Futures."
-          className="h-20 object-contain"
-        />
+      <div className="mb-1 flex justify-center">
+        <LoginBrandLogo />
       </div>
 
       <h1 className="text-[34px] font-extrabold leading-tight text-ink">
