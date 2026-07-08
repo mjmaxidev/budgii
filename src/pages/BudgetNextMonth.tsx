@@ -384,7 +384,7 @@ export function BudgetNextMonth() {
 }
 
 function distributeRemainder(alloc: Record<string, number>, target: number, ids: string[]) {
-  let total = ids.reduce((sum, id) => sum + (alloc[id] ?? 0), 0)
+  const total = ids.reduce((sum, id) => sum + (alloc[id] ?? 0), 0)
   let diff = target - total
   if (diff === 0 || ids.length === 0) return
 

@@ -18,7 +18,7 @@ export function FamilyJoin() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const findFamilyInvite = useStore((s) => s.findFamilyInvite)
-  const useFamilyInvite = useStore((s) => s.useFamilyInvite)
+  const redeemFamilyInvite = useStore((s) => s.useFamilyInvite)
   const addFamilyMember = useStore((s) => s.addFamilyMember)
   const userProfile = useStore((s) => s.userProfile)
 
@@ -92,7 +92,7 @@ export function FamilyJoin() {
       accessRole: invite.accessRole,
       editorLevel: invite.editorLevel,
     })
-    const ok = useFamilyInvite(normalizedCode, memberId)
+    const ok = redeemFamilyInvite(normalizedCode, memberId)
     if (!ok) {
       setError('invalid')
       return

@@ -11,7 +11,7 @@ const PULL_INTERVAL_MS = 60_000
 let hydrating = false
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 let pullTimer: ReturnType<typeof setInterval> | null = null
-let dirtyKeys = new Set<SyncKey>()
+const dirtyKeys = new Set<SyncKey>()
 let unsubscribe: (() => void) | null = null
 let pushing = false
 
