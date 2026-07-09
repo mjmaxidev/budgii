@@ -425,9 +425,8 @@ flowchart TB
 ## Run locally
 
 ```bash
-cd budgii-api
-cp .env.example .env
-docker compose up --build
+cp budgii-api/.env.example budgii-api/.env
+docker compose -f docker-compose.dev.yml up --build
 # API: http://localhost:8001/docs
 # Receipt files persist in Docker volume `receipt_uploads` → /app/uploads
 ```
@@ -440,11 +439,32 @@ and auto-seeds the default dev login if it is missing.
 docker compose -f docker-compose.dev.yml up --build
 ```
 
+For a staging deployment-style run, use the staging compose file. It exposes the
+frontend on the less common `:18088`, the API on `:18087`, and keeps Postgres
+private on the Docker network:
+
+```bash
+budgii-api/scripts/create_server_env.sh
+docker compose --env-file .env.server -f docker-compose.staging.yml up --build -d
+```
+
+Leave `INVITE_EMAIL_PROVIDER=log` until a real `INVITE_EMAIL_API_KEY` is set.
+
+Compose stack names are fixed in the files so each environment is isolated:
+`budgii-dev`, `budgii-staging`, and `budgii-production`. The root server compose is
+the production stack and defaults to `:28088` frontend / `:28087` API, separate from
+staging.
+
+```bash
+cp budgii-api/.env.production.example .env.production.server
+docker compose --env-file .env.production.server -f docker-compose.production.yml up --build -d
+```
+
 To wipe the local Docker dev database, re-run Alembic migrations, and load the
 rich mock dataset:
 
 ```bash
-scripts/reset_dev_db.sh --yes
+budgii-api/scripts/reset_dev_db.sh --yes
 ```
 
 The reset script intentionally leaves receipt upload files in the Docker volume.

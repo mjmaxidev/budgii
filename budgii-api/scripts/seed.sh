@@ -2,4 +2,4 @@
 # Seed dev user inside the running Docker Compose api container.
 set -e
 cd "$(dirname "$0")/.."
-docker compose exec api python scripts/seed_dev_user.py "$@"
+docker compose -f ../docker-compose.dev.yml exec api python scripts/seed_dev_user.py "$@"

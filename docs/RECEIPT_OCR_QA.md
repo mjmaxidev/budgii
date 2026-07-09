@@ -17,7 +17,6 @@ Do not commit real personal receipt images.
 ## Setup
 
 ```bash
-cd budgii-api
 RECEIPT_OCR_PROVIDER=openai docker compose -f docker-compose.dev.yml up --build
 ```
 

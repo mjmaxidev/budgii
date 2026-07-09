@@ -1,0 +1,83 @@
+name: budgii-staging
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-budgii}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the staging stack}
+      POSTGRES_DB: ${POSTGRES_DB:-budgii}
+    volumes:
+      - server_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-budgii} -d ${POSTGRES_DB:-budgii}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build:
+      context: ./budgii-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${SERVER_API_PORT:-18087}:8000"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      API_PREFIX: /v1
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS to the staging frontend origin}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-budgii}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the staging stack}@db:5432/${POSTGRES_DB:-budgii}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET before starting the staging stack}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INVITE_LINK_BASE: ${INVITE_LINK_BASE:-https://budgii.app/join}
+      INVITE_EMAIL_PROVIDER: ${INVITE_EMAIL_PROVIDER:-log}
+      INVITE_EMAIL_FROM: ${INVITE_EMAIL_FROM:-}
+      INVITE_EMAIL_API_KEY: ${INVITE_EMAIL_API_KEY:-}
+      RECEIPT_STORAGE_PATH: /app/uploads
+      RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-openai}
+      RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-log}
+    volumes:
+      - server_receipt_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_ENABLED: "true"
+        VITE_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:18087/v1}
+        VITE_SHOW_DEMO_TOOLS: ${VITE_SHOW_DEMO_TOOLS:-false}
+    restart: unless-stopped
+    ports:
+      - "${SERVER_FRONTEND_PORT:-18088}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  server_postgres_data:
+  server_receipt_uploads:

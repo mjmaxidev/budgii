@@ -5,7 +5,7 @@ Usage (host, postgres on localhost:5432):
   cd budgii-api && python scripts/seed_dev_user.py
 
 Usage (Docker Compose api container):
-  docker compose exec api python scripts/seed_dev_user.py
+  docker compose -f docker-compose.dev.yml exec api python scripts/seed_dev_user.py
 
 Defaults match the frontend login form (dev@mjproductions.app / password).
 """

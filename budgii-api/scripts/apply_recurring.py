@@ -4,7 +4,7 @@
 Usage:
   cd budgii-api && python scripts/apply_recurring.py
   cd budgii-api && python scripts/apply_recurring.py --date 2026-07-09
-  cd budgii-api && docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py
+  docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py
 """
 
 from __future__ import annotations

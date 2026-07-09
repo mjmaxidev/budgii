@@ -19,17 +19,41 @@ width and centered as a device mockup on larger screens.
 To run the backend:
 
 ```bash
-cd budgii-api
-cp .env.example .env
+cp budgii-api/.env.example budgii-api/.env
 docker compose -f docker-compose.dev.yml up --build
+```
+
+For a staging deployment-style stack, use the staging compose file. It runs the
+frontend on `:18088`, the API in production mode on `:18087`, and keeps
+Postgres private on the Docker network instead of exposing common host ports like
+`3000`, `5173`, `8000`, `8001`, or `5432`.
+
+```bash
+budgii-api/scripts/create_server_env.sh
+docker compose --env-file .env.server -f docker-compose.staging.yml up --build -d
+# Frontend: http://SERVER_HOST:18088
+# API: http://SERVER_HOST:18087/v1/health
+```
+
+Leave `INVITE_EMAIL_PROVIDER=log` until a real `INVITE_EMAIL_API_KEY` is set.
+
+Compose stack names are pinned in the files:
+`budgii-dev`, `budgii-staging`, and `budgii-production`. The root server compose
+is the production stack and defaults to `:28088` frontend / `:28087` API so it can
+run separately from staging.
+
+```bash
+cp budgii-api/.env.production.example .env.production.server
+docker compose --env-file .env.production.server -f docker-compose.production.yml up --build -d
+# Production frontend: http://SERVER_HOST:28088
+# Production API: http://SERVER_HOST:28087/v1/health
 ```
 
 The local dev login is `dev@mjproductions.app` / `password`. To fully reset and
 reseed the local Docker dev database:
 
 ```bash
-cd budgii-api
-scripts/reset_dev_db.sh --yes
+budgii-api/scripts/reset_dev_db.sh --yes
 ```
 
 ## Checks
@@ -44,7 +68,6 @@ npm run lint
 npm run format:check
 npm run build
 
-cd budgii-api
 docker compose -f docker-compose.dev.yml exec -T api scripts/lint.sh
 docker compose -f docker-compose.dev.yml exec -T -e RECEIPT_OCR_PROVIDER=deterministic api python -m pytest
 ```
@@ -52,7 +75,6 @@ docker compose -f docker-compose.dev.yml exec -T -e RECEIPT_OCR_PROVIDER=determi
 To run due recurring transactions manually, for example from a cron/scheduler:
 
 ```bash
-cd budgii-api
 docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py
 docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py --date 2026-07-09
 ```
