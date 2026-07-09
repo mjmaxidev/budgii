@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, time, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -7,6 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import NotificationDeviceToken, NotificationReadState
 from app.services.alerts import evaluate_spending_alerts, load_sync_chunk
+
+DEFAULT_NOTIFICATION_SETTINGS: dict[str, Any] = {
+    "notificationsEnabled": False,
+    "notificationBudgetWarnings": True,
+    "notificationBudgetExceeded": True,
+    "notificationDeals": True,
+    "notificationWeeklySummary": True,
+    "notificationQuietHoursEnabled": False,
+    "notificationQuietHoursStart": "22:00",
+    "notificationQuietHoursEnd": "07:00",
+}
 
 
 async def list_notifications(
@@ -21,6 +32,85 @@ async def list_notifications(
         for notification in notifications:
             notification["read"] = notification["id"] in read_ids
     return sorted(notifications, key=lambda item: item["timestamp"], reverse=True)
+
+
+async def push_candidate_notifications(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    now: datetime | None = None,
+) -> list[dict[str, Any]]:
+    current_time = now or datetime.now(timezone.utc)
+    notifications: list[dict[str, Any]] = []
+    notifications.extend(await spending_alert_notifications(session, household_id, current_time))
+    notifications.extend(await deal_notifications(session, household_id, current_time))
+    settings = await load_notification_settings(session, household_id)
+    return filter_notifications_for_delivery(settings, notifications, current_time)
+
+
+async def load_notification_settings(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+) -> dict[str, Any]:
+    settings = await load_sync_chunk(session, household_id, "settings")
+    if not isinstance(settings, dict):
+        settings = {}
+    return {**DEFAULT_NOTIFICATION_SETTINGS, **settings}
+
+
+def filter_notifications_for_delivery(
+    settings: dict[str, Any],
+    notifications: list[dict[str, Any]],
+    now: datetime,
+) -> list[dict[str, Any]]:
+    merged_settings = {**DEFAULT_NOTIFICATION_SETTINGS, **settings}
+    if not bool(merged_settings.get("notificationsEnabled")):
+        return []
+    if quiet_hours_active(merged_settings, now):
+        return []
+    return [
+        notification
+        for notification in notifications
+        if notification_type_enabled(merged_settings, str(notification.get("type") or ""))
+    ]
+
+
+def notification_type_enabled(settings: dict[str, Any], notification_type: str) -> bool:
+    type_settings = {
+        "budget_warning": "notificationBudgetWarnings",
+        "budget_exceeded": "notificationBudgetExceeded",
+        "deal_found": "notificationDeals",
+        "price_drop": "notificationDeals",
+        "weekly_summary": "notificationWeeklySummary",
+    }
+    setting_name = type_settings.get(notification_type)
+    if not setting_name:
+        return True
+    return bool(settings.get(setting_name, True))
+
+
+def quiet_hours_active(settings: dict[str, Any], now: datetime) -> bool:
+    if not bool(settings.get("notificationQuietHoursEnabled")):
+        return False
+
+    start = parse_time_string(settings.get("notificationQuietHoursStart"))
+    end = parse_time_string(settings.get("notificationQuietHoursEnd"))
+    if start is None or end is None or start == end:
+        return False
+
+    current = now.astimezone(timezone.utc).time().replace(tzinfo=None, second=0, microsecond=0)
+    if start < end:
+        return start <= current < end
+    return current >= start or current < end
+
+
+def parse_time_string(value: Any) -> time | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.strptime(value, "%H:%M")
+    except ValueError:
+        return None
+    return parsed.time()
 
 
 async def mark_notification_read(

@@ -117,6 +117,13 @@ export type AppStore = {
     notificationsEnabled: boolean
     alertTypeAmount: boolean
     alertTypePercentage: boolean
+    notificationBudgetWarnings: boolean
+    notificationBudgetExceeded: boolean
+    notificationDeals: boolean
+    notificationWeeklySummary: boolean
+    notificationQuietHoursEnabled: boolean
+    notificationQuietHoursStart: string
+    notificationQuietHoursEnd: string
   }
 
   // Extended store state
@@ -275,6 +282,13 @@ export const useStore = create<AppStore>()(
         notificationsEnabled: false,
         alertTypeAmount: true,
         alertTypePercentage: true,
+        notificationBudgetWarnings: true,
+        notificationBudgetExceeded: true,
+        notificationDeals: true,
+        notificationWeeklySummary: true,
+        notificationQuietHoursEnabled: false,
+        notificationQuietHoursStart: '22:00',
+        notificationQuietHoursEnd: '07:00',
       },
 
       // Initialize extended state
@@ -1004,7 +1018,7 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: 'budgii',
-      version: 13,
+      version: 14,
       migrate: (persisted, version) => {
         const state = persisted as Record<string, unknown>
         if (version < 2) {
@@ -1123,6 +1137,18 @@ export const useStore = create<AppStore>()(
                   ? (invite.editorLevel ?? defaultEditorLevel())
                   : undefined,
             }))
+          }
+        }
+        if (version < 14) {
+          const settings = state.settings as Record<string, unknown> | undefined
+          if (settings) {
+            settings.notificationBudgetWarnings = settings.notificationBudgetWarnings ?? true
+            settings.notificationBudgetExceeded = settings.notificationBudgetExceeded ?? true
+            settings.notificationDeals = settings.notificationDeals ?? true
+            settings.notificationWeeklySummary = settings.notificationWeeklySummary ?? true
+            settings.notificationQuietHoursEnabled = settings.notificationQuietHoursEnabled ?? false
+            settings.notificationQuietHoursStart = settings.notificationQuietHoursStart ?? '22:00'
+            settings.notificationQuietHoursEnd = settings.notificationQuietHoursEnd ?? '07:00'
           }
         }
         return state as AppStore

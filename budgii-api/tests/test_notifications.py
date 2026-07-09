@@ -1,3 +1,6 @@
+from datetime import datetime, timezone
+
+from app.services.notifications import filter_notifications_for_delivery
 from fastapi.testclient import TestClient
 
 from tests.helpers import (
@@ -9,6 +12,39 @@ from tests.helpers import (
     register_user,
 )
 from tests.test_normalized_finance import create_expense
+
+
+def test_push_delivery_filter_respects_master_type_and_quiet_hours() -> None:
+    now = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
+    notifications = [
+        {"id": "alert:warning", "type": "budget_warning"},
+        {"id": "deal:coffee", "type": "price_drop"},
+    ]
+
+    assert filter_notifications_for_delivery({"notificationsEnabled": False}, notifications, now) == []
+
+    type_filtered = filter_notifications_for_delivery(
+        {
+            "notificationsEnabled": True,
+            "notificationBudgetWarnings": True,
+            "notificationDeals": False,
+        },
+        notifications,
+        now,
+    )
+    assert [notification["id"] for notification in type_filtered] == ["alert:warning"]
+
+    quiet_filtered = filter_notifications_for_delivery(
+        {
+            "notificationsEnabled": True,
+            "notificationQuietHoursEnabled": True,
+            "notificationQuietHoursStart": "22:00",
+            "notificationQuietHoursEnd": "07:00",
+        },
+        notifications,
+        datetime(2026, 7, 7, 23, 0, tzinfo=timezone.utc),
+    )
+    assert quiet_filtered == []
 
 
 def test_notifications_include_active_spending_alert_and_new_deal(client: TestClient) -> None:

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Bell, DollarSign, Languages } from 'lucide-react'
+import { Bell, DollarSign, Languages, Moon } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
+import { FormField } from '@/components/ui/FormField'
 import { SelectRow } from '@/components/ui/SelectRow'
 import { ToggleRow } from '@/components/ui/ToggleRow'
 import { isApiEnabled } from '@/api/config'
@@ -36,6 +37,13 @@ export function Preferences() {
   const [currency, setCurrency] = useState(settings.currency || prefs.currency)
   const [language, setLanguage] = useState(prefs.language)
   const [notifications, setNotifications] = useState(settings.notificationsEnabled)
+  const [budgetWarnings, setBudgetWarnings] = useState(settings.notificationBudgetWarnings)
+  const [budgetExceeded, setBudgetExceeded] = useState(settings.notificationBudgetExceeded)
+  const [dealMatches, setDealMatches] = useState(settings.notificationDeals)
+  const [weeklySummary, setWeeklySummary] = useState(settings.notificationWeeklySummary)
+  const [quietHours, setQuietHours] = useState(settings.notificationQuietHoursEnabled)
+  const [quietStart, setQuietStart] = useState(settings.notificationQuietHoursStart)
+  const [quietEnd, setQuietEnd] = useState(settings.notificationQuietHoursEnd)
 
   const [openCurrency, setOpenCurrency] = useState(false)
   const [openLanguage, setOpenLanguage] = useState(false)
@@ -44,19 +52,47 @@ export function Preferences() {
   const [error, setError] = useState('')
   const savedCurrency = settings.currency || prefs.currency
   const savedNotifications = settings.notificationsEnabled
+  const savedNotificationSettings = {
+    budgetWarnings: settings.notificationBudgetWarnings,
+    budgetExceeded: settings.notificationBudgetExceeded,
+    dealMatches: settings.notificationDeals,
+    weeklySummary: settings.notificationWeeklySummary,
+    quietHours: settings.notificationQuietHoursEnabled,
+    quietStart: settings.notificationQuietHoursStart,
+    quietEnd: settings.notificationQuietHoursEnd,
+  }
 
   const currencyLabel = CURRENCIES.find((c) => c.code === currency)?.label || currency
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.label || 'English'
 
   const dirty =
-    currency !== savedCurrency || language !== prefs.language || notifications !== savedNotifications
+    currency !== savedCurrency ||
+    language !== prefs.language ||
+    notifications !== savedNotifications ||
+    budgetWarnings !== savedNotificationSettings.budgetWarnings ||
+    budgetExceeded !== savedNotificationSettings.budgetExceeded ||
+    dealMatches !== savedNotificationSettings.dealMatches ||
+    weeklySummary !== savedNotificationSettings.weeklySummary ||
+    quietHours !== savedNotificationSettings.quietHours ||
+    quietStart !== savedNotificationSettings.quietStart ||
+    quietEnd !== savedNotificationSettings.quietEnd
 
   async function handleSave() {
     if (saving) return
     setSaving(true)
     setError('')
     updatePrefs({ currency, language, notifications })
-    updateSettings({ currency, notificationsEnabled: notifications })
+    updateSettings({
+      currency,
+      notificationsEnabled: notifications,
+      notificationBudgetWarnings: budgetWarnings,
+      notificationBudgetExceeded: budgetExceeded,
+      notificationDeals: dealMatches,
+      notificationWeeklySummary: weeklySummary,
+      notificationQuietHoursEnabled: quietHours,
+      notificationQuietHoursStart: quietStart,
+      notificationQuietHoursEnd: quietEnd,
+    })
     try {
       if (isApiEnabled()) {
         await flushSyncNow()
@@ -130,11 +166,76 @@ export function Preferences() {
             <ToggleRow
               icon={<Bell size={20} />}
               title="Push Notifications"
-              description="Budget alerts and weekly summaries"
+              description="Allow Budgii to send alerts outside the app"
               checked={notifications}
               onChange={setNotifications}
               iconBg="#FFF0E5"
             />
+          </Card>
+        </div>
+
+        <div>
+          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">
+            Notification Types
+          </h2>
+          <Card className="divide-y divide-line/70 px-4 py-1">
+            <ToggleRow
+              title="Budget Warnings"
+              description="When a category is close to its limit"
+              checked={budgetWarnings}
+              onChange={setBudgetWarnings}
+            />
+            <ToggleRow
+              title="Over-Budget Alerts"
+              description="When spending passes a category limit"
+              checked={budgetExceeded}
+              onChange={setBudgetExceeded}
+              iconBg="#FFE5E5"
+            />
+            <ToggleRow
+              title="Deal Matches"
+              description="When watchlist items get a new deal"
+              checked={dealMatches}
+              onChange={setDealMatches}
+              iconBg="#EAF8ED"
+            />
+            <ToggleRow
+              title="Weekly Summary"
+              description="A short recap of household spending"
+              checked={weeklySummary}
+              onChange={setWeeklySummary}
+              iconBg="#E0F2FE"
+            />
+          </Card>
+        </div>
+
+        <div>
+          <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">Quiet Hours</h2>
+          <Card className="space-y-3 p-4">
+            <ToggleRow
+              icon={<Moon size={20} />}
+              title="Pause Push Alerts"
+              description="Hold non-urgent push alerts during this window"
+              checked={quietHours}
+              onChange={setQuietHours}
+              iconBg="#F0EAFE"
+            />
+            {quietHours && (
+              <div className="grid grid-cols-2 gap-3 border-t border-line/60 pt-3">
+                <FormField
+                  label="Start"
+                  type="time"
+                  value={quietStart}
+                  onChange={(e) => setQuietStart(e.target.value)}
+                />
+                <FormField
+                  label="End"
+                  type="time"
+                  value={quietEnd}
+                  onChange={(e) => setQuietEnd(e.target.value)}
+                />
+              </div>
+            )}
           </Card>
         </div>
 
