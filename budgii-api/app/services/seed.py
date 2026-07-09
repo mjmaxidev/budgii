@@ -48,6 +48,13 @@ DEFAULT_DOCUMENT: dict = {
         "notificationsEnabled": False,
         "alertTypeAmount": True,
         "alertTypePercentage": True,
+        "notificationBudgetWarnings": True,
+        "notificationBudgetExceeded": True,
+        "notificationDeals": True,
+        "notificationWeeklySummary": True,
+        "notificationQuietHoursEnabled": False,
+        "notificationQuietHoursStart": "22:00",
+        "notificationQuietHoursEnd": "07:00",
     },
     "incomeSources": [
         {"id": "src-salary", "name": "Salary", "color": "#16A34A"},

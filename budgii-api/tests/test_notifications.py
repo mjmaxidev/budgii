@@ -1,6 +1,10 @@
+import asyncio
 from datetime import datetime, timezone
+from uuid import UUID
 
+from app.db.session import async_session_factory, engine
 from app.services.notifications import filter_notifications_for_delivery
+from app.workers.push_notifications import dispatch_push_notifications_for_household
 from fastapi.testclient import TestClient
 
 from tests.helpers import (
@@ -229,3 +233,74 @@ def test_notification_device_token_registration_is_scoped_to_user(client: TestCl
     )
     assert unregister_response.status_code == 200, unregister_response.text
     assert unregister_response.json()["enabled"] is False
+
+
+def test_push_dispatch_sends_once_per_device_token(client: TestClient) -> None:
+    admin = register_user(client, "push-dispatch")
+    household = create_household(client, admin, "Push Dispatch")
+    revision = bootstrap(client, admin, household["id"]).json()["revision"]
+
+    push_response = client.post(
+        "/v1/sync",
+        json={
+            "household_id": household["id"],
+            "client_time": "2026-07-07T00:00:00Z",
+            "base_revision": revision,
+            "changes": {
+                "settings": {"notificationsEnabled": True},
+                "categories": [{"id": "cat-groceries", "name": "Groceries"}],
+                "budget": {"categoryAllocations": {"cat-groceries": 100}},
+                "spendingAlerts": [
+                    {
+                        "id": "alert-groceries",
+                        "categoryId": "cat-groceries",
+                        "threshold": 80,
+                        "alertType": "percentage",
+                    }
+                ],
+            },
+        },
+        headers=auth_headers(admin),
+    )
+    assert push_response.status_code == 200, push_response.text
+
+    token_response = client.post(
+        f"/v1/households/{household['id']}/notifications/device-tokens",
+        json={
+            "token": "ExponentPushToken[test-dispatch-device]",
+            "platform": "ios",
+            "device_id": "iphone-test",
+            "app_version": "0.1.0",
+        },
+        headers=auth_headers(admin),
+    )
+    assert token_response.status_code == 200, token_response.text
+
+    create_expense(
+        client,
+        admin,
+        household["id"],
+        category_id="cat-groceries",
+        amount=90,
+        merchant="Grocer",
+    )
+
+    run_at = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
+    first_summary, second_summary = asyncio.run(dispatch_household_push_twice(household["id"], run_at))
+    assert first_summary["notifications_considered"] == 1
+    assert first_summary["tokens_considered"] == 1
+    assert first_summary["sent_count"] == 1
+    assert first_summary["duplicate_count"] == 0
+
+    assert second_summary["sent_count"] == 0
+    assert second_summary["duplicate_count"] == 1
+
+
+async def dispatch_household_push_twice(household_id: str, run_at: datetime) -> tuple[dict, dict]:
+    await engine.dispose()
+    async with async_session_factory() as session:
+        first_summary = await dispatch_push_notifications_for_household(session, UUID(household_id), run_at)
+        await session.commit()
+        second_summary = await dispatch_push_notifications_for_household(session, UUID(household_id), run_at)
+        await session.commit()
+        return first_summary.as_dict(), second_summary.as_dict()

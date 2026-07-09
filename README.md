@@ -79,6 +79,12 @@ docker compose -f docker-compose.dev.yml run --rm --entrypoint python api script
 docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py --date 2026-07-09
 ```
 
+To dispatch eligible push notifications manually:
+
+```bash
+docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/dispatch_push_notifications.py
+```
+
 ## Desktop app (Electron)
 
 ```bash

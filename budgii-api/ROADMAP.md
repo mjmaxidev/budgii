@@ -53,6 +53,9 @@ receipt_uploads             ← file metadata (bytes on Docker volume at /app/up
 expenses
 receipts
 receipt_items
+notification_read_states
+notification_device_tokens
+notification_push_deliveries ← idempotent push delivery log
 ```
 
 ### Gaps (not built yet)
@@ -256,6 +259,8 @@ GET  /receipts/{id}/file                                        ✅
 **Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration. `scripts/apply_recurring.py` and `app/workers/recurring.py` provide the backend worker/CLI entry point for cron or a hosted scheduler.
 
 **Spending alert evaluation done:** `POST /households/{id}/spending-alerts/evaluate` reads synced alert config and budget allocations, compares against normalized monthly expenses, and returns active alert results for Home and Spending Alerts.
+
+**Push dispatch worker done:** `scripts/dispatch_push_notifications.py` scans eligible backend-generated notifications, respects notification preferences/quiet hours, sends through the configured push provider, and records `notification_push_deliveries` so repeated scheduler runs do not resend the same notification to the same device. The current production-safe provider is `log`; APNs/FCM remains a Phase 3 provider swap.
 
 **Finance pagination UX done:** Transactions and Receipt History render cached finance data in visible pages with load-more controls and result counts, so large local/API-hydrated histories remain manageable on the phone viewport.
 
