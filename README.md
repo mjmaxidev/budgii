@@ -49,6 +49,14 @@ docker compose -f docker-compose.dev.yml exec -T api scripts/lint.sh
 docker compose -f docker-compose.dev.yml exec -T -e RECEIPT_OCR_PROVIDER=deterministic api python -m pytest
 ```
 
+To run due recurring transactions manually, for example from a cron/scheduler:
+
+```bash
+cd budgii-api
+docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py
+docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py --date 2026-07-09
+```
+
 ## Desktop app (Electron)
 
 ```bash

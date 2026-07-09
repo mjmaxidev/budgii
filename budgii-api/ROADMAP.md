@@ -18,25 +18,25 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 
 ### Implemented and working
 
-| Area | Status | Endpoints |
-|------|--------|-----------|
-| Health | ✅ | `GET /v1/health` |
-| Auth | ✅ | `POST /v1/auth/register`, `/email`, `/google`, `/apple`, `/refresh` |
-| Users | ✅ | `GET /v1/users/me`, `DELETE /v1/users/me` |
-| Households | ✅ | `GET/POST /v1/households`, `POST /v1/households/join`, `POST /v1/households/invites` |
-| Sync | ✅ (v1) | `GET/POST /v1/sync` — document pull/push with revision conflicts |
-| Expenses | ✅ (Phase 2) | `GET/POST/PATCH/DELETE /v1/households/{id}/expenses` |
-| Receipts | ✅ (Phase 2, local volume) | Upload, CRUD, item CRUD, deterministic analyze/status/file endpoints |
-| Docker | ✅ | Postgres + API on `:8001`, Alembic on boot; `receipt_uploads` volume → `/app/uploads` |
+| Area       | Status                     | Endpoints                                                                             |
+| ---------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| Health     | ✅                         | `GET /v1/health`                                                                      |
+| Auth       | ✅                         | `POST /v1/auth/register`, `/email`, `/google`, `/apple`, `/refresh`                   |
+| Users      | ✅                         | `GET /v1/users/me`, `DELETE /v1/users/me`                                             |
+| Households | ✅                         | `GET/POST /v1/households`, `POST /v1/households/join`, `POST /v1/households/invites`  |
+| Sync       | ✅ (v1)                    | `GET/POST /v1/sync` — document pull/push with revision conflicts                      |
+| Expenses   | ✅ (Phase 2)               | `GET/POST/PATCH/DELETE /v1/households/{id}/expenses`                                  |
+| Receipts   | ✅ (Phase 2, local volume) | Upload, CRUD, item CRUD, deterministic analyze/status/file endpoints                  |
+| Docker     | ✅                         | Postgres + API on `:8001`, Alembic on boot; `receipt_uploads` volume → `/app/uploads` |
 
 ### Recent completed work
 
-| Area | Files | What changed |
-|------|-------|--------------|
-| Settings panel | `src/pages/Settings.tsx`, settings sub-pages | Settings flows are linked and backend-aware where applicable |
-| Receipt OCR | `app/services/ocr.py`, receipt pages, tests | OpenAI provider is wired, parser is hardened, and failed analysis is surfaced |
-| Dev operations | `scripts/reset_dev_db.sh`, README, roadmap | Local Docker dev database can be reset and reseeded with one guarded command |
-| Quality gates | `pyproject.toml`, `scripts/lint.sh`, backend Python files | Ruff lint/format checks are configured and the backend codebase is formatted |
+| Area           | Files                                                     | What changed                                                                  |
+| -------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Settings panel | `src/pages/Settings.tsx`, settings sub-pages              | Settings flows are linked and backend-aware where applicable                  |
+| Receipt OCR    | `app/services/ocr.py`, receipt pages, tests               | OpenAI provider is wired, parser is hardened, and failed analysis is surfaced |
+| Dev operations | `scripts/reset_dev_db.sh`, README, roadmap                | Local Docker dev database can be reset and reseeded with one guarded command  |
+| Quality gates  | `pyproject.toml`, `scripts/lint.sh`, backend Python files | Ruff lint/format checks are configured and the backend codebase is formatted  |
 
 ### Database tables
 
@@ -57,18 +57,18 @@ receipt_items
 
 ### Gaps (not built yet)
 
-| Gap | Notes |
-|-----|-------|
-| No frontend API client | **Done** — API client, auth gate, bootstrap, sync, personas, invites, normalized finance |
-| No invite list/revoke | **Done** — API-backed pending invite list and revoke UI |
-| No membership admin APIs | **Done** — role update and removal endpoints plus Family Members UI |
-| No email delivery | **Done** — dev logs invite links; production supports Resend/SendGrid via env |
-| No real OCR provider | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; receipt failure logging/status visibility is in place; real-receipt QA remains Phase 2 |
-| Account settings local-only | **Done** — `PATCH /users/me` updates profile/email and `POST /users/me/password` changes email-account passwords |
-| Notifications mock-only | **Done** — `GET /households/{id}/notifications` generates spending/deal notifications from backend data |
-| Deals/watchlist backend | **Done** — `POST /households/{id}/deals/check` refreshes synced watchlist/deals and frontend report/cards consume backend-generated deal data |
-| Limited tests | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest |
-| OAuth deferred | Apple/Google server verification exists; client UI/wiring and production IDs move to the end |
+| Gap                         | Notes                                                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| No frontend API client      | **Done** — API client, auth gate, bootstrap, sync, personas, invites, normalized finance                                                                     |
+| No invite list/revoke       | **Done** — API-backed pending invite list and revoke UI                                                                                                      |
+| No membership admin APIs    | **Done** — role update and removal endpoints plus Family Members UI                                                                                          |
+| No email delivery           | **Done** — dev logs invite links; production supports Resend/SendGrid via env                                                                                |
+| No real OCR provider        | OpenAI vision provider is wired behind `RECEIPT_OCR_PROVIDER=openai`; receipt failure logging/status visibility is in place; real-receipt QA remains Phase 2 |
+| Account settings local-only | **Done** — `PATCH /users/me` updates profile/email and `POST /users/me/password` changes email-account passwords                                             |
+| Notifications mock-only     | **Done** — `GET /households/{id}/notifications` generates spending/deal notifications from backend data                                                      |
+| Deals/watchlist backend     | **Done** — `POST /households/{id}/deals/check` refreshes synced watchlist/deals and frontend report/cards consume backend-generated deal data                |
+| Limited tests               | Auth sessions, bootstrap, household permissions, and normalized finance coverage started in pytest                                                           |
+| OAuth deferred              | Apple/Google server verification exists; client UI/wiring and production IDs move to the end                                                                 |
 
 ---
 
@@ -76,12 +76,12 @@ receipt_items
 
 ### Hybrid relational + JSONB
 
-| Relational (server enforces rules) | JSONB sync chunks (bulk sync via merged API) |
-|------------------------------------|----------------------------------------|
-| Users, refresh tokens | Categories, tags, budget, settings |
-| Households, memberships | Income config, goals, alerts |
-| Personas, invites | Shopping, watchlist, deals |
-| Receipt upload metadata, expenses, receipts, receipt items | Recurring transactions |
+| Relational (server enforces rules)                         | JSONB sync chunks (bulk sync via merged API) |
+| ---------------------------------------------------------- | -------------------------------------------- |
+| Users, refresh tokens                                      | Categories, tags, budget, settings           |
+| Households, memberships                                    | Income config, goals, alerts                 |
+| Personas, invites                                          | Shopping, watchlist, deals                   |
+| Receipt upload metadata, expenses, receipts, receipt items | Recurring transactions                       |
 
 **Why hybrid:** The app is one persisted Zustand object today. Document sync ships multi-device backup fast without rewriting 40+ store actions. Normalize expenses/receipts when the server needs SQL (reporting, OCR, search).
 
@@ -91,13 +91,13 @@ receipt_items
 
 Enforced at the API layer via `services/permissions.py`:
 
-| Role | Pull sync | Push sync keys | Admin actions |
-|------|-----------|----------------|---------------|
-| Admin | All | All document-sync keys | Members, invites, personas |
-| Editor · full | All | All document-sync keys | — |
-| Editor · standard | All | lists, income, recurring | — |
-| Editor · limited | All | ❌ none; expenses use normalized API | — |
-| Viewer | All | ❌ blocked | — |
+| Role              | Pull sync | Push sync keys                       | Admin actions              |
+| ----------------- | --------- | ------------------------------------ | -------------------------- |
+| Admin             | All       | All document-sync keys               | Members, invites, personas |
+| Editor · full     | All       | All document-sync keys               | —                          |
+| Editor · standard | All       | lists, income, recurring             | —                          |
+| Editor · limited  | All       | ❌ none; expenses use normalized API | —                          |
+| Viewer            | All       | ❌ blocked                           | —                          |
 
 Invites cannot grant `admin`. Household creator gets `admin` + `is_account_holder=True`.
 
@@ -124,33 +124,33 @@ Storage is split into `household_sync_meta` (revision + `updated_at`) and `house
 
 ### Storage
 
-| Asset | Phase 1–2 (current) | Phase 3+ (optional) |
-|-------|---------------------|---------------------|
-| Receipt images | Local filesystem via Docker volume | S3/R2/MinIO only if scale requires it |
-| Postgres | Docker volume | Managed (Neon / RDS) |
-| Secrets | `.env` | JWT, OAuth IDs, email API key (+ object-storage creds if adopted) |
+| Asset          | Phase 1–2 (current)                | Phase 3+ (optional)                                               |
+| -------------- | ---------------------------------- | ----------------------------------------------------------------- |
+| Receipt images | Local filesystem via Docker volume | S3/R2/MinIO only if scale requires it                             |
+| Postgres       | Docker volume                      | Managed (Neon / RDS)                                              |
+| Secrets        | `.env`                             | JWT, OAuth IDs, email API key (+ object-storage creds if adopted) |
 
 #### Receipt storage (chosen approach)
 
 Receipt uploads use **local filesystem storage** — no S3 for now.
 
-| Setting | Value |
-|---------|-------|
-| Config | `RECEIPT_STORAGE_PATH=/app/uploads` (default in `app/config.py`; set in `.env.example`) |
-| Docker Compose | Named volume `receipt_uploads` mounted at `/app/uploads` on the `api` service |
-| Upload layout | `{RECEIPT_STORAGE_PATH}/{household_id}/{upload_id}_{filename}` |
-| API response | `ReceiptUploadResponse` returns `id`, `status`, `filename` — client stores `id`; file path is server-internal |
-| Serving files | ✅ `GET /receipts/{id}/file` with auth + household check |
+| Setting        | Value                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------- |
+| Config         | `RECEIPT_STORAGE_PATH=/app/uploads` (default in `app/config.py`; set in `.env.example`)                       |
+| Docker Compose | Named volume `receipt_uploads` mounted at `/app/uploads` on the `api` service                                 |
+| Upload layout  | `{RECEIPT_STORAGE_PATH}/{household_id}/{upload_id}_{filename}`                                                |
+| API response   | `ReceiptUploadResponse` returns `id`, `status`, `filename` — client stores `id`; file path is server-internal |
+| Serving files  | ✅ `GET /receipts/{id}/file` with auth + household check                                                      |
 
 `POST /v1/receipts/upload` writes bytes to disk and records metadata in `receipt_uploads`. Phase 2 OCR workers read from the same local path.
 
 #### Receipt storage options
 
-| Option | Fit | Notes |
-|--------|-----|-------|
+| Option                    | Fit                                           | Notes                                                                                                          |
+| ------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **Local volume (chosen)** | Dev, Docker Compose, small single-host deploy | Simple; `receipt_uploads` volume persists across container restarts; not ideal for multi-replica or serverless |
-| **MinIO** | Self-hosted S3-compatible | Drop-in S3 API without AWS; easy migration path if you outgrow local disk |
-| **S3 / Cloudflare R2** | Production scale, CDN, multi-region | Defer until traffic, redundancy, or presigned direct-upload URLs justify the complexity |
+| **MinIO**                 | Self-hosted S3-compatible                     | Drop-in S3 API without AWS; easy migration path if you outgrow local disk                                      |
+| **S3 / Cloudflare R2**    | Production scale, CDN, multi-region           | Defer until traffic, redundancy, or presigned direct-upload URLs justify the complexity                        |
 
 ---
 
@@ -162,26 +162,26 @@ Receipt uploads use **local filesystem storage** — no S3 for now.
 
 #### Backend tasks
 
-| # | Task | API |
-|---|------|-----|
-| 1 | Commit persona/permissions slice | *(see §6)* |
-| 2 | Invite list + revoke | ✅ `GET /households/invites?household_id=`, `DELETE /households/invites/{id}` |
-| 3 | Membership admin | ✅ `GET /households/{id}/members`, `PATCH`, `DELETE` |
-| 4 | Bootstrap | ✅ `GET /households/{id}/bootstrap` → household + members + personas + invites + sync snapshot |
-| 5 | Viewer pull filtering (optional) | Strip admin-only keys from snapshot for limited roles |
+| #   | Task                             | API                                                                                            |
+| --- | -------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | Commit persona/permissions slice | _(see §6)_                                                                                     |
+| 2   | Invite list + revoke             | ✅ `GET /households/invites?household_id=`, `DELETE /households/invites/{id}`                  |
+| 3   | Membership admin                 | ✅ `GET /households/{id}/members`, `PATCH`, `DELETE`                                           |
+| 4   | Bootstrap                        | ✅ `GET /households/{id}/bootstrap` → household + members + personas + invites + sync snapshot |
+| 5   | Viewer pull filtering (optional) | Strip admin-only keys from snapshot for limited roles                                          |
 
 #### Frontend tasks
 
-| # | Task | Status |
-|---|------|--------|
-| 1 | `src/api/client.ts` — base URL, Bearer, refresh on 401 | ✅ |
-| 2 | `src/api/auth.ts`, `households.ts`, `sync.ts`, `personas.ts` | ✅ |
-| 3 | Auth gate on login/register screens | ✅ |
-| 4 | Map `PersonaResponse[]` → `familyMembers` on hydrate | ✅ |
-| 5 | Sync middleware: debounced push after mutations; periodic pull | ✅ |
-| 6 | Replace local invite/join with API | ✅ (when `VITE_API_ENABLED=true`) |
-| 7 | `VITE_API_ENABLED` flag for offline dev fallback | ✅ |
-| 8 | Membership admin UI | ✅ |
+| #   | Task                                                           | Status                            |
+| --- | -------------------------------------------------------------- | --------------------------------- |
+| 1   | `src/api/client.ts` — base URL, Bearer, refresh on 401         | ✅                                |
+| 2   | `src/api/auth.ts`, `households.ts`, `sync.ts`, `personas.ts`   | ✅                                |
+| 3   | Auth gate on login/register screens                            | ✅                                |
+| 4   | Map `PersonaResponse[]` → `familyMembers` on hydrate           | ✅                                |
+| 5   | Sync middleware: debounced push after mutations; periodic pull | ✅                                |
+| 6   | Replace local invite/join with API                             | ✅ (when `VITE_API_ENABLED=true`) |
+| 7   | `VITE_API_ENABLED` flag for offline dev fallback               | ✅                                |
+| 8   | Membership admin UI                                            | ✅                                |
 
 **Remaining Phase 1 frontend:** Complete enough to move into Phase 2. OAuth (Apple/Google) is intentionally deferred to the end.
 
@@ -253,7 +253,7 @@ GET  /receipts/{id}/file                                        ✅
 
 **Receipt retry/parser hardening done:** Receipt Results can re-analyze existing uploads, Scan Receipt and Receipt Results share the same API polling/hydration flow, and OpenAI payload parsing now skips total/tax/payment rows, merges duplicate item lines, tolerates numeric strings, and fails clearly when no line items are returned.
 
-**Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration.
+**Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration. `scripts/apply_recurring.py` and `app/workers/recurring.py` provide the backend worker/CLI entry point for cron or a hosted scheduler.
 
 **Spending alert evaluation done:** `POST /households/{id}/spending-alerts/evaluate` reads synced alert config and budget allocations, compares against normalized monthly expenses, and returns active alert results for Home and Spending Alerts.
 
@@ -263,17 +263,17 @@ GET  /receipts/{id}/file                                        ✅
 
 ### Phase 3 — Production deploy
 
-| Component | Recommendation |
-|-----------|----------------|
-| API hosting | Fly.io / Railway / ECS (Dockerfile ready) |
-| Database | Managed Postgres |
+| Component       | Recommendation                                                                                                                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API hosting     | Fly.io / Railway / ECS (Dockerfile ready)                                                                                                                                                      |
+| Database        | Managed Postgres                                                                                                                                                                               |
 | Receipt storage | **Keep local volume** on single-host deploy; mount persistent disk on the API container. Move to MinIO or S3/R2 only if you need multi-replica APIs, CDN delivery, or presigned direct uploads |
-| Email invites | ✅ Resend / SendGrid-ready provider (`INVITE_EMAIL_PROVIDER`, `INVITE_EMAIL_FROM`, `INVITE_EMAIL_API_KEY`) |
-| OCR | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split) |
-| Monitoring | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy |
-| Mobile | Capacitor → `https://api.budgii.app/v1` |
-| Universal links | `https://budgii.app/join?code=` → app or web |
-| CORS | ✅ `CORS_ORIGINS` locks origins when `APP_DEBUG=false`; production startup rejects weak/default JWT secrets |
+| Email invites   | ✅ Resend / SendGrid-ready provider (`INVITE_EMAIL_PROVIDER`, `INVITE_EMAIL_FROM`, `INVITE_EMAIL_API_KEY`)                                                                                     |
+| OCR             | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split)                                                                                            |
+| Monitoring      | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy                                                                                                   |
+| Mobile          | Capacitor → `https://api.budgii.app/v1`                                                                                                                                                        |
+| Universal links | `https://budgii.app/join?code=` → app or web                                                                                                                                                   |
+| CORS            | ✅ `CORS_ORIGINS` locks origins when `APP_DEBUG=false`; production startup rejects weak/default JWT secrets                                                                                    |
 
 ---
 
@@ -311,13 +311,13 @@ GET  /receipts/{id}/file                                        ✅
 
 ### Persona ↔ FamilyMember mapping
 
-| Frontend `FamilyMember` | Backend source |
-|-------------------------|----------------|
-| `id` | `persona.id` |
-| `name`, `relationship`, `avatar`, `active`, `isDefault` | `PersonaResponse` fields |
-| `isAccountHolder` | `membership.is_account_holder` |
-| `hasAppAccess` | persona has linked membership |
-| `accessRole`, `editorLevel` | membership fields (if linked) |
+| Frontend `FamilyMember`                                 | Backend source                 |
+| ------------------------------------------------------- | ------------------------------ |
+| `id`                                                    | `persona.id`                   |
+| `name`, `relationship`, `avatar`, `active`, `isDefault` | `PersonaResponse` fields       |
+| `isAccountHolder`                                       | `membership.is_account_holder` |
+| `hasAppAccess`                                          | persona has linked membership  |
+| `accessRole`, `editorLevel`                             | membership fields (if linked)  |
 
 ---
 
@@ -344,7 +344,7 @@ budgii-api/alembic/versions/001_initial.py
 budgii-api/alembic/env.py
 ```
 
-Suggested message: *Add household personas, access roles, and permission-gated sync.*
+Suggested message: _Add household personas, access roles, and permission-gated sync._
 
 Do **not** mix unrelated frontend changes (`ProgressRing.tsx`, `Home.tsx`, etc.) into this commit.
 
@@ -356,20 +356,20 @@ Do **not** mix unrelated frontend changes (`ProgressRing.tsx`, `Home.tsx`, etc.)
 
 ## 7. Open questions
 
-| # | Question | Options / notes |
-|---|----------|-----------------|
-| 1 | Single vs multi-household in v1 UI? | API supports multiple; frontend assumes one |
-| 2 | Migrate existing `localStorage` on first login? | Resolved for pre-market: fresh start; import flow can be added later if needed |
-| 3 | Client-generated UUIDs vs server-assigned IDs? | UUIDs client-side recommended for offline-first |
-| 4 | Single-use invite codes vs reusable links? | Current: single-use, 7-day expiry |
-| 5 | Viewer data scope | Resolved: full household read; writes/admin actions remain blocked |
-| 6 | Account holder transfer | Permanent owner vs transferable admin |
-| 7 | Add member + invite in one API call? | Matches `FamilyMembers.tsx` save flow |
-| 8 | Phone/SMS invites? | Resolved for v1: email-only; Twilio can be added later |
-| 9 | OCR provider | Resolved for Phase 2: OpenAI vision with deterministic fallback for tests/dev |
-| 10 | Electron vs mobile backend | Resolved: web/Electron/mobile share the API when `VITE_API_ENABLED=true` |
-| 11 | Deals/watchlist backend | Resolved for Phase 2: backend-generated deterministic deal checks; real retailer integrations later |
-| 12 | Conflict resolution | Per-key LWW (v1) vs per-entity merge |
+| #   | Question                                        | Options / notes                                                                                     |
+| --- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1   | Single vs multi-household in v1 UI?             | API supports multiple; frontend assumes one                                                         |
+| 2   | Migrate existing `localStorage` on first login? | Resolved for pre-market: fresh start; import flow can be added later if needed                      |
+| 3   | Client-generated UUIDs vs server-assigned IDs?  | UUIDs client-side recommended for offline-first                                                     |
+| 4   | Single-use invite codes vs reusable links?      | Current: single-use, 7-day expiry                                                                   |
+| 5   | Viewer data scope                               | Resolved: full household read; writes/admin actions remain blocked                                  |
+| 6   | Account holder transfer                         | Permanent owner vs transferable admin                                                               |
+| 7   | Add member + invite in one API call?            | Matches `FamilyMembers.tsx` save flow                                                               |
+| 8   | Phone/SMS invites?                              | Resolved for v1: email-only; Twilio can be added later                                              |
+| 9   | OCR provider                                    | Resolved for Phase 2: OpenAI vision with deterministic fallback for tests/dev                       |
+| 10  | Electron vs mobile backend                      | Resolved: web/Electron/mobile share the API when `VITE_API_ENABLED=true`                            |
+| 11  | Deals/watchlist backend                         | Resolved for Phase 2: backend-generated deterministic deal checks; real retailer integrations later |
+| 12  | Conflict resolution                             | Per-key LWW (v1) vs per-entity merge                                                                |
 
 ---
 
@@ -452,4 +452,4 @@ It only recreates the Postgres schema and rows.
 
 ---
 
-*MJ Productions — dev@mjproductions.app*
+_MJ Productions — dev@mjproductions.app_
