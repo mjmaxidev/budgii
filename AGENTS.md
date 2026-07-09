@@ -73,14 +73,14 @@ All per-screen layout lives in `AppShell`. Bottom button bars must use `absolute
 
 ### Scripts
 
-| Script | What it does |
-|--------|-------------|
-| `electron:dev:app` | Vite dev server + app Electron (hot reload) |
-| `electron:dev:qa` | Vite dev server + QA Electron (hot reload) |
-| `electron:start:app` | Build once + launch app |
-| `electron:start:qa` | Build once + launch QA |
-| `electron:dist:app` | Build `Budgii` distributable |
-| `electron:dist:qa` | Build `Budgii QA` distributable |
+| Script               | What it does                                |
+| -------------------- | ------------------------------------------- |
+| `electron:dev:app`   | Vite dev server + app Electron (hot reload) |
+| `electron:dev:qa`    | Vite dev server + QA Electron (hot reload)  |
+| `electron:start:app` | Build once + launch app                     |
+| `electron:start:qa`  | Build once + launch QA                      |
+| `electron:dist:app`  | Build `Budgii` distributable                |
+| `electron:dist:qa`   | Build `Budgii QA` distributable             |
 
 `build-app-variant.cjs` swaps `package.json` `main`, `productName`, and `appId` per variant and restores the file after the build.
 
@@ -91,7 +91,9 @@ All per-screen layout lives in `AppShell`. Bottom button bars must use `absolute
 - **`pageManifest.ts` is hand-maintained** — intentionally duplicates the router page list to avoid QA importing app code. Update both when adding/renaming app pages.
 - **`electron-builder` output** goes to `release/` (not `dist/`).
 - **`dist/`** is Vite's web bundle output (committed to `.gitignore`).
-- **All state is `localStorage`** — no backend. Electron is a pure web wrapper.
+- **Hybrid API + local cache** — when `VITE_API_ENABLED=true`, accounts, households, personas, invites, expenses, receipts, receipt items, profile, notifications, and OCR flows go through the FastAPI backend. `localStorage` remains the Zustand cache/offline fallback for synced config and local-only state.
+- **Server-owned vs synced state** — expenses, receipts, receipt items, personas, invites, and user profile are server-owned; categories, tags, budget, income, recurring transactions, alerts, watchlist, deals, and shopping list sync through JSONB chunks.
+- **Electron is a wrapper over the same app bundle** — it loads the React app, which may run in API mode or offline/local mode based on env.
 - The app's `base: './'` means the iframe `src="./index.html#/path"` resolves correctly in both dev and prod.
 
 ## Author

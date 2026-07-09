@@ -1,6 +1,6 @@
 # Budgii — Capacitor (iOS & Android)
 
-Budgii ships as a web bundle (`dist/`) wrapped by Electron (desktop) and Capacitor (mobile). The same React app, hash router, and `localStorage` state are used on all platforms.
+Budgii ships as a web bundle (`dist/`) wrapped by Electron (desktop) and Capacitor (mobile). The same React app and hash router are used on all platforms. In API mode, authenticated household data syncs through the FastAPI backend; `localStorage` remains the Zustand cache/offline fallback and stores local-only state such as the app PIN.
 
 ## Prerequisites
 
@@ -20,6 +20,11 @@ npm run cap:sync
 
 Native projects (`ios/`, `android/`) are gitignored and regenerated locally with `cap add`. Commit `capacitor.config.ts` and web source only.
 
+For API-backed mobile testing, set `VITE_API_ENABLED=true` and point
+`VITE_API_BASE_URL` at a backend URL the device can reach. `localhost` inside a
+phone/simulator is not the Docker host unless you are using platform-specific
+network aliases or a LAN/tunnel URL.
+
 ## Native camera
 
 Receipt scanning uses `@capacitor/camera` on iOS/Android and falls back to a browser file input on web/Electron.
@@ -37,12 +42,12 @@ The iOS Simulator can install and launch the app, but proper camera capture requ
 
 ## Scripts
 
-| Script | What it does |
-|--------|----------------|
-| `npm run cap:build` | `tsc` + Vite build, then `cap sync` |
-| `npm run cap:sync` | Copy `dist/` into native projects |
-| `npm run cap:ios` | Open Xcode workspace |
-| `npm run cap:android` | Open Android Studio project |
+| Script                | What it does                        |
+| --------------------- | ----------------------------------- |
+| `npm run cap:build`   | `tsc` + Vite build, then `cap sync` |
+| `npm run cap:sync`    | Copy `dist/` into native projects   |
+| `npm run cap:ios`     | Open Xcode workspace                |
+| `npm run cap:android` | Open Android Studio project         |
 
 ## Dev workflow
 

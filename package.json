@@ -14,6 +14,7 @@
     "hooks:install": "git config core.hooksPath .githooks",
     "precommit": "RUN_ALL=1 scripts/precommit.sh",
     "build": "tsc -b && vite build",
+    "smoke:routes": "node scripts/smoke-routes.mjs",
     "preview": "vite preview",
     "electron:dev:app": "node electron/dev-app.cjs",
     "electron:dev:qa": "node electron/dev-qa.cjs",

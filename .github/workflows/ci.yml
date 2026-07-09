@@ -1,12 +1,10 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches:
-      - main
-      - feature/**
-      - codex/**
+      - '**'
+  pull_request:
 
 jobs:
   frontend:
@@ -29,11 +27,14 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Check formatting
+      - name: Format check
         run: npm run format:check
 
       - name: Build
         run: npm run build
+
+      - name: Route smoke test
+        run: npm run smoke:routes
 
   backend:
     name: Backend
@@ -61,12 +62,11 @@ jobs:
     env:
       APP_ENV: development
       APP_DEBUG: 'true'
-      API_PREFIX: /v1
       DATABASE_URL: postgresql+asyncpg://budgii:budgii@localhost:5432/budgii
-      JWT_SECRET: ci-secret-change-me
-      INVITE_EMAIL_PROVIDER: log
-      RECEIPT_STORAGE_PATH: /tmp/budgii-receipt-uploads
+      JWT_SECRET: ci-dev-secret-change-me
+      RECEIPT_STORAGE_PATH: /tmp/budgii-receipts
       RECEIPT_OCR_PROVIDER: deterministic
+      INVITE_EMAIL_PROVIDER: log
 
     steps:
       - name: Checkout
@@ -82,7 +82,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Ruff check
+      - name: Ruff lint
         run: ruff check .
 
       - name: Ruff format check
@@ -91,5 +91,5 @@ jobs:
       - name: Run migrations
         run: alembic upgrade head
 
-      - name: Run tests
+      - name: Test
         run: python -m pytest
