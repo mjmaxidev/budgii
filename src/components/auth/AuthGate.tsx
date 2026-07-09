@@ -8,6 +8,13 @@ import { PageTransition } from '@/components/motion/PageTransition'
 import { useAuthStore } from '@/store/authStore'
 
 const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/verification'])
+const TOKEN_RESTORE_TIMEOUT_MS = 1500
+
+function timeout(ms: number): Promise<false> {
+  return new Promise((resolve) => {
+    window.setTimeout(() => resolve(false), ms)
+  })
+}
 
 export function AuthGate() {
   const location = useLocation()
@@ -27,7 +34,7 @@ export function AuthGate() {
 
     let cancelled = false
     ;(async () => {
-      await restoreAuthTokens()
+      await Promise.race([restoreAuthTokens(), timeout(TOKEN_RESTORE_TIMEOUT_MS)])
       if (!cancelled) setTokensRestored(true)
     })()
 
@@ -69,7 +76,11 @@ export function AuthGate() {
   }
 
   if (!tokensRestored) {
-    return null
+    return (
+      <div className="flex min-h-full items-center justify-center px-6 text-center">
+        <p className="text-[14px] font-semibold text-muted">Loading Budgii...</p>
+      </div>
+    )
   }
 
   if (!accessToken && !isPublic && !isJoin) {
