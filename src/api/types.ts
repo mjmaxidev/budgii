@@ -150,6 +150,21 @@ export type ApplyRecurringResponse = {
   recurring_transactions: RecurringTransaction[]
 }
 
+export type RecurringPreviewItem = {
+  recurring_id: string
+  merchant: string
+  amount: number
+  category_id: string
+  due_date: string
+  next_due_date: string | null
+}
+
+export type PreviewRecurringResponse = {
+  items: RecurringPreviewItem[]
+  due_count: number
+  skipped_count: number
+}
+
 export type ReceiptUploadResponse = {
   id: string
   status: string

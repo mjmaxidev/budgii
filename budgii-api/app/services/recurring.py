@@ -180,6 +180,47 @@ async def apply_due_recurring_transactions(
     return generated, skipped_count, applied_recurring_ids, updated_transactions
 
 
+async def preview_due_recurring_transactions(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    due_date: date,
+) -> tuple[list[dict[str, Any]], int]:
+    transactions = await load_recurring_transactions(session, household_id)
+
+    items: list[dict[str, Any]] = []
+    skipped_count = 0
+    for transaction in transactions:
+        recurring_id = str(transaction.get("id") or "").strip()
+        expense_payload = transaction.get("expense")
+        if (
+            not recurring_id
+            or not is_recurring_due(transaction, due_date)
+            or not valid_expense_payload(expense_payload)
+        ):
+            skipped_count += 1
+            continue
+
+        expense_id = generated_expense_id(household_id, recurring_id, due_date)
+        existing = await session.get(Expense, expense_id)
+        if existing is not None:
+            skipped_count += 1
+            continue
+
+        next_due = next_due_date(transaction, due_date)
+        items.append(
+            {
+                "recurring_id": recurring_id,
+                "merchant": expense_payload["merchant"].strip(),
+                "amount": float(expense_payload["amount"]),
+                "category_id": expense_payload["categoryId"].strip(),
+                "due_date": due_datetime(due_date),
+                "next_due_date": due_datetime(next_due) if next_due else None,
+            }
+        )
+
+    return items, skipped_count
+
+
 def parse_uuid_or_none(value: Any) -> uuid.UUID | None:
     if not value:
         return None

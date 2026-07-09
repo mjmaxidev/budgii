@@ -1,5 +1,10 @@
 import { apiRequest } from '@/api/client'
-import type { ApplyRecurringResponse, ExpenseListResponse, ExpenseResponse } from '@/api/types'
+import type {
+  ApplyRecurringResponse,
+  ExpenseListResponse,
+  ExpenseResponse,
+  PreviewRecurringResponse,
+} from '@/api/types'
 import type { Expense } from '@/types'
 
 type ExpenseApiInput = {
@@ -90,6 +95,16 @@ export async function applyDueRecurringTransactions(
   date = new Date(),
 ): Promise<ApplyRecurringResponse> {
   return apiRequest<ApplyRecurringResponse>(`/households/${householdId}/recurring/apply`, {
+    method: 'POST',
+    body: { date: date.toISOString() },
+  })
+}
+
+export async function previewDueRecurringTransactions(
+  householdId: string,
+  date = new Date(),
+): Promise<PreviewRecurringResponse> {
+  return apiRequest<PreviewRecurringResponse>(`/households/${householdId}/recurring/preview`, {
     method: 'POST',
     body: { date: date.toISOString() },
   })

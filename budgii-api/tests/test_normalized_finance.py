@@ -256,6 +256,22 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
     assert push_response.status_code == 200, push_response.text
     assert push_response.json()["accepted"] is True
 
+    preview_response = client.post(
+        f"/v1/households/{household['id']}/recurring/preview",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(admin),
+    )
+    assert preview_response.status_code == 200, preview_response.text
+    preview = preview_response.json()
+    assert preview["due_count"] == 4
+    assert preview["skipped_count"] == 4
+    assert {item["merchant"] for item in preview["items"]} == {
+        "Annual Renewal",
+        "Daily Coffee",
+        "Month End Bill",
+        "Tuesday Gym",
+    }
+
     apply_response = client.post(
         f"/v1/households/{household['id']}/recurring/apply",
         json={"date": "2026-07-07T00:00:00Z"},
@@ -286,6 +302,14 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
     )
     assert repeat_response.status_code == 200
     assert repeat_response.json()["applied_count"] == 0
+
+    preview_after_apply_response = client.post(
+        f"/v1/households/{household['id']}/recurring/preview",
+        json={"date": "2026-07-07T00:00:00Z"},
+        headers=auth_headers(admin),
+    )
+    assert preview_after_apply_response.status_code == 200
+    assert preview_after_apply_response.json()["due_count"] == 0
 
     expenses_response = client.get(
         f"/v1/households/{household['id']}/expenses",

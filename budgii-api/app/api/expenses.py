@@ -13,6 +13,7 @@ from app.schemas.expense import (
     CreateExpenseRequest,
     ExpenseListResponse,
     ExpenseResponse,
+    PreviewRecurringResponse,
     UpdateExpenseRequest,
 )
 from app.services import expense as expense_service
@@ -132,6 +133,25 @@ async def apply_due_recurring_transactions(
         applied_recurring_ids=applied_recurring_ids,
         recurring_transactions=recurring_transactions,
     )
+
+
+@router.post("/{household_id}/recurring/preview", response_model=PreviewRecurringResponse)
+async def preview_due_recurring_transactions(
+    household_id: str,
+    body: ApplyRecurringRequest | None = None,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> PreviewRecurringResponse:
+    household_uuid = parse_uuid(household_id, "household_id")
+    membership = await require_membership(session, user.id, household_uuid)
+    require_can_pull(membership)
+    due_date = (body.date if body and body.date else datetime.now().astimezone()).date()
+    items, skipped_count = await recurring_service.preview_due_recurring_transactions(
+        session,
+        membership.household_id,
+        due_date,
+    )
+    return PreviewRecurringResponse(items=items, due_count=len(items), skipped_count=skipped_count)
 
 
 @router.patch("/{household_id}/expenses/{expense_id}", response_model=ExpenseResponse)

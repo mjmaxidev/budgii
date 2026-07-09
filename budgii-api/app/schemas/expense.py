@@ -31,6 +31,21 @@ class ApplyRecurringRequest(BaseModel):
     date: datetime | None = None
 
 
+class RecurringPreviewItem(BaseModel):
+    recurring_id: str
+    merchant: str
+    amount: float
+    category_id: str
+    due_date: datetime
+    next_due_date: datetime | None = None
+
+
+class PreviewRecurringResponse(BaseModel):
+    items: list[RecurringPreviewItem]
+    due_count: int
+    skipped_count: int
+
+
 class ApplyRecurringResponse(BaseModel):
     expenses: list[ExpenseResponse]
     applied_count: int

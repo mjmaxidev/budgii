@@ -1,11 +1,20 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Play, Search } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
+import { ApiError } from '@/api/client'
+import { isApiEnabled } from '@/api/config'
+import {
+  apiExpensesToExpenses,
+  applyDueRecurringTransactions,
+  previewDueRecurringTransactions,
+} from '@/api/expenses'
+import type { RecurringPreviewItem } from '@/api/types'
+import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
 import { dateOnly, formatShortDate, nextRecurringDate, recurringScheduleLabel } from '@/utils/recurring'
@@ -53,6 +62,7 @@ export function RecurringTransactions() {
   const addRecurringTransaction = useStore((s) => s.addRecurringTransaction)
   const updateRecurringTransaction = useStore((s) => s.updateRecurringTransaction)
   const deleteRecurringTransaction = useStore((s) => s.deleteRecurringTransaction)
+  const householdId = useAuthStore((s) => s.householdId)
   const { familyMembers, tags, member } = useLookups()
 
   const [showForm, setShowForm] = useState(false)
@@ -72,8 +82,14 @@ export function RecurringTransactions() {
   const [tagIds, setTagIds] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [runDate, setRunDate] = useState(dateOnly())
+  const [previewItems, setPreviewItems] = useState<RecurringPreviewItem[]>([])
+  const [runMessage, setRunMessage] = useState('')
+  const [runError, setRunError] = useState('')
+  const [runningAction, setRunningAction] = useState<'preview' | 'apply' | null>(null)
 
   const isValid = merchant.trim() !== '' && amount.trim() !== '' && !!categoryId
+  const canRunApi = isApiEnabled() && !!householdId
   const draftSchedule = {
     frequency,
     startDate,
@@ -91,6 +107,63 @@ export function RecurringTransactions() {
     setTagIds((current) =>
       current.includes(id) ? current.filter((tagId) => tagId !== id) : [...current, id],
     )
+  }
+
+  async function handlePreviewDue() {
+    if (!canRunApi || runningAction) return
+    setRunningAction('preview')
+    setRunMessage('')
+    setRunError('')
+    try {
+      const response = await previewDueRecurringTransactions(householdId, runDateValue())
+      setPreviewItems(response.items)
+      setRunMessage(
+        response.due_count === 0
+          ? 'No due recurring transactions for this date.'
+          : `${response.due_count} recurring transaction${response.due_count === 1 ? '' : 's'} ready to apply.`,
+      )
+    } catch (err) {
+      setRunError(err instanceof ApiError ? err.message : 'Could not preview recurring transactions.')
+    } finally {
+      setRunningAction(null)
+    }
+  }
+
+  async function handleApplyDue() {
+    if (!canRunApi || runningAction) return
+    setRunningAction('apply')
+    setRunMessage('')
+    setRunError('')
+    try {
+      const response = await applyDueRecurringTransactions(householdId, runDateValue())
+      const appliedExpenses = apiExpensesToExpenses(response.expenses)
+      useStore.setState((state) => ({
+        expenses: [
+          ...appliedExpenses,
+          ...state.expenses.filter(
+            (expense) => !appliedExpenses.some((applied) => applied.id === expense.id),
+          ),
+        ],
+        recurringTransactions:
+          response.recurring_transactions.length > 0
+            ? response.recurring_transactions
+            : state.recurringTransactions,
+      }))
+      setPreviewItems([])
+      setRunMessage(
+        response.applied_count === 0
+          ? 'No new recurring expenses were applied.'
+          : `Applied ${response.applied_count} recurring expense${response.applied_count === 1 ? '' : 's'}.`,
+      )
+    } catch (err) {
+      setRunError(err instanceof ApiError ? err.message : 'Could not apply recurring transactions.')
+    } finally {
+      setRunningAction(null)
+    }
+  }
+
+  function runDateValue(): Date {
+    return new Date(`${runDate}T00:00:00`)
   }
 
   const handleAddOrUpdate = () => {
@@ -178,6 +251,76 @@ export function RecurringTransactions() {
         >
           Add Recurring Transaction
         </ActionButton>
+      )}
+
+      {!showForm && (
+        <Card className="mb-4 space-y-3">
+          <div className="grid grid-cols-[1fr_auto_auto] items-end gap-2">
+            <FormField
+              label="Run Date"
+              type="date"
+              value={runDate}
+              onChange={(event) => setRunDate(event.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => void handlePreviewDue()}
+              disabled={!canRunApi || runningAction !== null}
+              className="flex h-[46px] w-11 items-center justify-center rounded-input border border-line bg-surface text-muted disabled:opacity-40"
+              aria-label="Preview due recurring transactions"
+            >
+              <Search size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleApplyDue()}
+              disabled={!canRunApi || runningAction !== null}
+              className="flex h-[46px] w-11 items-center justify-center rounded-input bg-primary text-white disabled:opacity-40"
+              aria-label="Apply due recurring transactions"
+            >
+              <Play size={18} />
+            </button>
+          </div>
+          {!canRunApi && (
+            <p className="text-[12px] font-semibold text-muted">
+              Preview and apply controls are available when API mode is connected.
+            </p>
+          )}
+          {runMessage && (
+            <p className="rounded-input bg-greenSoft px-3 py-2 text-[13px] font-semibold text-green">
+              {runMessage}
+            </p>
+          )}
+          {runError && (
+            <p className="rounded-input bg-redSoft px-3 py-2 text-[13px] font-semibold text-red">
+              {runError}
+            </p>
+          )}
+          {previewItems.length > 0 && (
+            <div className="space-y-2">
+              {previewItems.map((item) => {
+                const cat = categories.find((category) => category.id === item.category_id)
+                return (
+                  <div
+                    key={item.recurring_id}
+                    className="flex items-center justify-between gap-3 rounded-input bg-surfaceSoft px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-bold text-ink">
+                        {cat?.icon ? `${cat.icon} ` : ''}
+                        {item.merchant}
+                      </p>
+                      <p className="text-[11px] font-semibold text-muted">
+                        Next after this: {item.next_due_date ? formatShortDate(item.next_due_date) : 'None'}
+                      </p>
+                    </div>
+                    <p className="text-[13px] font-extrabold text-ink">${item.amount.toFixed(2)}</p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Card>
       )}
 
       {/* Add/Edit Form */}
