@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
 import { isApiEnabled } from '@/api/config'
-import { listNotifications } from '@/api/notifications'
+import { listNotifications, markAllNotificationsRead, markNotificationRead } from '@/api/notifications'
 import type { NotificationResponse } from '@/api/types'
 import { useAuthStore } from '@/store/authStore'
 import { cn } from '@/utils/cn'
@@ -88,7 +88,7 @@ function mapApiNotification(notification: NotificationResponse): Notification {
     title: notification.title,
     description: notification.description,
     timestamp: formatTimestamp(notification.timestamp),
-    read: false,
+    read: notification.read,
     icon: isKnownIcon(notification.icon) ? notification.icon : 'gift',
   }
 }
@@ -179,10 +179,22 @@ export function Notifications() {
   }, [apiOn, householdId])
 
   const notifications = apiOn ? apiNotifications : MOCK_NOTIFICATIONS
-  const isRead = (n: Notification) => n.read || readIds.has(n.id)
+  const isRead = (n: Notification) => (apiOn ? n.read : n.read || readIds.has(n.id))
   const unreadCount = notifications.filter((n) => !isRead(n)).length
 
-  function markRead(id: string) {
+  async function markRead(id: string) {
+    if (apiOn && householdId) {
+      setApiNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+      setError('')
+      try {
+        await markNotificationRead(householdId, id)
+      } catch {
+        setApiNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
+        setError('Could not mark notification as read.')
+      }
+      return
+    }
+
     setReadIds((prev) => {
       const next = new Set(prev)
       next.add(id)
@@ -191,7 +203,20 @@ export function Notifications() {
     })
   }
 
-  function markAllRead() {
+  async function markAllRead() {
+    if (apiOn && householdId) {
+      const previous = apiNotifications
+      setApiNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+      setError('')
+      try {
+        await markAllNotificationsRead(householdId)
+      } catch {
+        setApiNotifications(previous)
+        setError('Could not mark notifications as read.')
+      }
+      return
+    }
+
     const next = new Set(notifications.map((n) => n.id))
     saveReadIds(next)
     setReadIds(next)
@@ -214,7 +239,7 @@ export function Notifications() {
                 <p className="text-sm text-muted">Tap a notification to mark it read</p>
               </div>
               <button
-                onClick={markAllRead}
+                onClick={() => void markAllRead()}
                 className="inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1.5 text-[12px] font-bold text-white active:opacity-80"
               >
                 <Check size={13} /> Mark all read
@@ -245,7 +270,7 @@ export function Notifications() {
                 className={cn('transition-colors', read ? 'opacity-75' : 'bg-surfaceSoft')}
               >
                 <button
-                  onClick={() => markRead(notif.id)}
+                  onClick={() => void markRead(notif.id)}
                   className="flex w-full items-start gap-3 text-left"
                   disabled={read}
                 >

@@ -130,10 +130,16 @@ export type NotificationResponse = {
   description: string
   timestamp: string
   icon: 'trending_down' | 'alert' | 'gift' | string
+  read: boolean
 }
 
 export type NotificationListResponse = {
   notifications: NotificationResponse[]
+}
+
+export type NotificationReadResponse = {
+  notification_id: string
+  read: boolean
 }
 
 export type ApplyRecurringResponse = {

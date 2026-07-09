@@ -175,6 +175,23 @@ class HouseholdSyncChunk(Base):
     household: Mapped[Household] = relationship(back_populates="sync_chunks")
 
 
+class NotificationReadState(Base):
+    __tablename__ = "notification_read_states"
+    __table_args__ = (
+        UniqueConstraint("household_id", "user_id", "notification_id", name="uq_notification_read_state"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    household_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    notification_id: Mapped[str] = mapped_column(String(160), index=True)
+    read_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class Expense(Base):
     __tablename__ = "expenses"
 

@@ -2,17 +2,78 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import NotificationReadState
 from app.services.alerts import evaluate_spending_alerts, load_sync_chunk
 
 
-async def list_notifications(session: AsyncSession, household_id: uuid.UUID) -> list[dict[str, Any]]:
+async def list_notifications(
+    session: AsyncSession, household_id: uuid.UUID, user_id: uuid.UUID | None = None
+) -> list[dict[str, Any]]:
     now = datetime.now(timezone.utc)
     notifications: list[dict[str, Any]] = []
     notifications.extend(await spending_alert_notifications(session, household_id, now))
     notifications.extend(await deal_notifications(session, household_id, now))
+    if user_id:
+        read_ids = await notification_read_ids(session, household_id, user_id)
+        for notification in notifications:
+            notification["read"] = notification["id"] in read_ids
     return sorted(notifications, key=lambda item: item["timestamp"], reverse=True)
+
+
+async def mark_notification_read(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+    notification_id: str,
+) -> NotificationReadState:
+    normalized_id = notification_id.strip()
+    read_state = await session.scalar(
+        select(NotificationReadState).where(
+            NotificationReadState.household_id == household_id,
+            NotificationReadState.user_id == user_id,
+            NotificationReadState.notification_id == normalized_id,
+        )
+    )
+    if read_state:
+        read_state.read_at = datetime.now(timezone.utc)
+        return read_state
+
+    read_state = NotificationReadState(
+        household_id=household_id,
+        user_id=user_id,
+        notification_id=normalized_id,
+    )
+    session.add(read_state)
+    await session.flush()
+    return read_state
+
+
+async def mark_all_notifications_read(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> int:
+    notifications = await list_notifications(session, household_id)
+    for notification in notifications:
+        await mark_notification_read(session, household_id, user_id, notification["id"])
+    return len(notifications)
+
+
+async def notification_read_ids(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> set[str]:
+    result = await session.scalars(
+        select(NotificationReadState.notification_id).where(
+            NotificationReadState.household_id == household_id,
+            NotificationReadState.user_id == user_id,
+        )
+    )
+    return set(result.all())
 
 
 async def spending_alert_notifications(
