@@ -67,6 +67,10 @@ export type BudgetGoal = {
 export type RecurringTransaction = {
   id: string
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
+  startDate?: string
+  enabled?: boolean
+  lastAppliedAt?: string
+  nextDueDate?: string
   dayOfMonth?: number
   dayOfWeek?: number
   monthOfYear?: number
@@ -796,6 +800,10 @@ export const useStore = create<AppStore>()(
         const recurringTransaction: RecurringTransaction = {
           id,
           frequency: transaction.frequency ?? 'monthly',
+          startDate: transaction.startDate,
+          enabled: transaction.enabled ?? true,
+          lastAppliedAt: transaction.lastAppliedAt,
+          nextDueDate: transaction.nextDueDate,
           dayOfMonth: transaction.dayOfMonth,
           dayOfWeek: transaction.dayOfWeek,
           monthOfYear: transaction.monthOfYear,

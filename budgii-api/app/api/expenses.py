@@ -114,7 +114,12 @@ async def apply_due_recurring_transactions(
     household_uuid = parse_uuid(household_id, "household_id")
     membership = await require_membership(session, user.id, household_uuid)
     due_date = (body.date if body and body.date else datetime.now().astimezone()).date()
-    expenses, skipped_count = await recurring_service.apply_due_recurring_transactions(
+    (
+        expenses,
+        skipped_count,
+        applied_recurring_ids,
+        recurring_transactions,
+    ) = await recurring_service.apply_due_recurring_transactions(
         session,
         membership,
         user,
@@ -124,6 +129,8 @@ async def apply_due_recurring_transactions(
         expenses=[expense_response(expense) for expense in expenses],
         applied_count=len(expenses),
         skipped_count=skipped_count,
+        applied_recurring_ids=applied_recurring_ids,
+        recurring_transactions=recurring_transactions,
     )
 
 

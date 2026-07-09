@@ -335,7 +335,10 @@ def mock_sync_document(personas: dict[str, HouseholdPersona]) -> dict[str, Any]:
             {
                 "id": "recurring-rent",
                 "frequency": "monthly",
+                "startDate": day(-90),
+                "enabled": True,
                 "dayOfMonth": 1,
+                "nextDueDate": day(7),
                 "expense": {
                     "amount": 1450,
                     "merchant": "Rent",
@@ -349,7 +352,10 @@ def mock_sync_document(personas: dict[str, HouseholdPersona]) -> dict[str, Any]:
             {
                 "id": "recurring-netflix",
                 "frequency": "monthly",
+                "startDate": day(-60),
+                "enabled": True,
                 "dayOfMonth": 15,
+                "nextDueDate": day(21),
                 "expense": {
                     "amount": 22.99,
                     "merchant": "Netflix",

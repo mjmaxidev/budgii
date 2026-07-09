@@ -8,6 +8,7 @@ import { FormField } from '@/components/ui/FormField'
 import { Modal } from '@/components/ui/Modal'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
+import { dateOnly, formatShortDate, nextRecurringDate, recurringScheduleLabel } from '@/utils/recurring'
 import type { RecurringTransaction } from '@/types'
 
 type RecurringFrequency = RecurringTransaction['frequency']
@@ -59,6 +60,8 @@ export function RecurringTransactions() {
   const [merchant, setMerchant] = useState('')
   const [amount, setAmount] = useState('')
   const [frequency, setFrequency] = useState<RecurringFrequency>('monthly')
+  const [startDate, setStartDate] = useState(dateOnly())
+  const [enabled, setEnabled] = useState(true)
   const [dayOfMonth, setDayOfMonth] = useState('1')
   const [dayOfWeek, setDayOfWeek] = useState(String(new Date().getDay()))
   const [monthOfYear, setMonthOfYear] = useState(String(new Date().getMonth() + 1))
@@ -71,6 +74,18 @@ export function RecurringTransactions() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const isValid = merchant.trim() !== '' && amount.trim() !== '' && !!categoryId
+  const draftSchedule = {
+    frequency,
+    startDate,
+    enabled,
+    dayOfMonth:
+      frequency === 'monthly' || frequency === 'quarterly' || frequency === 'yearly'
+        ? parseInt(dayOfMonth)
+        : undefined,
+    dayOfWeek: frequency === 'weekly' || frequency === 'biweekly' ? parseInt(dayOfWeek) : undefined,
+    monthOfYear: frequency === 'quarterly' || frequency === 'yearly' ? parseInt(monthOfYear) : undefined,
+  }
+  const draftNextDueDate = nextRecurringDate(draftSchedule)
 
   function toggleTag(id: string) {
     setTagIds((current) =>
@@ -83,12 +98,15 @@ export function RecurringTransactions() {
 
     const transactionData: Partial<RecurringTransaction> = {
       frequency,
+      startDate,
+      enabled,
       dayOfMonth:
         frequency === 'monthly' || frequency === 'quarterly' || frequency === 'yearly'
           ? parseInt(dayOfMonth)
           : undefined,
       dayOfWeek: frequency === 'weekly' || frequency === 'biweekly' ? parseInt(dayOfWeek) : undefined,
       monthOfYear: frequency === 'quarterly' || frequency === 'yearly' ? parseInt(monthOfYear) : undefined,
+      nextDueDate: draftNextDueDate,
       expense: {
         merchant,
         amount: parseFloat(amount),
@@ -114,6 +132,8 @@ export function RecurringTransactions() {
     setMerchant(transaction.expense.merchant || '')
     setAmount(transaction.expense.amount?.toString() || '')
     setFrequency(transaction.frequency)
+    setStartDate(transaction.startDate || dateOnly())
+    setEnabled(transaction.enabled ?? true)
     setDayOfMonth(transaction.dayOfMonth?.toString() || '1')
     setDayOfWeek(transaction.dayOfWeek?.toString() || String(new Date().getDay()))
     setMonthOfYear(transaction.monthOfYear?.toString() || String(new Date().getMonth() + 1))
@@ -133,6 +153,8 @@ export function RecurringTransactions() {
     setMerchant('')
     setAmount('')
     setFrequency('monthly')
+    setStartDate(dateOnly())
+    setEnabled(true)
     setDayOfMonth('1')
     setDayOfWeek(String(new Date().getDay()))
     setMonthOfYear(String(new Date().getMonth() + 1))
@@ -175,6 +197,37 @@ export function RecurringTransactions() {
             placeholder="0.00"
             step="0.01"
           />
+
+          <FormField
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+
+          <button
+            type="button"
+            onClick={() => setEnabled((value) => !value)}
+            className={`flex w-full items-center justify-between rounded-input border px-4 py-3 text-left transition ${
+              enabled ? 'border-green bg-greenSoft/60' : 'border-line bg-surface'
+            }`}
+          >
+            <span>
+              <span className="block text-[15px] font-bold text-ink">
+                {enabled ? 'Active schedule' : 'Paused schedule'}
+              </span>
+              <span className="text-[12px] font-semibold text-muted">
+                {enabled ? 'Budgii will apply this when due.' : 'No future expenses will be created.'}
+              </span>
+            </span>
+            <span className={`relative h-6 w-11 rounded-full transition ${enabled ? 'bg-green' : 'bg-line'}`}>
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                  enabled ? 'left-5' : 'left-0.5'
+                }`}
+              />
+            </span>
+          </button>
 
           {/* Category Selection */}
           <div>
@@ -316,6 +369,13 @@ export function RecurringTransactions() {
               Fill in merchant, amount, and category to continue.
             </p>
           )}
+          {isValid && (
+            <p className="rounded-input bg-surfaceSoft px-3 py-2 text-[13px] font-semibold text-muted">
+              {enabled && draftNextDueDate
+                ? `Next due ${formatShortDate(draftNextDueDate)}.`
+                : 'This schedule is paused.'}
+            </p>
+          )}
           <div className="flex gap-2 pt-2">
             <ActionButton
               variant="primary"
@@ -355,7 +415,38 @@ export function RecurringTransactions() {
                     <p className="text-[13px] text-muted">
                       ${transaction.expense.amount?.toFixed(2)} / {transaction.frequency}
                     </p>
+                    <p
+                      className={`mt-1 text-[12px] font-semibold ${
+                        transaction.enabled === false ? 'text-muted/70' : 'text-primary'
+                      }`}
+                    >
+                      {recurringScheduleLabel(transaction)}
+                    </p>
+                    {transaction.lastAppliedAt && (
+                      <p className="mt-0.5 text-[12px] text-muted/70">
+                        Last applied {formatShortDate(transaction.lastAppliedAt)}
+                      </p>
+                    )}
                     <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateRecurringTransaction(transaction.id, {
+                            enabled: !(transaction.enabled ?? true),
+                            nextDueDate:
+                              transaction.enabled === false
+                                ? nextRecurringDate({ ...transaction, enabled: true })
+                                : undefined,
+                          })
+                        }
+                        className={`rounded-pill px-2 py-0.5 text-[11px] font-bold ${
+                          transaction.enabled === false
+                            ? 'bg-surfaceSoft text-muted'
+                            : 'bg-greenSoft text-green'
+                        }`}
+                      >
+                        {transaction.enabled === false ? 'Paused' : 'Active'}
+                      </button>
                       {transaction.expense.memberId && (
                         <span className="rounded-pill bg-greenSoft px-2 py-0.5 text-[11px] font-bold text-green">
                           {member(transaction.expense.memberId)?.name ?? 'Member'}

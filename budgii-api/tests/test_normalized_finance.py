@@ -164,6 +164,8 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
                     {
                         "id": "rt-daily",
                         "frequency": "daily",
+                        "startDate": "2026-07-07",
+                        "enabled": True,
                         "expense": {
                             "merchant": "Daily Coffee",
                             "amount": 4.5,
@@ -175,6 +177,7 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
                     {
                         "id": "rt-weekly",
                         "frequency": "weekly",
+                        "startDate": "2026-06-30",
                         "dayOfWeek": 2,
                         "expense": {
                             "merchant": "Tuesday Gym",
@@ -185,6 +188,7 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
                     {
                         "id": "rt-monthly",
                         "frequency": "monthly",
+                        "startDate": "2026-07-01",
                         "dayOfMonth": 7,
                         "expense": {
                             "merchant": "Month End Bill",
@@ -195,12 +199,44 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
                     {
                         "id": "rt-yearly",
                         "frequency": "yearly",
+                        "startDate": "2026-07-07",
                         "dayOfMonth": 7,
                         "monthOfYear": 7,
                         "expense": {
                             "merchant": "Annual Renewal",
                             "amount": 99,
                             "categoryId": "cat-bills",
+                        },
+                    },
+                    {
+                        "id": "rt-paused",
+                        "frequency": "daily",
+                        "enabled": False,
+                        "expense": {
+                            "merchant": "Paused Daily",
+                            "amount": 3,
+                            "categoryId": "cat-bills",
+                        },
+                    },
+                    {
+                        "id": "rt-future",
+                        "frequency": "daily",
+                        "startDate": "2026-07-08",
+                        "expense": {
+                            "merchant": "Future Daily",
+                            "amount": 3,
+                            "categoryId": "cat-bills",
+                        },
+                    },
+                    {
+                        "id": "rt-biweekly",
+                        "frequency": "biweekly",
+                        "startDate": "2026-06-24",
+                        "dayOfWeek": 2,
+                        "expense": {
+                            "merchant": "Skipped Biweekly",
+                            "amount": 15,
+                            "categoryId": "cat-health",
                         },
                     },
                     {
@@ -228,7 +264,8 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
     assert apply_response.status_code == 200, apply_response.text
     applied = apply_response.json()
     assert applied["applied_count"] == 4
-    assert applied["skipped_count"] == 1
+    assert applied["skipped_count"] == 4
+    assert set(applied["applied_recurring_ids"]) == {"rt-daily", "rt-weekly", "rt-monthly", "rt-yearly"}
     assert {expense["merchant"] for expense in applied["expenses"]} == {
         "Annual Renewal",
         "Daily Coffee",
@@ -236,6 +273,11 @@ def test_apply_due_recurring_transactions_is_idempotent(client: TestClient) -> N
         "Tuesday Gym",
     }
     assert {expense["source"] for expense in applied["expenses"]} == {"recurring"}
+    recurring_by_id = {transaction["id"]: transaction for transaction in applied["recurring_transactions"]}
+    assert recurring_by_id["rt-daily"]["lastAppliedAt"] == "2026-07-07"
+    assert recurring_by_id["rt-daily"]["nextDueDate"] == "2026-07-08"
+    assert recurring_by_id["rt-weekly"]["nextDueDate"] == "2026-07-14"
+    assert "lastAppliedAt" not in recurring_by_id["rt-paused"]
 
     repeat_response = client.post(
         f"/v1/households/{household['id']}/recurring/apply",

@@ -17,6 +17,7 @@ import { apiExpenseToExpense, createExpense } from '@/api/expenses'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { useLookups } from '@/store/lookups'
+import { nextRecurringDate } from '@/utils/recurring'
 
 export function AddExpense() {
   const navigate = useNavigate()
@@ -86,11 +87,17 @@ export function AddExpense() {
     // If recurring, also add to recurring transactions
     if (isRecurring) {
       const scheduledDate = new Date(`${date}T00:00:00`)
-      addRecurringTransaction({
+      const recurringSchedule = {
         frequency,
+        startDate: date,
+        enabled: true,
         dayOfWeek: frequency === 'weekly' ? scheduledDate.getDay() : undefined,
         dayOfMonth: frequency === 'monthly' || frequency === 'yearly' ? scheduledDate.getDate() : undefined,
         monthOfYear: frequency === 'yearly' ? scheduledDate.getMonth() + 1 : undefined,
+      }
+      addRecurringTransaction({
+        ...recurringSchedule,
+        nextDueDate: nextRecurringDate(recurringSchedule),
         expense: expenseData,
       })
     }

@@ -1,4 +1,4 @@
-import type { EditorLevel, MemberAccessRole } from '@/types'
+import type { EditorLevel, MemberAccessRole, RecurringTransaction } from '@/types'
 
 export type TokenResponse = {
   access_token: string
@@ -146,6 +146,8 @@ export type ApplyRecurringResponse = {
   expenses: ExpenseResponse[]
   applied_count: number
   skipped_count: number
+  applied_recurring_ids: string[]
+  recurring_transactions: RecurringTransaction[]
 }
 
 export type ReceiptUploadResponse = {

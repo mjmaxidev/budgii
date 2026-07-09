@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Expense, HouseholdMembership, HouseholdSyncChunk, User
+from app.models import Expense, HouseholdMembership, HouseholdSyncChunk, HouseholdSyncMeta, User
 from app.services.expense import ensure_persona
 from app.services.permissions import require_expense_write
 
@@ -20,19 +20,29 @@ def due_datetime(due_date: date) -> datetime:
 
 
 def is_recurring_due(transaction: dict[str, Any], due_date: date) -> bool:
+    if transaction.get("enabled") is False:
+        return False
+
+    start_date = parse_date_or_none(transaction.get("startDate"))
+    if start_date and due_date < start_date:
+        return False
+
     frequency = transaction.get("frequency")
     if frequency == "daily":
         return True
 
     if frequency in ("weekly", "biweekly"):
         day_of_week = transaction.get("dayOfWeek")
+        if not isinstance(day_of_week, int) and start_date:
+            day_of_week = start_date.isoweekday() % 7
         if not isinstance(day_of_week, int):
             return False
         if day_of_week != due_date.isoweekday() % 7:
             return False
         if frequency == "weekly":
             return True
-        return weeks_since_epoch(due_date) % 2 == 0
+        anchor = start_date or date(1970, 1, 5)
+        return weeks_since(anchor, due_date) % 2 == 0
 
     if frequency == "monthly":
         day_of_month = transaction.get("dayOfMonth")
@@ -41,6 +51,8 @@ def is_recurring_due(transaction: dict[str, Any], due_date: date) -> bool:
     if frequency in ("quarterly", "yearly"):
         day_of_month = transaction.get("dayOfMonth")
         month_of_year = transaction.get("monthOfYear")
+        if not isinstance(month_of_year, int) and start_date:
+            month_of_year = start_date.month
         if not isinstance(day_of_month, int) or not isinstance(month_of_year, int):
             return False
         if frequency == "yearly" and due_date.month != month_of_year:
@@ -52,8 +64,16 @@ def is_recurring_due(transaction: dict[str, Any], due_date: date) -> bool:
     return False
 
 
-def weeks_since_epoch(due_date: date) -> int:
-    return (due_date.toordinal() - date(1970, 1, 5).toordinal()) // 7
+def weeks_since(start_date: date, due_date: date) -> int:
+    return (due_date.toordinal() - start_date.toordinal()) // 7
+
+
+def next_due_date(transaction: dict[str, Any], after_date: date) -> date | None:
+    for offset in range(1, 366 * 5):
+        candidate = date.fromordinal(after_date.toordinal() + offset)
+        if is_recurring_due(transaction, candidate):
+            return candidate
+    return None
 
 
 def is_due_day_of_month(day_of_month: int, due_date: date) -> bool:
@@ -92,13 +112,17 @@ async def apply_due_recurring_transactions(
     membership: HouseholdMembership,
     user: User,
     due_date: date,
-) -> tuple[list[Expense], int]:
+) -> tuple[list[Expense], int, list[str], list[dict[str, Any]]]:
     require_expense_write(membership)
     transactions = await load_recurring_transactions(session, membership.household_id)
 
     generated: list[Expense] = []
+    applied_recurring_ids: list[str] = []
+    updated_transactions: list[dict[str, Any]] = []
     skipped_count = 0
     for transaction in transactions:
+        transaction = dict(transaction)
+        updated_transactions.append(transaction)
         recurring_id = str(transaction.get("id") or "").strip()
         expense_payload = transaction.get("expense")
         if (
@@ -134,11 +158,26 @@ async def apply_due_recurring_transactions(
         )
         session.add(expense)
         generated.append(expense)
+        applied_recurring_ids.append(recurring_id)
+        transaction["lastAppliedAt"] = due_date.isoformat()
+        next_due = next_due_date(transaction, due_date)
+        if next_due:
+            transaction["nextDueDate"] = next_due.isoformat()
+        else:
+            transaction.pop("nextDueDate", None)
+
+    if applied_recurring_ids:
+        chunk = await session.get(HouseholdSyncChunk, (membership.household_id, "recurringTransactions"))
+        if chunk:
+            chunk.data = updated_transactions
+        meta = await session.get(HouseholdSyncMeta, membership.household_id)
+        if meta:
+            meta.revision += 1
 
     await session.flush()
     for expense in generated:
         await session.refresh(expense)
-    return generated, skipped_count
+    return generated, skipped_count, applied_recurring_ids, updated_transactions
 
 
 def parse_uuid_or_none(value: Any) -> uuid.UUID | None:
@@ -148,3 +187,21 @@ def parse_uuid_or_none(value: Any) -> uuid.UUID | None:
         return uuid.UUID(str(value))
     except ValueError:
         return None
+
+
+def parse_date_or_none(value: Any) -> date | None:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None

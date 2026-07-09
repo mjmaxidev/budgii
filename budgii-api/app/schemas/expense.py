@@ -35,6 +35,8 @@ class ApplyRecurringResponse(BaseModel):
     expenses: list[ExpenseResponse]
     applied_count: int
     skipped_count: int
+    applied_recurring_ids: list[str] = Field(default_factory=list)
+    recurring_transactions: list[dict] = Field(default_factory=list)
 
 
 class CreateExpenseRequest(BaseModel):

@@ -145,6 +145,9 @@ async function hydrateNormalizedData(householdId: string, patch: Partial<AppStor
     const applied = await applyDueRecurringTransactions(householdId)
     if (applied.applied_count > 0) {
       console.info(`[recurring] applied ${applied.applied_count} due transaction(s)`)
+      if (applied.recurring_transactions.length > 0) {
+        useStore.setState({ recurringTransactions: applied.recurring_transactions })
+      }
     }
   } catch (err) {
     console.info('[recurring] due transaction application skipped', err)

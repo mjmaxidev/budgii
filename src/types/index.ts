@@ -172,6 +172,10 @@ export type BudgetGoal = {
 export type RecurringTransaction = {
   id: string
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
+  startDate?: string
+  enabled?: boolean
+  lastAppliedAt?: string
+  nextDueDate?: string
   dayOfMonth?: number
   dayOfWeek?: number
   monthOfYear?: number
