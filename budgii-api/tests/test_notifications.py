@@ -138,3 +138,58 @@ def test_notification_read_state_persists_per_user(client: TestClient) -> None:
     )
     assert viewer_response.status_code == 200, viewer_response.text
     assert viewer_response.json()["notifications"][0]["read"] is False
+
+
+def test_notification_device_token_registration_is_scoped_to_user(client: TestClient) -> None:
+    admin = register_user(client, "push-token-admin")
+    household = create_household(client, admin, "Push Tokens")
+
+    register_response = client.post(
+        f"/v1/households/{household['id']}/notifications/device-tokens",
+        json={
+            "token": "ExponentPushToken[test-admin-device]",
+            "platform": "ios",
+            "device_id": "iphone-15",
+            "app_version": "0.1.0",
+        },
+        headers=auth_headers(admin),
+    )
+    assert register_response.status_code == 200, register_response.text
+    registered = register_response.json()
+    assert registered["platform"] == "ios"
+    assert registered["device_id"] == "iphone-15"
+    assert registered["enabled"] is True
+
+    duplicate_response = client.post(
+        f"/v1/households/{household['id']}/notifications/device-tokens",
+        json={
+            "token": "ExponentPushToken[test-admin-device]",
+            "platform": "ios",
+            "device_id": "iphone-15-pro",
+            "app_version": "0.1.1",
+        },
+        headers=auth_headers(admin),
+    )
+    assert duplicate_response.status_code == 200, duplicate_response.text
+    duplicate = duplicate_response.json()
+    assert duplicate["id"] == registered["id"]
+    assert duplicate["device_id"] == "iphone-15-pro"
+    assert duplicate["app_version"] == "0.1.1"
+
+    invite = create_invite(client, admin, household["id"], role="viewer")
+    viewer = register_user(client, "push-token-viewer")
+    join_household(client, viewer, invite["code"])
+
+    viewer_list_response = client.get(
+        f"/v1/households/{household['id']}/notifications/device-tokens",
+        headers=auth_headers(viewer),
+    )
+    assert viewer_list_response.status_code == 200, viewer_list_response.text
+    assert viewer_list_response.json()["tokens"] == []
+
+    unregister_response = client.delete(
+        f"/v1/households/{household['id']}/notifications/device-tokens/{registered['id']}",
+        headers=auth_headers(admin),
+    )
+    assert unregister_response.status_code == 200, unregister_response.text
+    assert unregister_response.json()["enabled"] is False

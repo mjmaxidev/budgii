@@ -142,6 +142,29 @@ export type NotificationReadResponse = {
   read: boolean
 }
 
+export type DevicePlatform = 'ios' | 'android' | 'web'
+
+export type DeviceTokenRegisterRequest = {
+  token: string
+  platform: DevicePlatform
+  device_id?: string | null
+  app_version?: string | null
+}
+
+export type DeviceTokenResponse = {
+  id: string
+  platform: string
+  device_id: string | null
+  app_version: string | null
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type DeviceTokenListResponse = {
+  tokens: DeviceTokenResponse[]
+}
+
 export type ApplyRecurringResponse = {
   expenses: ExpenseResponse[]
   applied_count: number

@@ -5,7 +5,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import NotificationReadState
+from app.models import NotificationDeviceToken, NotificationReadState
 from app.services.alerts import evaluate_spending_alerts, load_sync_chunk
 
 
@@ -60,6 +60,81 @@ async def mark_all_notifications_read(
     for notification in notifications:
         await mark_notification_read(session, household_id, user_id, notification["id"])
     return len(notifications)
+
+
+async def register_device_token(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+    token: str,
+    platform: str,
+    device_id: str | None = None,
+    app_version: str | None = None,
+) -> NotificationDeviceToken:
+    existing = await session.scalar(
+        select(NotificationDeviceToken).where(
+            NotificationDeviceToken.household_id == household_id,
+            NotificationDeviceToken.user_id == user_id,
+            NotificationDeviceToken.token == token,
+        )
+    )
+    if existing:
+        existing.platform = platform
+        existing.device_id = device_id
+        existing.app_version = app_version
+        existing.enabled = True
+        await session.flush()
+        await session.refresh(existing)
+        return existing
+
+    device_token = NotificationDeviceToken(
+        household_id=household_id,
+        user_id=user_id,
+        token=token,
+        platform=platform,
+        device_id=device_id,
+        app_version=app_version,
+    )
+    session.add(device_token)
+    await session.flush()
+    return device_token
+
+
+async def list_device_tokens(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> list[NotificationDeviceToken]:
+    result = await session.scalars(
+        select(NotificationDeviceToken)
+        .where(
+            NotificationDeviceToken.household_id == household_id,
+            NotificationDeviceToken.user_id == user_id,
+        )
+        .order_by(NotificationDeviceToken.updated_at.desc())
+    )
+    return list(result.all())
+
+
+async def disable_device_token(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+    token_id: uuid.UUID,
+) -> NotificationDeviceToken | None:
+    device_token = await session.scalar(
+        select(NotificationDeviceToken).where(
+            NotificationDeviceToken.id == token_id,
+            NotificationDeviceToken.household_id == household_id,
+            NotificationDeviceToken.user_id == user_id,
+        )
+    )
+    if not device_token:
+        return None
+    device_token.enabled = False
+    await session.flush()
+    await session.refresh(device_token)
+    return device_token
 
 
 async def notification_read_ids(

@@ -15,21 +15,21 @@ The remaining work is mostly production hardening: schedulers, real provider
 integrations, mobile release setup, stronger CI, better observability, and a few
 feature-level polish gaps.
 
-| Area                                              | Status                                         |
-| ------------------------------------------------- | ---------------------------------------------- |
-| Frontend app shell, navigation, phone layout      | Done                                           |
-| FastAPI backend, Postgres, auth, sync             | Done                                           |
-| Normalized expenses, receipts, receipt items      | Done                                           |
-| Household members, personas, invites, permissions | Mostly done                                    |
-| Receipt image upload and OpenAI OCR path          | Mostly done                                    |
-| Reports and insights from real data               | Mostly done                                    |
-| Settings panel                                    | Mostly done                                    |
-| Deals and watchlist                               | Prototype-real hybrid                          |
-| Recurring transactions                            | Functional foundation                          |
-| Notifications                                     | In-app notifications done; push not done       |
-| Mobile/Capacitor                                  | Started; release hardening needed              |
-| Production deployment                             | Not done                                       |
-| CI/release quality gates                          | Hosted CI config added; needs first remote run |
+| Area                                              | Status                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Frontend app shell, navigation, phone layout      | Done                                                                           |
+| FastAPI backend, Postgres, auth, sync             | Done                                                                           |
+| Normalized expenses, receipts, receipt items      | Done                                                                           |
+| Household members, personas, invites, permissions | Mostly done                                                                    |
+| Receipt image upload and OpenAI OCR path          | Mostly done                                                                    |
+| Reports and insights from real data               | Mostly done                                                                    |
+| Settings panel                                    | Mostly done                                                                    |
+| Deals and watchlist                               | Prototype-real hybrid                                                          |
+| Recurring transactions                            | Functional foundation                                                          |
+| Notifications                                     | In-app notifications and push device registration done; push delivery not done |
+| Mobile/Capacitor                                  | Started; release hardening needed                                              |
+| Production deployment                             | Not done                                                                       |
+| CI/release quality gates                          | Hosted CI config added; needs first remote run                                 |
 
 ## Done
 
@@ -182,7 +182,7 @@ feature-level polish gaps.
 | Secrets management          | Env examples exist                                                             | Real secret manager or deploy-provider secrets; rotate JWT/OAuth/email/OpenAI keys                            |
 | Hosted CI                   | Local `scripts/precommit.sh` exists and GitHub Actions workflow has been added | First remote run must pass; decide whether to add pre-commit framework config or keep the existing shell hook |
 | OAuth client wiring         | Backend verification exists                                                    | Frontend Apple/Google buttons, mobile/web client IDs, redirect/native setup, QA tests                         |
-| Push notifications          | Preferences toggle only saves setting                                          | Real push provider, device token registration, backend send pipeline, permission UX                           |
+| Push notifications          | Backend stores per-user device tokens and has a log push provider              | Real APNs/FCM provider, backend send jobs, permission UX                                                      |
 | Mobile release setup        | Capacitor docs/config exist; native projects are generated locally/gitignored  | iOS/Android signing, Info.plist/manifest automation, push/camera/deep-link native config, release builds      |
 | Legal/privacy basics        | Not present                                                                    | Privacy policy, terms, account/data deletion policy, receipt image retention policy                           |
 
@@ -193,7 +193,7 @@ feature-level polish gaps.
 | Recurring transactions | Config UI, sync, backend apply, idempotent due expense creation, `startDate`, active/paused toggle, next due, last applied metadata, manual preview/apply controls, and a reusable backend worker/CLI for scheduled runs | Production scheduler deployment and user-facing background failure status                                                                                                                |
 | Deals/watchlist        | Backend deterministic deal generation from watchlist data                                                                                                                                                                | Real retailer/product source, price history, affiliate/deep links, stale deal expiry, dedupe across stores, confidence/source labels                                                     |
 | Receipt OCR            | Upload, OpenAI provider, deterministic provider, retry and failure surfacing                                                                                                                                             | More real receipt QA set, provider cost/rate-limit handling, background worker queue instead of inline/background task only, item tax/discount apportioning, receipt duplicate detection |
-| Notifications          | In-app generated notifications and read state                                                                                                                                                                            | Actual push delivery, notification preferences per type, quiet hours, weekly summary generation/sending                                                                                  |
+| Notifications          | In-app generated notifications, read state, and per-user device token registration                                                                                                                                       | Actual push delivery, notification preferences per type, quiet hours, weekly summary generation/sending                                                                                  |
 | Email invites          | Provider hooks exist                                                                                                                                                                                                     | Production provider key/domain verification, branded email QA, bounced email/error visibility                                                                                            |
 | Family permissions     | Roles and API checks exist                                                                                                                                                                                               | Full UX pass for restricted users, clearer disabled controls/messages, account-holder transfer decision                                                                                  |
 | Data export            | Local CSV/HTML/JSON download                                                                                                                                                                                             | API-side export option, import/restore path, PDF export if required, better escaping/sanitization for generated HTML                                                                     |
@@ -274,7 +274,7 @@ feature-level polish gaps.
 - Done: add recurring `startDate`, `enabled`, `lastAppliedAt`, and computed `nextDueDate`.
 - Done: add preview/apply-now controls.
 - Done: add a backend scheduled job/worker for recurring expenses.
-- Add push notification device registration and provider integration.
+- Add push notification device registration and provider integration. Device registration and log provider are done; APNs/FCM delivery remains.
 - Split notification preferences by type.
 
 ### Phase C — Real integrations
