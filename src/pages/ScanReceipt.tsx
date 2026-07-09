@@ -6,7 +6,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Modal } from '@/components/ui/Modal'
 import { ApiError } from '@/api/client'
-import { isApiEnabled } from '@/api/config'
+import { isApiEnabled, showDemoTools } from '@/api/config'
 import { apiReceiptToReceipt, createReceipt, uploadReceipt } from '@/api/receipts'
 import { runReceiptAnalysis } from '@/api/receiptAnalysis'
 import { useAuthStore } from '@/store/authStore'
@@ -26,6 +26,7 @@ export function ScanReceipt() {
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
+  const canUseDemoReceipt = !isApiEnabled() || showDemoTools()
 
   async function handleCameraCapture() {
     setError('')
@@ -213,7 +214,7 @@ export function ScanReceipt() {
         <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
       )}
 
-      {!analyzing && (
+      {!analyzing && canUseDemoReceipt && (
         <button
           onClick={() => handleFile(undefined)}
           className="mt-4 w-full text-center text-[14px] font-semibold text-muted underline"

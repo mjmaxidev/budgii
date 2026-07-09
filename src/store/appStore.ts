@@ -170,7 +170,7 @@ export type AppStore = {
   // Watchlist & Deals
   addWatchlistItem: (item: Partial<WatchlistItem>) => void
   removeWatchlistItem: (id: string) => void
-  mockRunDailyDealCheck: () => void
+  runLocalDealCheck: () => void
   addDealToShoppingList: (dealId: string) => void
   skipDeal: (dealId: string) => void
   keepWatchingDeal: (dealId: string) => void
@@ -577,7 +577,7 @@ export const useStore = create<AppStore>()(
       removeWatchlistItem: (id) =>
         set((s) => ({ watchlistItems: s.watchlistItems.filter((w) => w.id !== id) })),
 
-      mockRunDailyDealCheck: () => {
+      runLocalDealCheck: () => {
         const now = todayISO()
         set((s) => ({
           watchlistItems: s.watchlistItems.map((w) => ({ ...w, lastCheckedAt: now })),

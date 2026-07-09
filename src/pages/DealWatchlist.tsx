@@ -21,7 +21,7 @@ export function DealWatchlist() {
   const items = useStore((s) => s.watchlistItems)
   const addWatchlistItem = useStore((s) => s.addWatchlistItem)
   const removeWatchlistItem = useStore((s) => s.removeWatchlistItem)
-  const runCheck = useStore((s) => s.mockRunDailyDealCheck)
+  const runLocalDealCheck = useStore((s) => s.runLocalDealCheck)
   const householdId = useAuthStore((s) => s.householdId)
   const setSyncMeta = useAuthStore((s) => s.setSyncMeta)
   const [edit, setEdit] = useState(false)
@@ -44,7 +44,7 @@ export function DealWatchlist() {
     setError(null)
 
     if (!isApiEnabled()) {
-      runCheck()
+      runLocalDealCheck()
       return
     }
 
