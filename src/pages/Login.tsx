@@ -14,8 +14,8 @@ export function Login() {
   const from = (location.state as { from?: string } | null)?.from ?? '/home'
   const apiOn = isApiEnabled()
 
-  const [email, setEmail] = useState('dev@mjproductions.app')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,6 +23,11 @@ export function Login() {
   async function handleLogin() {
     if (!apiOn) {
       navigate(from)
+      return
+    }
+
+    if (!email.trim() || !password) {
+      setError('Enter your email and password.')
       return
     }
 
