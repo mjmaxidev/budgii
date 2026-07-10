@@ -25,7 +25,9 @@
     "cap:sync": "cap sync",
     "cap:ios": "cap open ios",
     "cap:android": "cap open android",
-    "cap:build": "npm run build && cap sync"
+    "cap:build": "npm run build && cap sync",
+    "cap:android:run": "npm run build && cap sync android && JAVA_HOME=$(/usr/libexec/java_home -v 21) cap run android",
+    "android:build:debug": "npm run build && cap sync android && cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

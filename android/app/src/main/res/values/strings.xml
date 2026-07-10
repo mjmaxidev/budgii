@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Budgii</string>
+    <string name="title_activity_main">Budgii</string>
+    <string name="package_name">app.mjproductions.budgii</string>
+    <string name="custom_url_scheme">app.mjproductions.budgii</string>
+</resources>

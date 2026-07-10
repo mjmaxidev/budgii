@@ -8,9 +8,8 @@ dist/
 dist-ssr/
 release/
 
-# Capacitor native projects (regenerate with: npx cap add ios/android)
+# Capacitor native projects
 ios/
-android/
 *.tsbuildinfo
 
 # Vite

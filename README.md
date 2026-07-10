@@ -94,6 +94,19 @@ npm run electron:start:app
 npm run electron:dist:app # distributable installer (.dmg / .nsis / .AppImage)
 ```
 
+## Mobile app (Capacitor)
+
+Android builds require JDK 21. On macOS the Android scripts resolve it with
+`/usr/libexec/java_home -v 21`.
+
+```bash
+npm run cap:build
+npm run cap:ios
+npm run cap:android
+npm run cap:android:run -- --target emulator-5554
+npm run android:build:debug
+```
+
 The Electron shell lives in [electron/](electron/): `main-app.cjs` / `main-qa.cjs`,
 `preload.cjs`, and `dev-app.cjs` / `dev-qa.cjs` dev launchers.
 The app uses a **hash router** and **relative asset base** so the same build runs both in
