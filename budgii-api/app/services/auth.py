@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
@@ -5,8 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
-from app.models import RefreshToken, User
+from app.models import AuthActionToken, RefreshToken, User
 from app.schemas.auth import TokenResponse
+from app.services.email import AuthEmail, send_auth_email
 from app.services.oauth import OAuthVerificationError, verify_apple_id_token, verify_google_id_token
 from app.services.security import (
     create_access_token,
@@ -15,6 +17,9 @@ from app.services.security import (
     hash_token,
     verify_password,
 )
+
+EMAIL_VERIFICATION = "email_verification"
+PASSWORD_RESET = "password_reset"
 
 
 async def issue_tokens(session: AsyncSession, user: User, settings: Settings) -> TokenResponse:
@@ -60,6 +65,136 @@ async def login_email(session: AsyncSession, email: str, password: str, settings
     return await issue_tokens(session, user, settings)
 
 
+async def request_email_verification(session: AsyncSession, email: str, settings: Settings) -> None:
+    user = await user_by_email(session, email)
+    if not user:
+        return
+    if user.email_verified_at:
+        return
+    token = await create_action_token(session, user, EMAIL_VERIFICATION, timedelta(hours=24))
+    await send_auth_email(settings, verification_email(user, token, settings))
+
+
+async def confirm_email_verification(session: AsyncSession, token: str) -> None:
+    action = await consume_action_token(session, token, EMAIL_VERIFICATION)
+    user = await session.get(User, action.user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+    user.email_verified_at = datetime.now(timezone.utc)
+    await session.flush()
+
+
+async def request_password_reset(session: AsyncSession, email: str, settings: Settings) -> None:
+    user = await user_by_email(session, email)
+    if not user or user.auth_provider != "email" or not user.password_hash:
+        return
+    token = await create_action_token(session, user, PASSWORD_RESET, timedelta(hours=1))
+    await send_auth_email(settings, password_reset_email(user, token, settings))
+
+
+async def confirm_password_reset(
+    session: AsyncSession,
+    token: str,
+    new_password: str,
+) -> None:
+    action = await consume_action_token(session, token, PASSWORD_RESET)
+    user = await session.get(User, action.user_id)
+    if not user or user.auth_provider != "email":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+    user.password_hash = hash_password(new_password)
+    await revoke_refresh_tokens(session, user)
+    await session.flush()
+
+
+async def user_by_email(session: AsyncSession, email: str) -> User | None:
+    return await session.scalar(select(User).where(User.email == email.lower().strip()))
+
+
+async def create_action_token(
+    session: AsyncSession,
+    user: User,
+    purpose: str,
+    ttl: timedelta,
+) -> str:
+    token = secrets.token_urlsafe(48)
+    now = datetime.now(timezone.utc)
+    session.add(
+        AuthActionToken(
+            user_id=user.id,
+            token_hash=hash_token(token),
+            purpose=purpose,
+            expires_at=now + ttl,
+        )
+    )
+    await session.flush()
+    return token
+
+
+async def consume_action_token(
+    session: AsyncSession,
+    token: str,
+    purpose: str,
+) -> AuthActionToken:
+    now = datetime.now(timezone.utc)
+    action = await session.scalar(
+        select(AuthActionToken).where(
+            AuthActionToken.token_hash == hash_token(token),
+            AuthActionToken.purpose == purpose,
+            AuthActionToken.used_at.is_(None),
+            AuthActionToken.expires_at > now,
+        )
+    )
+    if not action:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+    action.used_at = now
+    await session.flush()
+    return action
+
+
+async def revoke_refresh_tokens(session: AsyncSession, user: User) -> None:
+    records = await session.scalars(select(RefreshToken).where(RefreshToken.user_id == user.id))
+    for record in records.all():
+        await session.delete(record)
+
+
+def verification_email(user: User, token: str, settings: Settings) -> AuthEmail:
+    link = f"{settings.auth_link_base.rstrip('/')}/#/verification?token={token}"
+    text = (
+        "Verify your Budgii email address by opening this link:\n\n"
+        f"{link}\n\n"
+        "This link expires in 24 hours."
+    )
+    html = (
+        "<p>Verify your Budgii email address.</p>"
+        f'<p><a href="{link}">Verify email</a></p>'
+        "<p>This link expires in 24 hours.</p>"
+    )
+    return AuthEmail(
+        to_email=user.email,
+        subject="Verify your Budgii email",
+        text=text,
+        html=html,
+        log_label=f"email_verification url={link}",
+    )
+
+
+def password_reset_email(user: User, token: str, settings: Settings) -> AuthEmail:
+    link = f"{settings.auth_link_base.rstrip('/')}/#/reset-password?token={token}"
+    text = f"Reset your Budgii password by opening this link:\n\n{link}\n\nThis link expires in 1 hour."
+    html = (
+        "<p>Reset your Budgii password.</p>"
+        f'<p><a href="{link}">Reset password</a></p>'
+        "<p>This link expires in 1 hour.</p>"
+    )
+    return AuthEmail(
+        to_email=user.email,
+        subject="Reset your Budgii password",
+        text=text,
+        html=html,
+        log_label=f"password_reset url={link}",
+    )
+
+
 async def login_oauth(
     session: AsyncSession,
     provider: str,
@@ -83,6 +218,8 @@ async def login_oauth(
             user.name = name
         if avatar:
             user.avatar = avatar
+        if not user.email_verified_at:
+            user.email_verified_at = datetime.now(timezone.utc)
     else:
         user = User(
             email=email,
@@ -90,6 +227,7 @@ async def login_oauth(
             avatar=avatar,
             auth_provider=provider,
             external_id=external_id,
+            email_verified_at=datetime.now(timezone.utc),
         )
         session.add(user)
         await session.flush()

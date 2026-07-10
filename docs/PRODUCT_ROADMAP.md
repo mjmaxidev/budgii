@@ -49,7 +49,7 @@ feature-level polish gaps.
 - PostgreSQL, async SQLAlchemy, Alembic migrations, and Docker Compose are in place.
 - Health endpoint exists.
 - JWT access tokens and rotating refresh tokens are implemented.
-- Email/password registration, login, refresh, logout storage, and account deletion exist.
+- Email/password registration, login, refresh, logout storage, email verification, password reset, and account deletion exist.
 - Apple/Google token verification endpoints exist on the backend.
 - API mode is controlled by `VITE_API_ENABLED`.
 - Frontend token restore and refresh-on-401 behavior exists.
@@ -213,7 +213,7 @@ feature-level polish gaps.
 | Receipt storage                | Local Docker volume is fine for single-host deploy; object storage or shared volume is needed for multi-replica/serverless                      |
 | Pagination/incremental hydrate | Expenses/receipts are hydrated into the store; very large accounts may need incremental loading/cache eviction                                  |
 | Observability                  | Health, request IDs, and structured logs exist; Sentry/error tracking, metrics, alerting, and audit logs are not fully wired                    |
-| Security hardening             | Auth basics exist; still need rate limiting, brute-force protection, email verification, password reset, session/device management UI           |
+| Security hardening             | Auth basics, email verification, and password reset exist; still need rate limiting, brute-force protection, and session/device management UI   |
 | Accessibility                  | Needs full keyboard/screen-reader/contrast audit across mobile-sized UI                                                                         |
 | Performance                    | Needs production profiling on low-end mobile devices and large seeded datasets                                                                  |
 | Test coverage                  | Backend tests are meaningful; frontend component/e2e tests are still missing                                                                    |
@@ -224,9 +224,9 @@ feature-level polish gaps.
 
 | Page                   | Backend/data status                                                                                                        | Production notes                                                          |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Login                  | API-backed email login                                                                                                     | Add Apple/Google UI; add password reset/email verification                |
+| Login                  | API-backed email login and password reset                                                                                  | Add Apple/Google UI                                                       |
 | Onboarding             | API-backed registration and household creation in API mode                                                                 | Phone auth is offline/prototype only; OAuth deferred                      |
-| Verification           | UI exists                                                                                                                  | No real email/SMS verification pipeline yet                               |
+| Verification           | API-backed email link request/confirm flow                                                                                 | SMS verification not implemented                                          |
 | Home                   | Uses hydrated expenses/budget/profile; evaluates alerts in API mode                                                        | Depends on bootstrap hydration; push alerts not real                      |
 | Add Expense            | API-backed create in API mode                                                                                              | Recurring option creates config but no scheduler UI feedback              |
 | Add Expense Choice     | Navigation only                                                                                                            | Good                                                                      |
@@ -248,7 +248,7 @@ feature-level polish gaps.
 | Family Invitation      | API-backed invites in API mode                                                                                             | Production email/domain QA needed                                         |
 | Join Family            | API-backed code redemption in API mode                                                                                     | Native universal/app links not fully configured                           |
 | Settings               | Real navigation hub                                                                                                        | Demo reset only appears when allowed                                      |
-| Account Settings       | API-backed profile/avatar/password/logout/delete                                                                           | Password reset and email verification missing                             |
+| Account Settings       | API-backed profile/avatar/password/logout/delete with email verification status                                             | Session/device management missing                                         |
 | Preferences            | Synced settings with browser notification permission and push type controls                                                 | Native APNs/FCM token capture, full i18n, and currency conversion missing |
 | Income Tracking        | Synced JSONB config/data                                                                                                   | Not normalized                                                            |
 | Recurring Transactions | Synced config + backend apply-on-hydration, visible schedule status, manual preview/apply controls, backend worker/CLI/server compose scheduler, and admin worker status | Good foundation                                                          |

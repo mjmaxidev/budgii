@@ -47,7 +47,9 @@ async def update_me(
         )
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
-        user.email = normalized_email
+        if normalized_email != user.email:
+            user.email = normalized_email
+            user.email_verified_at = None
 
     if body.name is not None:
         user.name = body.name.strip()
@@ -155,6 +157,7 @@ def user_response(user: User, settings: Settings) -> UserResponse:
         name=user.name,
         avatar=avatar_response_value(user, settings),
         auth_provider=user.auth_provider,
+        email_verified_at=user.email_verified_at.isoformat() if user.email_verified_at else None,
     )
 
 

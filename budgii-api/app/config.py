@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
 
     invite_link_base: str = "https://budgii.app/join"
+    auth_link_base: str = "https://budgii.app"
     invite_email_provider: str = "log"
     invite_email_from: str = ""
     invite_email_api_key: str = ""

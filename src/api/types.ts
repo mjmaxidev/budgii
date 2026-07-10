@@ -12,6 +12,11 @@ export type UserResponse = {
   name: string
   avatar: string | null
   auth_provider: string
+  email_verified_at: string | null
+}
+
+export type AuthActionResponse = {
+  ok: boolean
 }
 
 export type UpdateUserInput = {

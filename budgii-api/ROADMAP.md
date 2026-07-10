@@ -21,7 +21,7 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 | Area       | Status                     | Endpoints                                                                             |
 | ---------- | -------------------------- | ------------------------------------------------------------------------------------- |
 | Health     | ✅                         | `GET /v1/health`                                                                      |
-| Auth       | ✅                         | `POST /v1/auth/register`, `/email`, `/google`, `/apple`, `/refresh`                   |
+| Auth       | ✅                         | Register/login/refresh, OAuth verify endpoints, email verification, password reset     |
 | Users      | ✅                         | `GET /v1/users/me`, `DELETE /v1/users/me`                                             |
 | Households | ✅                         | `GET/POST /v1/households`, `POST /v1/households/join`, `POST /v1/households/invites`  |
 | Sync       | ✅ (v1)                    | `GET/POST /v1/sync` — document pull/push with revision conflicts                      |
@@ -121,7 +121,7 @@ Storage is split into `household_sync_meta` (revision + `updated_at`) and `house
 ### Auth
 
 - JWT access token (60 min) + rotating refresh token (30 days)
-- Email/password + Apple/Google OAuth (token verification implemented; needs client IDs)
+- Email/password, email verification, password reset, and Apple/Google OAuth (token verification implemented; needs client IDs)
 - Capacitor: store refresh token in secure storage; refresh on 401
 - Deep link `https://budgii.app/join?code=` → auth → `POST /households/join`
 
@@ -310,6 +310,7 @@ GET  /receipts/{id}/file                                        ✅
 - [x] Login/register → store tokens
 - [x] Capacitor secure token storage
 - [x] Logout in Account Settings clears auth state and stored tokens
+- [x] Email verification and password reset use single-use hashed action tokens
 - [x] Create or join household on first use
 - [x] Pull sync snapshot → hydrate Zustand
 - [x] Push on mutation with `base_revision`

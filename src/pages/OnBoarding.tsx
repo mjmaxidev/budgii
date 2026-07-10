@@ -18,6 +18,7 @@ import { useStore } from '@/store/appStore'
 import { isApiEnabled } from '@/api/config'
 import { registerAndCreateHousehold } from '@/api/bootstrap'
 import { ApiError } from '@/api/client'
+import { requestEmailVerification } from '@/api/auth'
 
 type Step = 1 | 2 | 3 | 4
 type ContactMethod = 'phone' | 'email' | 'apple' | 'google'
@@ -272,6 +273,11 @@ export function OnBoarding() {
           householdName,
           false,
         )
+        try {
+          await requestEmailVerification(contact.trim().toLowerCase())
+        } catch {
+          // Account creation succeeded; verification can be resent from Account Settings.
+        }
         setStep(4)
       } catch (err) {
         setSubmitError(err instanceof ApiError ? err.message : 'Could not create account')

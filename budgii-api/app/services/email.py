@@ -22,15 +22,41 @@ class InviteEmail:
     access_label: str
 
 
+@dataclass(frozen=True)
+class AuthEmail:
+    to_email: str
+    subject: str
+    text: str
+    html: str
+    log_label: str
+
+
 async def send_invite_email(settings: Settings, message: InviteEmail) -> None:
+    await send_email(
+        settings,
+        AuthEmail(
+            to_email=message.to_email,
+            subject=f"{message.inviter_name} invited you to Budgii",
+            text=_invite_text(message),
+            html=_invite_html(message),
+            log_label=f"household={message.household_name} url={message.invite_url}",
+        ),
+    )
+
+
+async def send_auth_email(settings: Settings, message: AuthEmail) -> None:
+    await send_email(settings, message)
+
+
+async def send_email(settings: Settings, message: AuthEmail) -> None:
     provider = settings.invite_email_provider.strip().lower()
     if provider in {"", "log", "none"}:
         logger.info(
-            "invite_email_log provider=%s to=%s household=%s url=%s",
+            "email_log provider=%s to=%s subject=%s %s",
             provider or "none",
             message.to_email,
-            message.household_name,
-            message.invite_url,
+            message.subject,
+            message.log_label,
         )
         return
 
@@ -48,7 +74,7 @@ async def send_invite_email(settings: Settings, message: InviteEmail) -> None:
     raise EmailDeliveryError(f"Unsupported invite email provider: {settings.invite_email_provider}")
 
 
-async def _send_resend(settings: Settings, message: InviteEmail) -> None:
+async def _send_resend(settings: Settings, message: AuthEmail) -> None:
     if not settings.invite_email_api_key:
         raise EmailDeliveryError("INVITE_EMAIL_API_KEY is required for Resend")
 
@@ -61,14 +87,14 @@ async def _send_resend(settings: Settings, message: InviteEmail) -> None:
         {
             "from": settings.invite_email_from,
             "to": [message.to_email],
-            "subject": f"{message.inviter_name} invited you to Budgii",
-            "html": _invite_html(message),
-            "text": _invite_text(message),
+            "subject": message.subject,
+            "html": message.html,
+            "text": message.text,
         },
     )
 
 
-async def _send_sendgrid(settings: Settings, message: InviteEmail) -> None:
+async def _send_sendgrid(settings: Settings, message: AuthEmail) -> None:
     if not settings.invite_email_api_key:
         raise EmailDeliveryError("INVITE_EMAIL_API_KEY is required for SendGrid")
 
@@ -82,10 +108,10 @@ async def _send_sendgrid(settings: Settings, message: InviteEmail) -> None:
         {
             "personalizations": [{"to": [{"email": message.to_email}]}],
             "from": {"email": from_email, **({"name": from_name} if from_name else {})},
-            "subject": f"{message.inviter_name} invited you to Budgii",
+            "subject": message.subject,
             "content": [
-                {"type": "text/plain", "value": _invite_text(message)},
-                {"type": "text/html", "value": _invite_html(message)},
+                {"type": "text/plain", "value": message.text},
+                {"type": "text/html", "value": message.html},
             ],
         },
     )
@@ -114,7 +140,10 @@ def _invite_text(message: InviteEmail) -> str:
 
 def _invite_html(message: InviteEmail) -> str:
     return f"""
-<p>{message.inviter_name} invited you to join <strong>{message.household_name}</strong> on Budgii with {message.access_label} access.</p>
+<p>
+  {message.inviter_name} invited you to join <strong>{message.household_name}</strong>
+  on Budgii with {message.access_label} access.
+</p>
 <p><a href="{message.invite_url}">Accept the invite</a></p>
 <p>This invite expires in 7 days.</p>
 """

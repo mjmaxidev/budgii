@@ -4,10 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import Settings, get_settings
 from app.db.session import get_db
 from app.schemas.auth import (
+    AuthActionResponse,
     EmailLoginRequest,
+    EmailActionRequest,
     OAuthLoginRequest,
+    PasswordResetConfirmRequest,
     RefreshRequest,
     RegisterRequest,
+    TokenActionRequest,
     TokenResponse,
 )
 from app.services import auth as auth_service
@@ -58,3 +62,41 @@ async def refresh_token(
     settings: Settings = Depends(get_settings),
 ) -> TokenResponse:
     return await auth_service.refresh_access_token(session, body.refresh_token, settings)
+
+
+@router.post("/email-verification/request", response_model=AuthActionResponse)
+async def request_email_verification(
+    body: EmailActionRequest,
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> AuthActionResponse:
+    await auth_service.request_email_verification(session, body.email, settings)
+    return AuthActionResponse()
+
+
+@router.post("/email-verification/confirm", response_model=AuthActionResponse)
+async def confirm_email_verification(
+    body: TokenActionRequest,
+    session: AsyncSession = Depends(get_db),
+) -> AuthActionResponse:
+    await auth_service.confirm_email_verification(session, body.token)
+    return AuthActionResponse()
+
+
+@router.post("/password-reset/request", response_model=AuthActionResponse)
+async def request_password_reset(
+    body: EmailActionRequest,
+    session: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> AuthActionResponse:
+    await auth_service.request_password_reset(session, body.email, settings)
+    return AuthActionResponse()
+
+
+@router.post("/password-reset/confirm", response_model=AuthActionResponse)
+async def confirm_password_reset(
+    body: PasswordResetConfirmRequest,
+    session: AsyncSession = Depends(get_db),
+) -> AuthActionResponse:
+    await auth_service.confirm_password_reset(session, body.token, body.new_password)
+    return AuthActionResponse()

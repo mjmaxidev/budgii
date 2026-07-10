@@ -1,6 +1,6 @@
 import { apiRequest, apiUpload } from '@/api/client'
 import { clearStoredAuthTokens, loadStoredAuthTokens, saveStoredAuthTokens } from '@/api/authStorage'
-import type { TokenResponse, UpdateUserInput, UserResponse } from '@/api/types'
+import type { AuthActionResponse, TokenResponse, UpdateUserInput, UserResponse } from '@/api/types'
 import { useAuthStore } from '@/store/authStore'
 
 export async function register(email: string, password: string, name: string): Promise<TokenResponse> {
@@ -69,6 +69,38 @@ export async function changePassword(currentPassword: string, newPassword: strin
       current_password: currentPassword,
       new_password: newPassword,
     },
+  })
+}
+
+export async function requestEmailVerification(email: string): Promise<AuthActionResponse> {
+  return apiRequest<AuthActionResponse>('/auth/email-verification/request', {
+    method: 'POST',
+    body: { email },
+    auth: false,
+  })
+}
+
+export async function confirmEmailVerification(token: string): Promise<AuthActionResponse> {
+  return apiRequest<AuthActionResponse>('/auth/email-verification/confirm', {
+    method: 'POST',
+    body: { token },
+    auth: false,
+  })
+}
+
+export async function requestPasswordReset(email: string): Promise<AuthActionResponse> {
+  return apiRequest<AuthActionResponse>('/auth/password-reset/request', {
+    method: 'POST',
+    body: { email },
+    auth: false,
+  })
+}
+
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<AuthActionResponse> {
+  return apiRequest<AuthActionResponse>('/auth/password-reset/confirm', {
+    method: 'POST',
+    body: { token, new_password: newPassword },
+    auth: false,
   })
 }
 

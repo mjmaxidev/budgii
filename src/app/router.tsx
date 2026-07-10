@@ -3,6 +3,8 @@ import { AppLayout } from './AppLayout'
 import { AuthGate } from '@/components/auth/AuthGate'
 import { Login } from '@/pages/Login'
 import { Verification } from '@/pages/Verification'
+import { ForgotPassword } from '@/pages/ForgotPassword'
+import { ResetPassword } from '@/pages/ResetPassword'
 import { OnBoarding } from '@/pages/OnBoarding'
 import { Home } from '@/pages/Home'
 import { AddExpense } from '@/pages/AddExpense'
@@ -216,6 +218,16 @@ export const appRoutes: RouteWithMeta[] = [
     path: '/login',
     element: <Login />,
     meta: { label: 'Login', description: 'Welcome / sign in', section: 'app', hidden: true },
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+    meta: { label: 'Forgot Password', description: 'Request reset link', section: 'app', hidden: true },
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />,
+    meta: { label: 'Reset Password', description: 'Set new password', section: 'app', hidden: true },
   },
   {
     path: '/verification',

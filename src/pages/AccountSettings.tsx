@@ -216,6 +216,27 @@ export function AccountSettings() {
             placeholder="your.email@example.com"
             leftIcon={<Mail size={18} />}
           />
+          {apiOn && (
+            <div className="rounded-input bg-surfaceSoft px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[13px] font-bold text-ink">Email Verification</p>
+                  <p className="text-[12px] text-muted">
+                    {apiUser?.email_verified_at ? 'Verified' : 'Verification link required'}
+                  </p>
+                </div>
+                {!apiUser?.email_verified_at && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/verification')}
+                    className="text-[13px] font-bold text-primary"
+                  >
+                    Verify
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

@@ -80,6 +80,13 @@ export function Login() {
             </button>
           }
         />
+        <button
+          type="button"
+          onClick={() => navigate('/forgot-password')}
+          className="block w-full text-right text-[13px] font-bold text-primary active:opacity-80"
+        >
+          Forgot password?
+        </button>
       </div>
 
       {error && (

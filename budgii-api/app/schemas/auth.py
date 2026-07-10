@@ -32,6 +32,7 @@ class UserResponse(BaseModel):
     name: str
     avatar: str | None = None
     auth_provider: str
+    email_verified_at: str | None = None
 
 
 class UpdateUserRequest(BaseModel):
@@ -43,3 +44,19 @@ class UpdateUserRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=8)
     new_password: str = Field(min_length=8)
+
+
+class EmailActionRequest(BaseModel):
+    email: EmailStr
+
+
+class TokenActionRequest(BaseModel):
+    token: str = Field(min_length=16)
+
+
+class PasswordResetConfirmRequest(TokenActionRequest):
+    new_password: str = Field(min_length=8)
+
+
+class AuthActionResponse(BaseModel):
+    ok: bool = True

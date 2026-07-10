@@ -1,166 +1,133 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { MessageSquare, Mail, Check, CheckCircle2, ChevronRight } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { CheckCircle2, Mail } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
-import { Card } from '@/components/ui/Card'
+import { TopBar } from '@/components/layout/TopBar'
 import { ActionButton } from '@/components/ui/ActionButton'
-import { cn } from '@/utils/cn'
+import { Card } from '@/components/ui/Card'
+import { FormField } from '@/components/ui/FormField'
+import { confirmEmailVerification, getMe, requestEmailVerification } from '@/api/auth'
+import { ApiError } from '@/api/client'
 import { isApiEnabled } from '@/api/config'
-
-type VerificationType = 'phone' | 'email' | null
+import { useAuthStore } from '@/store/authStore'
 
 export function Verification() {
   const navigate = useNavigate()
+  const location = useLocation()
   const apiOn = isApiEnabled()
-  const [verificationType, setVerificationType] = useState<VerificationType>(null)
-  const [contactInput, setContactInput] = useState('')
-  const [verificationCode, setVerificationCode] = useState('')
-  const [isVerified, setIsVerified] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const setUser = useAuthStore((s) => s.setUser)
+  const token = useMemo(() => new URLSearchParams(location.search).get('token') ?? '', [location.search])
+  const [email, setEmail] = useState(user?.email ?? '')
+  const [loading, setLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [verified, setVerified] = useState(Boolean(user?.email_verified_at))
+  const [error, setError] = useState('')
 
-  const handleVerify = () => {
-    if (!contactInput.trim() || !verificationCode.trim()) return
-    setIsVerified(true)
-  }
+  useEffect(() => {
+    if (!token || !apiOn) return
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    confirmEmailVerification(token)
+      .then(async () => {
+        if (cancelled) return
+        setVerified(true)
+        try {
+          const freshUser = await getMe()
+          setUser(freshUser)
+        } catch {
+          // The token is still confirmed even if the session is gone.
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : 'Could not verify email.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [apiOn, setUser, token])
 
-  const handleContinue = () => {
-    if (isVerified) {
-      navigate('/home')
+  async function handleSend() {
+    if (!email.trim()) {
+      setError('Enter your email address.')
+      return
+    }
+    if (!apiOn) {
+      setSent(true)
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      await requestEmailVerification(email.trim())
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not send verification email.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <AppShell contentClassName="flex flex-col justify-between pb-20">
-      <div className="mt-6 mb-8">
-        <h1 className="text-[28px] font-extrabold text-ink">Verify Your Account</h1>
-        <p className="mt-2 text-[15px] text-muted">
-          Choose how you'd like to receive your verification code.
-        </p>
-      </div>
-
-      {!verificationType && (
-        <div className="space-y-3">
-          <button
-            onClick={() => setVerificationType('phone')}
-            disabled={apiOn}
-            className="flex w-full items-center gap-3 rounded-xl border-2 border-line bg-surface p-4 transition-all hover:border-primary hover:bg-primarySoft disabled:hidden"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <MessageSquare size={24} className="text-primary" />
+    <AppShell showBottomNav topBar={<TopBar title="Verify Email" showBack />}>
+      <div className="mt-4 space-y-4">
+        <Card className="p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primarySoft text-primary">
+              {verified ? <CheckCircle2 size={24} /> : <Mail size={24} />}
             </div>
-            <div className="flex-1 text-left">
-              <p className="font-bold text-ink">Text Message</p>
-              <p className="text-[13px] text-muted">Receive code via SMS</p>
-            </div>
-            <ChevronRight size={20} className="text-muted" />
-          </button>
-
-          <button
-            onClick={() => setVerificationType('email')}
-            className="flex w-full items-center gap-3 rounded-xl border-2 border-line bg-surface p-4 transition-all hover:border-primary hover:bg-primarySoft"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <Mail size={24} className="text-primary" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-bold text-ink">Email</p>
-              <p className="text-[13px] text-muted">Receive code via email</p>
-            </div>
-            <ChevronRight size={20} className="text-muted" />
-          </button>
-        </div>
-      )}
-
-      {verificationType && (
-        <div className="space-y-4">
-          <Card>
-            <div className="flex items-center gap-3 mb-3">
-              <div
-                className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl',
-                  verificationType === 'phone' ? 'bg-blue-100' : 'bg-orange-100',
-                )}
-              >
-                {verificationType === 'phone' ? (
-                  <MessageSquare size={20} className="text-blue-600" />
-                ) : (
-                  <Mail size={20} className="text-orange-600" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-[15px] font-bold text-ink">
-                  {verificationType === 'phone' ? 'Phone Number' : 'Email Address'}
-                </p>
-                <p className="text-[12px] text-muted">
-                  {verificationType === 'phone' ? 'Enter your phone number' : 'Enter your email address'}
-                </p>
-              </div>
-              <button
-                onClick={() => setVerificationType(null)}
-                className="text-[13px] font-bold text-primary"
-              >
-                Change
-              </button>
-            </div>
-            <input
-              type={verificationType === 'phone' ? 'tel' : 'email'}
-              placeholder={verificationType === 'phone' ? '+1 (555) 123-4567' : 'you@example.com'}
-              value={contactInput}
-              onChange={(e) => setContactInput(e.target.value)}
-              disabled={isVerified}
-              className="w-full rounded-input border border-line bg-surfaceSoft px-3 py-2.5 text-[15px] font-semibold text-ink placeholder:font-normal placeholder:text-muted/50 outline-none disabled:opacity-50"
-            />
-          </Card>
-
-          {contactInput.trim() && !isVerified && (
-            <Card>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100">
-                  <Check size={20} className="text-green-600" />
-                </div>
-                <p className="text-[15px] font-bold text-ink">Verification Code</p>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="000000"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.slice(0, 6))}
-                  maxLength={6}
-                  className="flex-1 rounded-input border border-line bg-surfaceSoft px-3 py-2.5 text-center text-[20px] font-bold text-ink placeholder:text-muted/50 outline-none"
-                />
-              </div>
-              <p className="mt-2 text-[12px] text-muted">
-                Check your {verificationType === 'phone' ? 'SMS' : 'email'}
+            <div>
+              <h1 className="text-[22px] font-extrabold text-ink">
+                {verified ? 'Email Verified' : 'Verify Your Email'}
+              </h1>
+              <p className="mt-1 text-[14px] leading-snug text-muted">
+                {verified
+                  ? 'Your Budgii account email is verified.'
+                  : 'Budgii sends a secure link to confirm this email belongs to you.'}
               </p>
-            </Card>
-          )}
+            </div>
+          </div>
+        </Card>
 
-          {isVerified && (
-            <Card className="flex items-center gap-3 bg-green-50 border-green-200">
-              <CheckCircle2 size={24} className="text-green-600" />
-              <div>
-                <p className="font-bold text-green-900">Account verified</p>
-                <p className="text-[13px] text-green-700">You're all set to get started</p>
-              </div>
-            </Card>
-          )}
-        </div>
-      )}
+        {!verified && (
+          <Card className="space-y-4 p-4">
+            <FormField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              leftIcon={<Mail size={18} />}
+              autoComplete="email"
+            />
+            <ActionButton onClick={() => void handleSend()} disabled={loading}>
+              {loading ? 'Sending...' : sent ? 'Send Again' : 'Send Verification Link'}
+            </ActionButton>
+          </Card>
+        )}
 
-      <div className="absolute inset-x-0 bottom-0 border-t border-line bg-surface px-4 py-3">
-        <div className="flex gap-2">
-          <ActionButton variant="outline" className="flex-1" onClick={() => navigate('/home')}>
-            Skip
-          </ActionButton>
+        {sent && !verified && (
+          <p className="rounded-input bg-greenSoft px-4 py-2 text-[13px] font-semibold text-green">
+            If that email has a Budgii account, a verification link is on the way.
+          </p>
+        )}
+        {error && (
+          <p className="rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
+        )}
+
+        {verified && (
           <ActionButton
-            variant="primary"
-            className="flex-1"
-            disabled={!isVerified && (verificationType ? !contactInput.trim() : true)}
-            onClick={isVerified ? handleContinue : handleVerify}
+            onClick={() => {
+              navigate('/home')
+            }}
           >
-            {isVerified ? 'Continue' : 'Verify'}
+            Continue
           </ActionButton>
-        </div>
+        )}
       </div>
     </AppShell>
   )

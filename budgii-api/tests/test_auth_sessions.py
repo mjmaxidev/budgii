@@ -1,3 +1,5 @@
+import re
+
 from fastapi.testclient import TestClient
 
 from tests.helpers import auth_headers, create_household, register_user, unique_email
@@ -158,6 +160,97 @@ def test_change_password(client: TestClient) -> None:
     assert response.status_code == 204
     assert login_email(client, tokens["email"], PASSWORD).status_code == 401
     assert login_email(client, tokens["email"], "newpassword123").status_code == 200
+
+
+def test_email_verification_request_and_confirm(client: TestClient, monkeypatch) -> None:
+    tokens = register_user(client, "verify-email")
+    sent = []
+
+    async def capture_email(_settings, message):
+        sent.append(message)
+
+    monkeypatch.setattr("app.services.auth.send_auth_email", capture_email)
+
+    request_response = client.post(
+        "/v1/auth/email-verification/request",
+        json={"email": tokens["email"]},
+    )
+    assert request_response.status_code == 200, request_response.text
+    assert request_response.json() == {"ok": True}
+
+    me_response = client.get("/v1/users/me", headers=auth_headers(tokens))
+    assert me_response.status_code == 200
+    assert me_response.json()["email_verified_at"] is None
+
+    token = extract_auth_token(sent[0].text, "/#/verification?token=")
+    confirm_response = client.post(
+        "/v1/auth/email-verification/confirm",
+        json={"token": token},
+    )
+    assert confirm_response.status_code == 200, confirm_response.text
+
+    verified_response = client.get("/v1/users/me", headers=auth_headers(tokens))
+    assert verified_response.status_code == 200
+    assert verified_response.json()["email_verified_at"]
+
+    reused_response = client.post(
+        "/v1/auth/email-verification/confirm",
+        json={"token": token},
+    )
+    assert reused_response.status_code == 400
+
+
+def test_email_verification_request_does_not_reveal_unknown_email(
+    client: TestClient, monkeypatch
+) -> None:
+    sent = []
+
+    async def capture_email(_settings, message):
+        sent.append(message)
+
+    monkeypatch.setattr("app.services.auth.send_auth_email", capture_email)
+
+    response = client.post(
+        "/v1/auth/email-verification/request",
+        json={"email": unique_email("missing-verify")},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+    assert sent == []
+
+
+def test_password_reset_request_and_confirm(client: TestClient, monkeypatch) -> None:
+    tokens = register_user(client, "password-reset")
+    sent = []
+
+    async def capture_email(_settings, message):
+        sent.append(message)
+
+    monkeypatch.setattr("app.services.auth.send_auth_email", capture_email)
+
+    request_response = client.post(
+        "/v1/auth/password-reset/request",
+        json={"email": tokens["email"]},
+    )
+    assert request_response.status_code == 200, request_response.text
+    assert request_response.json() == {"ok": True}
+
+    token = extract_auth_token(sent[0].text, "/#/reset-password?token=")
+    confirm_response = client.post(
+        "/v1/auth/password-reset/confirm",
+        json={"token": token, "new_password": "resetpassword123"},
+    )
+    assert confirm_response.status_code == 200, confirm_response.text
+
+    assert login_email(client, tokens["email"], PASSWORD).status_code == 401
+    assert login_email(client, tokens["email"], "resetpassword123").status_code == 200
+    assert refresh(client, tokens["refresh_token"]).status_code == 401
+
+
+def extract_auth_token(text: str, marker: str) -> str:
+    match = re.search(re.escape(marker) + r"([A-Za-z0-9_-]+)", text)
+    assert match, text
+    return match.group(1)
 
 
 def test_delete_account_invalidates_user_and_refresh_tokens(client: TestClient) -> None:
