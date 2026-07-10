@@ -260,7 +260,7 @@ GET  /receipts/{id}/file                                        ✅
 
 **Spending alert evaluation done:** `POST /households/{id}/spending-alerts/evaluate` reads synced alert config and budget allocations, compares against normalized monthly expenses, and returns active alert results for Home and Spending Alerts.
 
-**Push dispatch worker done:** `scripts/dispatch_push_notifications.py` scans eligible backend-generated notifications, respects notification preferences/quiet hours, sends through the configured push provider, and records `notification_push_deliveries` so repeated scheduler runs do not resend the same notification to the same device. The current production-safe provider is `log`; APNs/FCM remains a Phase 3 provider swap.
+**Push dispatch worker done:** `scripts/dispatch_push_notifications.py` scans eligible backend-generated notifications, respects master/type notification preferences and quiet hours, sends through the configured push provider, and records `notification_push_deliveries` so repeated scheduler runs do not resend the same notification to the same device. The current production-safe provider is `log`; APNs/FCM and native token capture remain Phase 3 provider work.
 
 **Finance pagination UX done:** Transactions and Receipt History render cached finance data in visible pages with load-more controls and result counts, so large local/API-hydrated histories remain manageable on the phone viewport.
 

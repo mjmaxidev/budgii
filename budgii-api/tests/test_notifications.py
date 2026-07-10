@@ -22,7 +22,11 @@ def test_push_delivery_filter_respects_master_type_and_quiet_hours() -> None:
     now = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
     notifications = [
         {"id": "alert:warning", "type": "budget_warning"},
+        {"id": "alert:exceeded", "type": "budget_exceeded"},
         {"id": "deal:coffee", "type": "price_drop"},
+        {"id": "deal:new", "type": "deal_found"},
+        {"id": "summary:weekly", "type": "weekly_summary"},
+        {"id": "system:unknown", "type": "system_notice"},
     ]
 
     assert filter_notifications_for_delivery({"notificationsEnabled": False}, notifications, now) == []
@@ -31,12 +35,30 @@ def test_push_delivery_filter_respects_master_type_and_quiet_hours() -> None:
         {
             "notificationsEnabled": True,
             "notificationBudgetWarnings": True,
+            "notificationBudgetExceeded": False,
             "notificationDeals": False,
+            "notificationWeeklySummary": False,
         },
         notifications,
         now,
     )
-    assert [notification["id"] for notification in type_filtered] == ["alert:warning"]
+    assert [notification["id"] for notification in type_filtered] == ["alert:warning", "system:unknown"]
+
+    summary_filtered = filter_notifications_for_delivery(
+        {
+            "notificationsEnabled": True,
+            "notificationBudgetWarnings": False,
+            "notificationBudgetExceeded": False,
+            "notificationDeals": False,
+            "notificationWeeklySummary": True,
+        },
+        notifications,
+        now,
+    )
+    assert [notification["id"] for notification in summary_filtered] == [
+        "summary:weekly",
+        "system:unknown",
+    ]
 
     quiet_filtered = filter_notifications_for_delivery(
         {

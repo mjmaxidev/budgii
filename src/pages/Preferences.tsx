@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Bell, DollarSign, Languages, Moon } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -44,6 +44,9 @@ export function Preferences() {
   const [quietHours, setQuietHours] = useState(settings.notificationQuietHoursEnabled)
   const [quietStart, setQuietStart] = useState(settings.notificationQuietHoursStart)
   const [quietEnd, setQuietEnd] = useState(settings.notificationQuietHoursEnd)
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | 'unsupported'
+  >('unsupported')
 
   const [openCurrency, setOpenCurrency] = useState(false)
   const [openLanguage, setOpenLanguage] = useState(false)
@@ -64,6 +67,14 @@ export function Preferences() {
 
   const currencyLabel = CURRENCIES.find((c) => c.code === currency)?.label || currency
   const languageLabel = LANGUAGES.find((l) => l.code === language)?.label || 'English'
+  const permissionLabel =
+    notificationPermission === 'granted'
+      ? 'Allowed'
+      : notificationPermission === 'denied'
+        ? 'Blocked'
+        : notificationPermission === 'default'
+          ? 'Not Allowed'
+          : 'Device Managed'
 
   const dirty =
     currency !== savedCurrency ||
@@ -76,6 +87,53 @@ export function Preferences() {
     quietHours !== savedNotificationSettings.quietHours ||
     quietStart !== savedNotificationSettings.quietStart ||
     quietEnd !== savedNotificationSettings.quietEnd
+
+  useEffect(() => {
+    if (!('Notification' in window)) {
+      setNotificationPermission('unsupported')
+      return
+    }
+    setNotificationPermission(Notification.permission)
+  }, [])
+
+  async function handleNotificationsChange(next: boolean) {
+    setError('')
+    if (!next) {
+      setNotifications(false)
+      return
+    }
+
+    if (!('Notification' in window)) {
+      setNotifications(true)
+      setNotificationPermission('unsupported')
+      return
+    }
+
+    if (Notification.permission === 'granted') {
+      setNotifications(true)
+      setNotificationPermission('granted')
+      return
+    }
+
+    if (Notification.permission === 'denied') {
+      setNotifications(false)
+      setNotificationPermission('denied')
+      setError('Notification permission is blocked for this app.')
+      return
+    }
+
+    try {
+      const permission = await Notification.requestPermission()
+      setNotificationPermission(permission)
+      setNotifications(permission === 'granted')
+      if (permission !== 'granted') {
+        setError('Notification permission was not granted.')
+      }
+    } catch {
+      setNotifications(false)
+      setError('Could not request notification permission.')
+    }
+  }
 
   async function handleSave() {
     if (saving) return
@@ -166,9 +224,11 @@ export function Preferences() {
             <ToggleRow
               icon={<Bell size={20} />}
               title="Push Notifications"
-              description="Allow Budgii to send alerts outside the app"
+              description={permissionLabel}
               checked={notifications}
-              onChange={setNotifications}
+              onChange={(next) => {
+                void handleNotificationsChange(next)
+              }}
               iconBg="#FFF0E5"
             />
           </Card>
@@ -184,6 +244,7 @@ export function Preferences() {
               description="When a category is close to its limit"
               checked={budgetWarnings}
               onChange={setBudgetWarnings}
+              disabled={!notifications}
             />
             <ToggleRow
               title="Over-Budget Alerts"
@@ -191,6 +252,7 @@ export function Preferences() {
               checked={budgetExceeded}
               onChange={setBudgetExceeded}
               iconBg="#FFE5E5"
+              disabled={!notifications}
             />
             <ToggleRow
               title="Deal Matches"
@@ -198,6 +260,7 @@ export function Preferences() {
               checked={dealMatches}
               onChange={setDealMatches}
               iconBg="#EAF8ED"
+              disabled={!notifications}
             />
             <ToggleRow
               title="Weekly Summary"
@@ -205,6 +268,7 @@ export function Preferences() {
               checked={weeklySummary}
               onChange={setWeeklySummary}
               iconBg="#E0F2FE"
+              disabled={!notifications}
             />
           </Card>
         </div>
@@ -219,8 +283,9 @@ export function Preferences() {
               checked={quietHours}
               onChange={setQuietHours}
               iconBg="#F0EAFE"
+              disabled={!notifications}
             />
-            {quietHours && (
+            {notifications && quietHours && (
               <div className="grid grid-cols-2 gap-3 border-t border-line/60 pt-3">
                 <FormField
                   label="Start"

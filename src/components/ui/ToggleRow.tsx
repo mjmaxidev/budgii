@@ -8,11 +8,20 @@ type Props = {
   checked: boolean
   onChange: (checked: boolean) => void
   iconBg?: string
+  disabled?: boolean
 }
 
-export function ToggleRow({ icon, title, description, checked, onChange, iconBg = '#EAF8ED' }: Props) {
+export function ToggleRow({
+  icon,
+  title,
+  description,
+  checked,
+  onChange,
+  iconBg = '#EAF8ED',
+  disabled = false,
+}: Props) {
   return (
-    <div className="flex items-center gap-3 py-1">
+    <div className={cn('flex items-center gap-3 py-1', disabled && 'opacity-55')}>
       {icon && (
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg"
@@ -28,8 +37,13 @@ export function ToggleRow({ icon, title, description, checked, onChange, iconBg 
       <button
         role="switch"
         aria-checked={checked}
+        disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={cn('relative h-7 w-12 shrink-0 rounded-pill transition', checked ? 'bg-green' : 'bg-line')}
+        className={cn(
+          'relative h-7 w-12 shrink-0 rounded-pill transition',
+          checked ? 'bg-green' : 'bg-line',
+          disabled && 'cursor-not-allowed',
+        )}
       >
         <span
           className={cn(
