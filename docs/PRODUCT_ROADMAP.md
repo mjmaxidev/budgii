@@ -213,7 +213,7 @@ feature-level polish gaps.
 | Receipt storage                | Local Docker volume is fine for single-host deploy; object storage or shared volume is needed for multi-replica/serverless                      |
 | Pagination/incremental hydrate | Expenses/receipts are hydrated into the store; very large accounts may need incremental loading/cache eviction                                  |
 | Observability                  | Health, request IDs, and structured logs exist; Sentry/error tracking, metrics, alerting, and audit logs are not fully wired                    |
-| Security hardening             | Auth basics, email verification, and password reset exist; still need rate limiting, brute-force protection, and session/device management UI   |
+| Security hardening             | Auth basics, email verification, password reset, and auth endpoint rate limiting exist; still need stronger distributed brute-force protection and session/device management UI |
 | Accessibility                  | Needs full keyboard/screen-reader/contrast audit across mobile-sized UI                                                                         |
 | Performance                    | Needs production profiling on low-end mobile devices and large seeded datasets                                                                  |
 | Test coverage                  | Backend tests are meaningful; frontend component/e2e tests are still missing                                                                    |

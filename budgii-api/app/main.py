@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.config import get_settings
 from app.monitoring import add_request_logging
+from app.rate_limit import add_auth_rate_limiting
 
 
 def create_app() -> FastAPI:
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.app_debug else None,
     )
     add_request_logging(app)
+    add_auth_rate_limiting(app, settings)
 
     app.add_middleware(
         CORSMiddleware,

@@ -122,6 +122,7 @@ Storage is split into `household_sync_meta` (revision + `updated_at`) and `house
 
 - JWT access token (60 min) + rotating refresh token (30 days)
 - Email/password, email verification, password reset, and Apple/Google OAuth (token verification implemented; needs client IDs)
+- In-process auth endpoint rate limiting via `AUTH_RATE_LIMIT_*` env vars
 - Capacitor: store refresh token in secure storage; refresh on 401
 - Deep link `https://budgii.app/join?code=` → auth → `POST /households/join`
 

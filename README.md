@@ -40,6 +40,8 @@ Leave `INVITE_EMAIL_PROVIDER=log` until a real `INVITE_EMAIL_API_KEY` is set.
 Leave `PUSH_PROVIDER=log` until APNs/FCM delivery is implemented.
 Set `AUTH_LINK_BASE` to the public frontend origin so password reset and email
 verification links open the right app.
+Auth endpoints are rate-limited by default; tune `AUTH_RATE_LIMIT_REQUESTS` and
+`AUTH_RATE_LIMIT_WINDOW_SECONDS` per environment.
 
 Compose stack names are pinned in the files:
 `budgii-dev`, `budgii-staging`, and `budgii-production`. The root server compose

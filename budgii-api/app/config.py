@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 30
+    auth_rate_limit_enabled: bool = True
+    auth_rate_limit_requests: int = 10
+    auth_rate_limit_window_seconds: int = 60
 
     apple_client_id: str = ""
     google_client_id: str = ""
