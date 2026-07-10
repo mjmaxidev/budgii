@@ -242,6 +242,18 @@ class NotificationPushDelivery(Base):
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class BackgroundJobRun(Base):
+    __tablename__ = "background_job_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    job_name: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    summary: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
 class Expense(Base):
     __tablename__ = "expenses"
 

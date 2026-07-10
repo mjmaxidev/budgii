@@ -78,6 +78,84 @@ services:
       retries: 5
       start_period: 10s
 
+  recurring-worker:
+    build:
+      context: ./budgii-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command:
+      [
+        "python",
+        "scripts/run_scheduler.py",
+        "recurring",
+        "--interval-seconds",
+        "${RECURRING_WORKER_INTERVAL_SECONDS:-3600}",
+      ]
+    environment:
+      BUDGII_RUN_MIGRATIONS: "false"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      API_PREFIX: /v1
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS to the production frontend origin}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-budgii}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the production stack}@db:5432/${POSTGRES_DB:-budgii}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET before starting the production stack}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INVITE_LINK_BASE: ${INVITE_LINK_BASE:-https://budgii.app/join}
+      INVITE_EMAIL_PROVIDER: ${INVITE_EMAIL_PROVIDER:-log}
+      INVITE_EMAIL_FROM: ${INVITE_EMAIL_FROM:-}
+      INVITE_EMAIL_API_KEY: ${INVITE_EMAIL_API_KEY:-}
+      RECEIPT_STORAGE_PATH: /app/uploads
+      RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-openai}
+      RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-log}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  push-worker:
+    build:
+      context: ./budgii-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command:
+      [
+        "python",
+        "scripts/run_scheduler.py",
+        "push",
+        "--interval-seconds",
+        "${PUSH_WORKER_INTERVAL_SECONDS:-300}",
+      ]
+    environment:
+      BUDGII_RUN_MIGRATIONS: "false"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      API_PREFIX: /v1
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS to the production frontend origin}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-budgii}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before starting the production stack}@db:5432/${POSTGRES_DB:-budgii}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET before starting the production stack}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INVITE_LINK_BASE: ${INVITE_LINK_BASE:-https://budgii.app/join}
+      INVITE_EMAIL_PROVIDER: ${INVITE_EMAIL_PROVIDER:-log}
+      INVITE_EMAIL_FROM: ${INVITE_EMAIL_FROM:-}
+      INVITE_EMAIL_API_KEY: ${INVITE_EMAIL_API_KEY:-}
+      RECEIPT_STORAGE_PATH: /app/uploads
+      RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-openai}
+      RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-log}
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   server_postgres_data:
   server_receipt_uploads:

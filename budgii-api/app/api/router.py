@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api import (
     alerts,
     auth,
+    background_jobs,
     deals,
     expenses,
     health,
@@ -21,6 +22,7 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(households.router, prefix="/households", tags=["households"])
 api_router.include_router(expenses.router, prefix="/households", tags=["expenses"])
 api_router.include_router(alerts.router, prefix="/households", tags=["spending-alerts"])
+api_router.include_router(background_jobs.router, prefix="/households", tags=["background-jobs"])
 api_router.include_router(deals.router, prefix="/households", tags=["deals"])
 api_router.include_router(notifications.router, prefix="/households", tags=["notifications"])
 api_router.include_router(receipts.household_router, prefix="/households", tags=["receipts"])

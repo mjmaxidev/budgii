@@ -19,6 +19,7 @@ import {
   LogOut,
   Trash2,
   ChevronRight,
+  ServerCog,
 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
@@ -102,7 +103,10 @@ export function Settings() {
     },
     {
       title: 'Support',
-      items: [{ icon: LifeBuoy, label: 'Help Center', to: '/help' }],
+      items: [
+        { icon: ServerCog, label: 'Background Jobs', to: '/background-jobs' },
+        { icon: LifeBuoy, label: 'Help Center', to: '/help' },
+      ],
     },
   ]
 

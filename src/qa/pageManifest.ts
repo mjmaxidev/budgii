@@ -41,6 +41,7 @@ export const appPages: AppPage[] = [
   { path: '/receipt-history', label: 'Receipt History', description: 'Past receipts' },
   { path: '/data-export', label: 'Data Export', description: 'Export data' },
   { path: '/help', label: 'Help', description: 'Support' },
+  { path: '/background-jobs', label: 'Background Jobs', description: 'Worker status' },
   { path: '/budget-comparison', label: 'Budget Comparison', description: 'Compare periods' },
   { path: '/notifications', label: 'Notifications', description: 'Updates' },
   { path: '/verification', label: 'Verification', description: 'Account verification' },

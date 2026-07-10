@@ -256,11 +256,11 @@ GET  /receipts/{id}/file                                        ✅
 
 **Receipt retry/parser hardening done:** Receipt Results can re-analyze existing uploads, Scan Receipt and Receipt Results share the same API polling/hydration flow, and OpenAI payload parsing now skips total/tax/payment rows, merges duplicate item lines, tolerates numeric strings, and fails clearly when no line items are returned.
 
-**Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration. `scripts/apply_recurring.py` and `app/workers/recurring.py` provide the backend worker/CLI entry point for cron or a hosted scheduler.
+**Recurring application done:** `POST /households/{id}/recurring/apply` reads the synced recurring config, creates deterministic normalized expenses for due daily/weekly/biweekly/monthly/quarterly/yearly schedules, skips duplicates, and the frontend runs it during API hydration. `scripts/apply_recurring.py`, `app/workers/recurring.py`, and the Docker Compose `recurring-worker` service provide scheduled execution.
 
 **Spending alert evaluation done:** `POST /households/{id}/spending-alerts/evaluate` reads synced alert config and budget allocations, compares against normalized monthly expenses, and returns active alert results for Home and Spending Alerts.
 
-**Push dispatch worker done:** `scripts/dispatch_push_notifications.py` scans eligible backend-generated notifications, respects master/type notification preferences and quiet hours, sends through the configured push provider, and records `notification_push_deliveries` so repeated scheduler runs do not resend the same notification to the same device. The current production-safe provider is `log`; APNs/FCM and native token capture remain Phase 3 provider work.
+**Push dispatch worker done:** `scripts/dispatch_push_notifications.py` and the Docker Compose `push-worker` service scan eligible backend-generated notifications, respect master/type notification preferences and quiet hours, send through the configured push provider, and record `notification_push_deliveries` so repeated scheduler runs do not resend the same notification to the same device. The current production-safe provider is `log`; APNs/FCM and native token capture remain Phase 3 provider work.
 
 **Finance pagination UX done:** Transactions and Receipt History render cached finance data in visible pages with load-more controls and result counts, so large local/API-hydrated histories remain manageable on the phone viewport.
 
@@ -275,6 +275,7 @@ GET  /receipts/{id}/file                                        ✅
 | Receipt storage | **Keep local volume** on single-host deploy; mount persistent disk on the API container. Move to MinIO or S3/R2 only if you need multi-replica APIs, CDN delivery, or presigned direct uploads |
 | Email invites   | ✅ Resend / SendGrid-ready provider (`INVITE_EMAIL_PROVIDER`, `INVITE_EMAIL_FROM`, `INVITE_EMAIL_API_KEY`)                                                                                     |
 | OCR             | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split)                                                                                            |
+| Schedulers      | ✅ Compose `recurring-worker` and `push-worker` services using the API image and configurable intervals; runs persist to `background_job_runs` for admin status UX                              |
 | Monitoring      | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy                                                                                                   |
 | Mobile          | Capacitor → `https://api.budgii.app/v1`                                                                                                                                                        |
 | Universal links | `https://budgii.app/join?code=` → app or web                                                                                                                                                   |

@@ -37,6 +37,7 @@ import { DataExport } from '@/pages/DataExport'
 import { Help } from '@/pages/Help'
 import { BudgetComparison } from '@/pages/BudgetComparison'
 import { Notifications } from '@/pages/Notifications'
+import { BackgroundJobs } from '@/pages/BackgroundJobs'
 
 export type RouteMeta = {
   label?: string
@@ -196,6 +197,11 @@ export const appRoutes: RouteWithMeta[] = [
     meta: { label: 'Data Export', description: 'Export data', section: 'app' },
   },
   { path: '/help', element: <Help />, meta: { label: 'Help', description: 'Support', section: 'app' } },
+  {
+    path: '/background-jobs',
+    element: <BackgroundJobs />,
+    meta: { label: 'Background Jobs', description: 'Worker status', section: 'app' },
+  },
   {
     path: '/budget-comparison',
     element: <BudgetComparison />,

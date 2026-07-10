@@ -26,7 +26,8 @@ docker compose -f docker-compose.dev.yml up --build
 For a staging deployment-style stack, use the staging compose file. It runs the
 frontend on `:18088`, the API in production mode on `:18087`, and keeps
 Postgres private on the Docker network instead of exposing common host ports like
-`3000`, `5173`, `8000`, `8001`, or `5432`.
+`3000`, `5173`, `8000`, `8001`, or `5432`. It also starts recurring and push
+worker services with configurable intervals.
 
 ```bash
 budgii-api/scripts/create_server_env.sh
@@ -36,6 +37,7 @@ docker compose --env-file .env.server -f docker-compose.staging.yml up --build -
 ```
 
 Leave `INVITE_EMAIL_PROVIDER=log` until a real `INVITE_EMAIL_API_KEY` is set.
+Leave `PUSH_PROVIDER=log` until APNs/FCM delivery is implemented.
 
 Compose stack names are pinned in the files:
 `budgii-dev`, `budgii-staging`, and `budgii-production`. The root server compose
@@ -47,6 +49,15 @@ cp budgii-api/.env.production.example .env.production.server
 docker compose --env-file .env.production.server -f docker-compose.production.yml up --build -d
 # Production frontend: http://SERVER_HOST:28088
 # Production API: http://SERVER_HOST:28087/v1/health
+```
+
+The server stacks include:
+
+- `recurring-worker`: applies due recurring expenses every `RECURRING_WORKER_INTERVAL_SECONDS`
+- `push-worker`: dispatches eligible push notifications every `PUSH_WORKER_INTERVAL_SECONDS`
+
+```bash
+docker compose --env-file .env.server -f docker-compose.staging.yml logs -f recurring-worker push-worker
 ```
 
 The local dev login is `dev@mjproductions.app` / `password`. To fully reset and
@@ -83,6 +94,13 @@ To dispatch eligible push notifications manually:
 
 ```bash
 docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/dispatch_push_notifications.py
+```
+
+To test the same scheduler loop locally:
+
+```bash
+docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/run_scheduler.py recurring --once
+docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/run_scheduler.py push --once
 ```
 
 ## Desktop app (Electron)

@@ -165,6 +165,20 @@ export type DeviceTokenListResponse = {
   tokens: DeviceTokenResponse[]
 }
 
+export type BackgroundJobRunResponse = {
+  id: string
+  job_name: 'recurring' | 'push' | string
+  status: 'success' | 'failed' | string
+  started_at: string
+  finished_at: string
+  summary: Record<string, unknown> | null
+  error: string | null
+}
+
+export type BackgroundJobStatusResponse = {
+  runs: BackgroundJobRunResponse[]
+}
+
 export type ApplyRecurringResponse = {
   expenses: ExpenseResponse[]
   applied_count: number
