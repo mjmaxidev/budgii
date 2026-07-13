@@ -101,7 +101,6 @@ export function Home() {
               onClick={() => navigate('/notifications', withFrom('/home'))}
             >
               <Bell size={24} className="text-ink" />
-              <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red ring-2 ring-bg" />
             </button>
           </div>
           <div className="mt-3 flex items-center justify-between">
