@@ -61,9 +61,7 @@ class RefreshToken(Base):
 
 class AuthActionToken(Base):
     __tablename__ = "auth_action_tokens"
-    __table_args__ = (
-        UniqueConstraint("token_hash", name="uq_auth_action_token_hash"),
-    )
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_auth_action_token_hash"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))

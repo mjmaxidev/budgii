@@ -250,9 +250,7 @@ def test_email_verification_request_and_confirm(client: TestClient, monkeypatch)
     assert reused_response.status_code == 400
 
 
-def test_email_verification_request_does_not_reveal_unknown_email(
-    client: TestClient, monkeypatch
-) -> None:
+def test_email_verification_request_does_not_reveal_unknown_email(client: TestClient, monkeypatch) -> None:
     sent = []
 
     async def capture_email(_settings, message):

@@ -23,6 +23,7 @@ feature-level polish gaps.
 | Household members, personas, invites, permissions | Mostly done                                                                    |
 | Receipt image upload and OpenAI OCR path          | Mostly done                                                                    |
 | Reports and insights from real data               | Mostly done                                                                    |
+| AI Budget Coach                                   | Done — user-triggered aggregate spending guidance with deterministic fallback |
 | Settings panel                                    | Mostly done                                                                    |
 | Deals and watchlist                               | Prototype-real hybrid                                                          |
 | Recurring transactions                            | Functional foundation                                                          |

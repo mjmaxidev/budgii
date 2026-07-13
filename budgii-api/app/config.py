@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     apple_client_id: str = ""
     google_client_id: str = ""
     openai_api_key: str = ""
+    ai_insights_model: str = "gpt-5.4-mini"
 
     invite_link_base: str = "https://budgii.app/join"
     auth_link_base: str = "https://budgii.app"

@@ -183,9 +183,7 @@ async def revoke_refresh_tokens(session: AsyncSession, user: User) -> None:
 def verification_email(user: User, token: str, settings: Settings) -> AuthEmail:
     link = f"{settings.auth_link_base.rstrip('/')}/#/verification?token={token}"
     text = (
-        "Verify your Budgii email address by opening this link:\n\n"
-        f"{link}\n\n"
-        "This link expires in 24 hours."
+        f"Verify your Budgii email address by opening this link:\n\n{link}\n\nThis link expires in 24 hours."
     )
     html = (
         "<p>Verify your Budgii email address.</p>"

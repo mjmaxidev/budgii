@@ -1,8 +1,7 @@
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
 from app.config import Settings
 from app.rate_limit import add_auth_rate_limiting
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 def test_auth_rate_limit_blocks_repeated_post_requests() -> None:

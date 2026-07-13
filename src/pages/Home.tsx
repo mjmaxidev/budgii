@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Telescope, Bell, ChevronRight } from 'lucide-react'
+import { Telescope, Bell, ChevronRight, Sparkles } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { AppShell } from '@/components/layout/AppShell'
 import { StaggerIn } from '@/components/motion/StaggerIn'
@@ -22,6 +22,7 @@ import { isApiEnabled } from '@/api/config'
 import { evaluateSpendingAlerts } from '@/api/alerts'
 import { useAuthStore } from '@/store/authStore'
 import type { SpendingAlertEvaluation } from '@/api/types'
+import { generateBudgetInsight, type BudgetInsight } from '@/api/insights'
 
 const periodDivisor: Record<Period, number> = { daily: 30, weekly: 30 / 7, monthly: 1 }
 
@@ -39,6 +40,9 @@ export function Home() {
   const apiUser = useAuthStore((s) => s.user)
   const { category } = useLookups()
   const [activeAlerts, setActiveAlerts] = useState<SpendingAlertEvaluation[]>([])
+  const [insight, setInsight] = useState<BudgetInsight | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
+  const [insightError, setInsightError] = useState('')
   const displayName = apiUser?.name || userProfile.name || apiUser?.email?.split('@')[0] || 'there'
   const firstName = displayName.trim().split(/\s+/)[0] || 'there'
 
@@ -80,6 +84,19 @@ export function Home() {
       cancelled = true
     }
   }, [householdId, expenses])
+
+  async function askBudgetCoach() {
+    if (!householdId) return
+    setInsightLoading(true)
+    setInsightError('')
+    try {
+      setInsight(await generateBudgetInsight(householdId))
+    } catch {
+      setInsightError('Budget Coach is unavailable right now.')
+    } finally {
+      setInsightLoading(false)
+    }
+  }
 
   return (
     <AppShell
@@ -166,6 +183,41 @@ export function Home() {
             </div>
             <ChevronRight size={18} className="shrink-0 text-red" />
           </button>
+        </Card>
+      )}
+
+      {isApiEnabled() && (
+        <Card className="mt-3 border-primary/20 bg-primary/5 py-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Sparkles size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-extrabold text-ink">AI Budget Coach</p>
+              {insight ? (
+                <>
+                  <p className="mt-1 text-[13px] text-muted">{insight.summary}</p>
+                  <ul className="mt-2 space-y-1 text-[12px] font-semibold text-ink">
+                    {insight.actions.map((action) => (
+                      <li key={action}>• {action}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="mt-1 text-[13px] text-muted">
+                  Get private, practical tips from aggregate spending totals.
+                </p>
+              )}
+              {insightError && <p className="mt-2 text-[12px] font-semibold text-red">{insightError}</p>}
+              <button
+                onClick={() => void askBudgetCoach()}
+                disabled={insightLoading || !householdId}
+                className="mt-2 text-[13px] font-bold text-primary disabled:opacity-50"
+              >
+                {insightLoading ? 'Thinking…' : insight ? 'Refresh insight' : 'Ask Budgii AI'}
+              </button>
+            </div>
+          </div>
         </Card>
       )}
 

@@ -5,8 +5,8 @@ from app.config import Settings, get_settings
 from app.db.session import get_db
 from app.schemas.auth import (
     AuthActionResponse,
-    EmailLoginRequest,
     EmailActionRequest,
+    EmailLoginRequest,
     OAuthLoginRequest,
     PasswordResetConfirmRequest,
     RefreshRequest,

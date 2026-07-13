@@ -8,6 +8,7 @@ from app.api import (
     expenses,
     health,
     households,
+    insights,
     notifications,
     personas,
     receipts,
@@ -20,6 +21,7 @@ api_router.include_router(health.router, tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(households.router, prefix="/households", tags=["households"])
+api_router.include_router(insights.router, prefix="/households", tags=["insights"])
 api_router.include_router(expenses.router, prefix="/households", tags=["expenses"])
 api_router.include_router(alerts.router, prefix="/households", tags=["spending-alerts"])
 api_router.include_router(background_jobs.router, prefix="/households", tags=["background-jobs"])
