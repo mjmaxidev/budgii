@@ -1,4 +1,4 @@
-import { getMe, loginEmail, register } from '@/api/auth'
+import { getMe, loginEmail, loginGoogle, register } from '@/api/auth'
 import { createHousehold, getHouseholdBootstrap, joinHousehold, listHouseholds } from '@/api/households'
 import { listPersonas } from '@/api/personas'
 import { apiExpensesToExpenses, applyDueRecurringTransactions, listAllExpenses } from '@/api/expenses'
@@ -94,6 +94,18 @@ export async function registerAndCreateHousehold(
 
 export async function loginAndBootstrap(email: string, password: string): Promise<void> {
   await loginEmail(email, password)
+  await bootstrapSession()
+}
+
+export async function loginGoogleAndCreateHousehold(idToken: string, name: string): Promise<void> {
+  await loginGoogle(idToken)
+  const { households } = await listHouseholds()
+  if (households.length === 0) {
+    const household = await createHousehold(`${name.trim() || 'My'}'s Household`)
+    useAuthStore.getState().setHouseholdId(household.id)
+  } else {
+    useAuthStore.getState().setHouseholdId(households[0].id)
+  }
   await bootstrapSession()
 }
 

@@ -31,6 +31,17 @@ export async function loginEmail(email: string, password: string): Promise<Token
   return tokens
 }
 
+export async function loginGoogle(idToken: string): Promise<TokenResponse> {
+  const tokens = await apiRequest<TokenResponse>('/auth/google', {
+    method: 'POST',
+    body: { id_token: idToken },
+    auth: false,
+  })
+  await saveStoredAuthTokens({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token })
+  useAuthStore.getState().setTokens(tokens.access_token, tokens.refresh_token)
+  return tokens
+}
+
 export async function refreshTokens(): Promise<TokenResponse> {
   const refreshToken = useAuthStore.getState().refreshToken
   if (!refreshToken) {

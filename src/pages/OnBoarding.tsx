@@ -19,6 +19,8 @@ import { isApiEnabled } from '@/api/config'
 import { registerAndCreateHousehold } from '@/api/bootstrap'
 import { ApiError } from '@/api/client'
 import { requestEmailVerification } from '@/api/auth'
+import { signInWithGoogle } from '@/api/firebase'
+import { loginGoogleAndCreateHousehold } from '@/api/bootstrap'
 
 type Step = 1 | 2 | 3 | 4
 type ContactMethod = 'phone' | 'email' | 'apple' | 'google'
@@ -305,13 +307,30 @@ export function OnBoarding() {
         contact={contact}
         setContact={setContact}
         apiMode={apiOn}
+        submitError={submitError}
+        submitting={submitting}
         onContinue={(c) => {
           const isPhone = !apiOn && /^[+\d\s()-]{4,}$/.test(c)
           goToVerify(isPhone ? 'phone' : 'email', c)
         }}
-        onSocial={(method) =>
-          goToVerify(method, method === 'apple' ? 'your Apple account' : 'your Google account')
-        }
+        onSocial={async (method) => {
+          if (method !== 'google' || !apiOn) {
+            goToVerify(method, method === 'apple' ? 'your Apple account' : 'your Google account')
+            return
+          }
+          setSubmitting(true)
+          setSubmitError('')
+          try {
+            const idToken = await signInWithGoogle()
+            const name = 'Budgii user'
+            await loginGoogleAndCreateHousehold(idToken, name)
+            navigate('/')
+          } catch (err) {
+            setSubmitError(err instanceof ApiError ? err.message : 'Could not sign in with Google')
+          } finally {
+            setSubmitting(false)
+          }
+        }}
         onLogin={() => navigate('/login')}
       />
     )
@@ -377,6 +396,8 @@ function Step1CreateAccount({
   contact,
   setContact,
   apiMode,
+  submitError,
+  submitting,
   onContinue,
   onSocial,
   onLogin,
@@ -384,8 +405,10 @@ function Step1CreateAccount({
   contact: string
   setContact: (v: string) => void
   apiMode: boolean
+  submitError: string
+  submitting: boolean
   onContinue: (c: string) => void
-  onSocial: (m: 'apple' | 'google') => void
+  onSocial: (m: 'apple' | 'google') => void | Promise<void>
   onLogin: () => void
 }) {
   const trimmedContact = contact.trim()
@@ -439,7 +462,7 @@ function Step1CreateAccount({
       {/* Continue */}
       <button
         onClick={() => onContinue(contact)}
-        disabled={!canContinue}
+        disabled={!canContinue || submitting}
         className={cn(
           'mt-4 w-full rounded-2xl py-4 text-center text-[16px] font-bold text-white transition',
           canContinue ? 'bg-primary active:bg-primary/90' : 'bg-primary/40',
@@ -448,34 +471,41 @@ function Step1CreateAccount({
         Continue
       </button>
 
-      {!apiMode && (
-        <>
-          {/* Divider */}
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-line" />
-            <span className="text-sm font-medium text-muted">or continue with</span>
-            <div className="h-px flex-1 bg-line" />
-          </div>
+      <>
+        {submitError && (
+          <p className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+            {submitError}
+          </p>
+        )}
 
-          {/* Google */}
-          <button
-            onClick={() => onSocial('google')}
-            className="mb-3 flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
-          >
-            <GoogleLogo />
-            <span className="text-[15px] font-bold text-ink">Continue with Google</span>
-          </button>
+        {/* Divider */}
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-line" />
+          <span className="text-sm font-medium text-muted">or continue with</span>
+          <div className="h-px flex-1 bg-line" />
+        </div>
 
-          {/* Apple */}
-          <button
-            onClick={() => onSocial('apple')}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
-          >
-            <AppleLogo />
-            <span className="text-[15px] font-bold text-ink">Continue with Apple</span>
-          </button>
-        </>
-      )}
+        {/* Google */}
+        <button
+          onClick={() => onSocial('google')}
+          disabled={submitting}
+          className="mb-3 flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft disabled:opacity-50"
+        >
+          <GoogleLogo />
+          <span className="text-[15px] font-bold text-ink">
+            {submitting ? 'Connecting to Google…' : 'Continue with Google'}
+          </span>
+        </button>
+
+        {/* Apple */}
+        <button
+          onClick={() => onSocial('apple')}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-line bg-surface py-4 shadow-sm active:bg-surfaceSoft"
+        >
+          <AppleLogo />
+          <span className="text-[15px] font-bold text-ink">Continue with Apple</span>
+        </button>
+      </>
 
       {/* Log in */}
       <p className="mt-6 text-center text-[15px] text-muted">
