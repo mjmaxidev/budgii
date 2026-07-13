@@ -1,6 +1,12 @@
 import { apiRequest, apiUpload } from '@/api/client'
 import { clearStoredAuthTokens, loadStoredAuthTokens, saveStoredAuthTokens } from '@/api/authStorage'
-import type { AuthActionResponse, TokenResponse, UpdateUserInput, UserResponse } from '@/api/types'
+import type {
+  AuthActionResponse,
+  SessionListResponse,
+  TokenResponse,
+  UpdateUserInput,
+  UserResponse,
+} from '@/api/types'
 import { useAuthStore } from '@/store/authStore'
 
 export async function register(email: string, password: string, name: string): Promise<TokenResponse> {
@@ -69,6 +75,16 @@ export async function changePassword(currentPassword: string, newPassword: strin
       current_password: currentPassword,
       new_password: newPassword,
     },
+  })
+}
+
+export async function listSessions(): Promise<SessionListResponse> {
+  return apiRequest<SessionListResponse>('/users/me/sessions')
+}
+
+export async function revokeSession(sessionId: string): Promise<void> {
+  await apiRequest<void>(`/users/me/sessions/${sessionId}`, {
+    method: 'DELETE',
   })
 }
 

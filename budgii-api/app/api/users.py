@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -6,11 +7,17 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, parse_uuid
 from app.config import Settings, get_settings
 from app.db.session import get_db
-from app.models import User
-from app.schemas.auth import ChangePasswordRequest, UpdateUserRequest, UserResponse
+from app.models import RefreshToken, User
+from app.schemas.auth import (
+    ChangePasswordRequest,
+    SessionListResponse,
+    SessionResponse,
+    UpdateUserRequest,
+    UserResponse,
+)
 from app.services import auth as auth_service
 from app.services.security import hash_password, verify_password
 
@@ -130,6 +137,35 @@ async def change_password(
     await session.flush()
 
 
+@router.get("/me/sessions", response_model=SessionListResponse)
+async def list_sessions(
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> SessionListResponse:
+    now = datetime.now(timezone.utc)
+    records = await session.scalars(
+        select(RefreshToken)
+        .where(RefreshToken.user_id == user.id, RefreshToken.expires_at > now)
+        .order_by(RefreshToken.created_at.desc())
+    )
+    return SessionListResponse(sessions=[session_response(record) for record in records.all()])
+
+
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> None:
+    token_id = parse_uuid(session_id, "session id")
+    record = await session.scalar(
+        select(RefreshToken).where(RefreshToken.id == token_id, RefreshToken.user_id == user.id)
+    )
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    await session.delete(record)
+
+
 def avatar_storage_path(avatar: str | None, settings: Settings) -> Path | None:
     if not avatar:
         return None
@@ -158,6 +194,17 @@ def user_response(user: User, settings: Settings) -> UserResponse:
         avatar=avatar_response_value(user, settings),
         auth_provider=user.auth_provider,
         email_verified_at=user.email_verified_at.isoformat() if user.email_verified_at else None,
+    )
+
+
+def session_response(record: RefreshToken) -> SessionResponse:
+    return SessionResponse(
+        id=str(record.id),
+        user_agent=record.user_agent,
+        ip_address=record.ip_address,
+        created_at=record.created_at,
+        last_used_at=record.last_used_at,
+        expires_at=record.expires_at,
     )
 
 

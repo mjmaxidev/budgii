@@ -29,6 +29,7 @@ import { ShoppingList } from '@/pages/ShoppingList'
 import { FamilyInvitation } from '@/pages/FamilyInvitation'
 import { FamilyJoin } from '@/pages/FamilyJoin'
 import { AccountSettings } from '@/pages/AccountSettings'
+import { ActiveSessions } from '@/pages/ActiveSessions'
 import { Preferences } from '@/pages/Preferences'
 import { IncomeTracking } from '@/pages/IncomeTracking'
 import { RecurringTransactions } from '@/pages/RecurringTransactions'
@@ -155,6 +156,11 @@ export const appRoutes: RouteWithMeta[] = [
     path: '/account-settings',
     element: <AccountSettings />,
     meta: { label: 'Account', description: 'Profile & account settings', section: 'app' },
+  },
+  {
+    path: '/active-sessions',
+    element: <ActiveSessions />,
+    meta: { label: 'Sessions', description: 'Signed-in devices', section: 'app' },
   },
   {
     path: '/preferences',

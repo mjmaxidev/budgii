@@ -22,15 +22,25 @@ EMAIL_VERIFICATION = "email_verification"
 PASSWORD_RESET = "password_reset"
 
 
-async def issue_tokens(session: AsyncSession, user: User, settings: Settings) -> TokenResponse:
+async def issue_tokens(
+    session: AsyncSession,
+    user: User,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> TokenResponse:
     access_token = create_access_token(str(user.id), settings)
     refresh_value = create_refresh_token_value()
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(days=settings.refresh_token_expire_days)
 
     session.add(
         RefreshToken(
             user_id=user.id,
             token_hash=hash_token(refresh_value),
+            user_agent=user_agent,
+            ip_address=ip_address,
+            last_used_at=now,
             expires_at=expires_at,
         )
     )
@@ -39,7 +49,13 @@ async def issue_tokens(session: AsyncSession, user: User, settings: Settings) ->
 
 
 async def register_user(
-    session: AsyncSession, email: str, password: str, name: str, settings: Settings
+    session: AsyncSession,
+    email: str,
+    password: str,
+    name: str,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
 ) -> TokenResponse:
     normalized = email.lower().strip()
     existing = await session.scalar(select(User).where(User.email == normalized))
@@ -54,15 +70,22 @@ async def register_user(
     )
     session.add(user)
     await session.flush()
-    return await issue_tokens(session, user, settings)
+    return await issue_tokens(session, user, settings, user_agent, ip_address)
 
 
-async def login_email(session: AsyncSession, email: str, password: str, settings: Settings) -> TokenResponse:
+async def login_email(
+    session: AsyncSession,
+    email: str,
+    password: str,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> TokenResponse:
     normalized = email.lower().strip()
     user = await session.scalar(select(User).where(User.email == normalized))
     if not user or not user.password_hash or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    return await issue_tokens(session, user, settings)
+    return await issue_tokens(session, user, settings, user_agent, ip_address)
 
 
 async def request_email_verification(session: AsyncSession, email: str, settings: Settings) -> None:
@@ -203,6 +226,8 @@ async def login_oauth(
     avatar: str | None,
     external_id: str | None,
     settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
 ) -> TokenResponse:
     user = await session.scalar(select(User).where(User.email == email))
     if user:
@@ -232,27 +257,43 @@ async def login_oauth(
         session.add(user)
         await session.flush()
 
-    return await issue_tokens(session, user, settings)
+    return await issue_tokens(session, user, settings, user_agent, ip_address)
 
 
-async def login_google(session: AsyncSession, id_token: str, settings: Settings) -> TokenResponse:
+async def login_google(
+    session: AsyncSession,
+    id_token: str,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> TokenResponse:
     try:
         email, name, avatar = await verify_google_id_token(id_token, settings)
     except OAuthVerificationError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    return await login_oauth(session, "google", email, name, avatar, email, settings)
+    return await login_oauth(session, "google", email, name, avatar, email, settings, user_agent, ip_address)
 
 
-async def login_apple(session: AsyncSession, id_token: str, settings: Settings) -> TokenResponse:
+async def login_apple(
+    session: AsyncSession,
+    id_token: str,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> TokenResponse:
     try:
         email, name, avatar = await verify_apple_id_token(id_token, settings)
     except OAuthVerificationError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
-    return await login_oauth(session, "apple", email, name, avatar, email, settings)
+    return await login_oauth(session, "apple", email, name, avatar, email, settings, user_agent, ip_address)
 
 
 async def refresh_access_token(
-    session: AsyncSession, refresh_token: str, settings: Settings
+    session: AsyncSession,
+    refresh_token: str,
+    settings: Settings,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
 ) -> TokenResponse:
     token_hash = hash_token(refresh_token)
     now = datetime.now(timezone.utc)
@@ -269,7 +310,7 @@ async def refresh_access_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     await session.delete(record)
-    return await issue_tokens(session, user, settings)
+    return await issue_tokens(session, user, settings, user_agent, ip_address)
 
 
 async def delete_user(session: AsyncSession, user: User) -> None:

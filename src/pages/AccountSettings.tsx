@@ -1,6 +1,15 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Lock, Mail, User as UserIcon, X, Shield, ChevronRight } from 'lucide-react'
+import {
+  Camera,
+  Lock,
+  Mail,
+  User as UserIcon,
+  X,
+  Shield,
+  ChevronRight,
+  MonitorSmartphone,
+} from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -243,11 +252,11 @@ export function AccountSettings() {
       {/* Security */}
       <div className="mt-5">
         <h2 className="mb-2 px-1 text-[13px] font-bold uppercase tracking-wide text-muted">App Lock</h2>
-        <Card>
+        <Card className="divide-y divide-line/70">
           <button
             type="button"
             onClick={() => setPinModal(true)}
-            className="flex w-full items-center gap-3 py-1 text-left active:opacity-80"
+            className="flex w-full items-center gap-3 pb-3 text-left active:opacity-80"
           >
             <Shield size={20} className="text-primary" />
             <div className="flex-1">
@@ -255,6 +264,18 @@ export function AccountSettings() {
               <p className="text-[13px] text-muted">
                 {hasPin ? 'Update your 4-digit unlock code' : 'Require a PIN when you return to Budgii'}
               </p>
+            </div>
+            <ChevronRight size={18} className="text-muted" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/active-sessions')}
+            className="flex w-full items-center gap-3 pt-3 text-left active:opacity-80"
+          >
+            <MonitorSmartphone size={20} className="text-muted" />
+            <div className="flex-1">
+              <p className="text-[15px] font-semibold text-ink">Active Sessions</p>
+              <p className="text-[13px] text-muted">Review signed-in devices</p>
             </div>
             <ChevronRight size={18} className="text-muted" />
           </button>

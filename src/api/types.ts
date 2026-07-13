@@ -25,6 +25,19 @@ export type UpdateUserInput = {
   avatar?: string | null
 }
 
+export type SessionResponse = {
+  id: string
+  user_agent: string | null
+  ip_address: string | null
+  created_at: string
+  last_used_at: string | null
+  expires_at: string
+}
+
+export type SessionListResponse = {
+  sessions: SessionResponse[]
+}
+
 export type HouseholdResponse = {
   id: string
   name: string

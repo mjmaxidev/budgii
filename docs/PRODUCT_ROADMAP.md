@@ -213,7 +213,7 @@ feature-level polish gaps.
 | Receipt storage                | Local Docker volume is fine for single-host deploy; object storage or shared volume is needed for multi-replica/serverless                      |
 | Pagination/incremental hydrate | Expenses/receipts are hydrated into the store; very large accounts may need incremental loading/cache eviction                                  |
 | Observability                  | Health, request IDs, and structured logs exist; Sentry/error tracking, metrics, alerting, and audit logs are not fully wired                    |
-| Security hardening             | Auth basics, email verification, password reset, and auth endpoint rate limiting exist; still need stronger distributed brute-force protection and session/device management UI |
+| Security hardening             | Auth basics, email verification, password reset, auth endpoint rate limiting, and session/device management UI exist; still need stronger distributed brute-force protection |
 | Accessibility                  | Needs full keyboard/screen-reader/contrast audit across mobile-sized UI                                                                         |
 | Performance                    | Needs production profiling on low-end mobile devices and large seeded datasets                                                                  |
 | Test coverage                  | Backend tests are meaningful; frontend component/e2e tests are still missing                                                                    |
@@ -248,7 +248,7 @@ feature-level polish gaps.
 | Family Invitation      | API-backed invites in API mode                                                                                             | Production email/domain QA needed                                         |
 | Join Family            | API-backed code redemption in API mode                                                                                     | Native universal/app links not fully configured                           |
 | Settings               | Real navigation hub                                                                                                        | Demo reset only appears when allowed                                      |
-| Account Settings       | API-backed profile/avatar/password/logout/delete with email verification status                                             | Session/device management missing                                         |
+| Account Settings       | API-backed profile/avatar/password/logout/delete, email verification status, and active session revocation                  | Good foundation                                                           |
 | Preferences            | Synced settings with browser notification permission and push type controls                                                 | Native APNs/FCM token capture, full i18n, and currency conversion missing |
 | Income Tracking        | Synced JSONB config/data                                                                                                   | Not normalized                                                            |
 | Recurring Transactions | Synced config + backend apply-on-hydration, visible schedule status, manual preview/apply controls, backend worker/CLI/server compose scheduler, and admin worker status | Good foundation                                                          |

@@ -71,6 +71,56 @@ def test_refresh_token_rotates_and_old_token_cannot_be_reused(client: TestClient
     assert me_response.json()["email"] == tokens["email"]
 
 
+def test_sessions_capture_client_metadata_and_can_be_revoked(client: TestClient) -> None:
+    email = unique_email("session-device")
+    register_response = client.post(
+        "/v1/auth/register",
+        json={"email": email, "password": PASSWORD, "name": "Session Device"},
+        headers={
+            "User-Agent": "Budgii iOS/1.0",
+            "X-Forwarded-For": "203.0.113.10, 10.0.0.1",
+        },
+    )
+    assert register_response.status_code == 200, register_response.text
+    tokens = register_response.json()
+
+    list_response = client.get("/v1/users/me/sessions", headers=auth_headers(tokens))
+    assert list_response.status_code == 200, list_response.text
+    sessions = list_response.json()["sessions"]
+    assert len(sessions) == 1
+    active_session = sessions[0]
+    assert active_session["user_agent"] == "Budgii iOS/1.0"
+    assert active_session["ip_address"] == "203.0.113.10"
+    assert active_session["created_at"]
+    assert active_session["last_used_at"]
+    assert active_session["expires_at"]
+
+    revoke_response = client.delete(
+        f"/v1/users/me/sessions/{active_session['id']}",
+        headers=auth_headers(tokens),
+    )
+    assert revoke_response.status_code == 204
+
+    refresh_response = refresh(client, tokens["refresh_token"])
+    assert refresh_response.status_code == 401
+
+    empty_response = client.get("/v1/users/me/sessions", headers=auth_headers(tokens))
+    assert empty_response.status_code == 200
+    assert empty_response.json()["sessions"] == []
+
+
+def test_revoke_unknown_session_returns_404(client: TestClient) -> None:
+    tokens = register_user(client, "session-missing")
+
+    response = client.delete(
+        "/v1/users/me/sessions/00000000-0000-0000-0000-000000000000",
+        headers=auth_headers(tokens),
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Session not found"
+
+
 def test_update_profile_and_email(client: TestClient) -> None:
     tokens = register_user(client, "profile")
     new_email = unique_email("profile-new")

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -44,6 +46,19 @@ class UpdateUserRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=8)
     new_password: str = Field(min_length=8)
+
+
+class SessionResponse(BaseModel):
+    id: str
+    user_agent: str | None = None
+    ip_address: str | None = None
+    created_at: datetime
+    last_used_at: datetime | None = None
+    expires_at: datetime
+
+
+class SessionListResponse(BaseModel):
+    sessions: list[SessionResponse]
 
 
 class EmailActionRequest(BaseModel):

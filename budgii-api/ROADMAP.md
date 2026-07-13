@@ -22,7 +22,7 @@ The path forward is three phases: **wire the React app to the API** (Phase 1), *
 | ---------- | -------------------------- | ------------------------------------------------------------------------------------- |
 | Health     | ✅                         | `GET /v1/health`                                                                      |
 | Auth       | ✅                         | Register/login/refresh, OAuth verify endpoints, email verification, password reset     |
-| Users      | ✅                         | `GET /v1/users/me`, `DELETE /v1/users/me`                                             |
+| Users      | ✅                         | Profile, avatar, password, active sessions, delete account                             |
 | Households | ✅                         | `GET/POST /v1/households`, `POST /v1/households/join`, `POST /v1/households/invites`  |
 | Sync       | ✅ (v1)                    | `GET/POST /v1/sync` — document pull/push with revision conflicts                      |
 | Expenses   | ✅ (Phase 2)               | `GET/POST/PATCH/DELETE /v1/households/{id}/expenses`                                  |
@@ -312,6 +312,7 @@ GET  /receipts/{id}/file                                        ✅
 - [x] Capacitor secure token storage
 - [x] Logout in Account Settings clears auth state and stored tokens
 - [x] Email verification and password reset use single-use hashed action tokens
+- [x] Active sessions list/revoke maps to rotating refresh tokens
 - [x] Create or join household on first use
 - [x] Pull sync snapshot → hydrate Zustand
 - [x] Push on mutation with `base_revision`

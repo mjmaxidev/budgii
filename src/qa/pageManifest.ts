@@ -33,6 +33,7 @@ export const appPages: AppPage[] = [
   { path: '/shopping-list', label: 'Shopping List', description: 'Selected items' },
   { path: '/onboarding', label: 'OnBoarding', description: 'Setup flow' },
   { path: '/account-settings', label: 'Account', description: 'Profile & account settings' },
+  { path: '/active-sessions', label: 'Sessions', description: 'Signed-in devices' },
   { path: '/preferences', label: 'Preferences', description: 'Currency, language, notifications' },
   { path: '/income-tracking', label: 'Income', description: 'Income log' },
   { path: '/recurring-transactions', label: 'Recurring', description: 'Scheduled items' },
