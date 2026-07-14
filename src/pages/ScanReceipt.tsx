@@ -6,19 +6,17 @@ import { TopBar } from '@/components/layout/TopBar'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { Modal } from '@/components/ui/Modal'
 import { ApiError } from '@/api/client'
-import { isApiEnabled, showDemoTools } from '@/api/config'
+import { isApiEnabled } from '@/api/config'
 import { apiReceiptToReceipt, createReceipt, uploadReceipt } from '@/api/receipts'
 import { runReceiptAnalysis } from '@/api/receiptAnalysis'
 import { useAuthStore } from '@/store/authStore'
 import { useStore } from '@/store/appStore'
 import { canUseNativeCamera, captureReceiptPhoto } from '@/capacitor/camera'
 import { withFrom } from '@/utils/navigation'
-import { MOCK_RECEIPT_MERCHANT, MOCK_RECEIPT_TOTAL } from '@/utils/mockAi'
 
 export function ScanReceipt() {
   const navigate = useNavigate()
   const addReceipt = useStore((s) => s.addReceipt)
-  const updateReceipt = useStore((s) => s.updateReceipt)
   const analyzeLocalReceipt = useStore((s) => s.analyzeReceipt)
   const householdId = useAuthStore((s) => s.householdId)
   const [analyzing, setAnalyzing] = useState(false)
@@ -26,7 +24,6 @@ export function ScanReceipt() {
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
-  const canUseDemoReceipt = !isApiEnabled() || showDemoTools()
 
   async function handleCameraCapture() {
     setError('')
@@ -46,9 +43,10 @@ export function ScanReceipt() {
   }
 
   async function handleFile(file?: File) {
+    if (!file) return
     setAnalyzing(true)
     setError('')
-    const merchant = file?.name?.split('.')[0] || MOCK_RECEIPT_MERCHANT
+    const merchant = file.name.split('.')[0] || 'Receipt'
     const today = new Date().toISOString()
     let imageUrl = ''
 
@@ -74,7 +72,7 @@ export function ScanReceipt() {
             uploadId: upload?.id,
             merchant,
             date: today,
-            total: MOCK_RECEIPT_TOTAL,
+            total: 0,
             status: 'uploaded',
           }),
         )
@@ -90,11 +88,9 @@ export function ScanReceipt() {
       return
     }
 
-    const id = addReceipt(merchant, today, MOCK_RECEIPT_TOTAL, imageUrl)
+    const id = addReceipt(merchant, today, 0, imageUrl)
 
     window.setTimeout(() => {
-      if (imageUrl)
-        updateReceipt(id, { imageUrl, merchant: MOCK_RECEIPT_MERCHANT, total: MOCK_RECEIPT_TOTAL })
       analyzeLocalReceipt(id)
       setAnalyzing(false)
       navigate(`/receipt-results/${id}`, withFrom('/scan-receipt'))
@@ -212,15 +208,6 @@ export function ScanReceipt() {
 
       {error && (
         <p className="mt-4 rounded-input bg-redSoft px-4 py-2 text-[13px] font-semibold text-red">{error}</p>
-      )}
-
-      {!analyzing && canUseDemoReceipt && (
-        <button
-          onClick={() => handleFile(undefined)}
-          className="mt-4 w-full text-center text-[14px] font-semibold text-muted underline"
-        >
-          Use demo receipt (no photo)
-        </button>
       )}
 
       <Modal open={showInfo} onClose={() => setShowInfo(false)} title="How scanning works" variant="center">

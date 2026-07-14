@@ -35,9 +35,9 @@ import { uid } from '@/utils/id'
 import { todayISO } from '@/utils/dates'
 import { mockExtractReceiptItems } from '@/utils/mockAi'
 import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
-import { sumOngoingIncome } from '@/utils/income'
 import { normalizeInviteCode } from '@/utils/familyInvite'
 import { defaultEditorLevel, normalizeEditorLevel } from '@/utils/memberAccess'
+import { createIncomeActions } from './incomeActions'
 
 const TAG_PALETTE = ['#FB8500', '#16A34A', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
@@ -663,105 +663,7 @@ export const useStore = create<AppStore>()(
         set((s) => ({ shoppingList: [...s.shoppingList, newItem] }))
       },
 
-      // ── New store methods ────────────────────────────────────────────
-
-      addIncomeSource: (name, color) => {
-        const id = uid('incsrc')
-        const idx = get().incomeSources.length
-        const source: IncomeSource = {
-          id,
-          name,
-          color: color ?? TAG_PALETTE[idx % TAG_PALETTE.length],
-        }
-        set((s) => ({ incomeSources: [...s.incomeSources, source] }))
-        return id
-      },
-
-      updateIncomeSource: (id, patch) =>
-        set((s) => ({
-          incomeSources: s.incomeSources.map((src) => (src.id === id ? { ...src, ...patch } : src)),
-        })),
-
-      deleteIncomeSource: (id) => {
-        const fallback = get().incomeSources.find((s) => s.id !== id)
-        set((s) => ({
-          incomeSources: s.incomeSources.filter((src) => src.id !== id),
-          incomeItems: fallback
-            ? s.incomeItems.map((item) => (item.sourceId === id ? { ...item, sourceId: fallback.id } : item))
-            : s.incomeItems,
-        }))
-      },
-
-      addIncomeItem: (item) => {
-        if (!item.memberId) return ''
-        const id = item.id ?? uid('inc')
-        const defaultSourceId = get().incomeSources[0]?.id ?? ''
-        const incomeItem: IncomeItem = {
-          id,
-          date: item.date ?? todayISO(),
-          sourceId: item.sourceId ?? defaultSourceId,
-          amount: item.amount ?? 0,
-          memberId: item.memberId,
-          notes: item.notes,
-        }
-        set((s) => ({ incomeItems: [incomeItem, ...s.incomeItems] }))
-        return id
-      },
-
-      updateIncomeItem: (id, patch) => {
-        if ('memberId' in patch && !patch.memberId) return
-        set((s) => ({
-          incomeItems: s.incomeItems.map((i) => (i.id === id ? { ...i, ...patch } : i)),
-        }))
-      },
-
-      deleteIncomeItem: (id) => set((s) => ({ incomeItems: s.incomeItems.filter((i) => i.id !== id) })),
-
-      addOngoingIncome: (item) => {
-        if (!item.memberId) return ''
-        const id = item.id ?? uid('oinc')
-        const entry: OngoingIncome = {
-          id,
-          sourceId: item.sourceId ?? get().incomeSources[0]?.id ?? '',
-          amount: item.amount ?? 0,
-          memberId: item.memberId,
-          notes: item.notes,
-          enabled: item.enabled ?? true,
-        }
-        set((s) => ({ ongoingIncomes: [...s.ongoingIncomes, entry] }))
-        return id
-      },
-
-      updateOngoingIncome: (id, patch) => {
-        if ('memberId' in patch && !patch.memberId) return
-        set((s) => ({
-          ongoingIncomes: s.ongoingIncomes.map((o) => (o.id === id ? { ...o, ...patch } : o)),
-        }))
-      },
-
-      deleteOngoingIncome: (id) =>
-        set((s) => ({ ongoingIncomes: s.ongoingIncomes.filter((o) => o.id !== id) })),
-
-      upsertOngoingIncome: ({ sourceId, amount, memberId, notes }) => {
-        if (!memberId) return ''
-        const existing = get().ongoingIncomes.find((o) => o.sourceId === sourceId && o.memberId === memberId)
-        if (existing) {
-          get().updateOngoingIncome(existing.id, { amount, notes, enabled: true })
-          return existing.id
-        }
-        return get().addOngoingIncome({ sourceId, amount, memberId, notes, enabled: true })
-      },
-
-      getIncomeItems: (startDate, endDate) => {
-        return get().incomeItems.filter((i) => i.date >= startDate && i.date <= endDate)
-      },
-
-      getTotalIncome: (startDate, endDate) => {
-        const manual = get()
-          .getIncomeItems(startDate, endDate)
-          .reduce((sum, item) => sum + item.amount, 0)
-        return manual + sumOngoingIncome(get().ongoingIncomes)
-      },
+      ...createIncomeActions(set, get),
 
       setUserProfile: (profile) => {
         set((s) => ({
