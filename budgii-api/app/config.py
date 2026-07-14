@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     receipt_ocr_provider: str = "deterministic"
     receipt_openai_model: str = "gpt-5.5"
     push_provider: str = "log"
+    fcm_project_id: str = ""
 
     @property
     def is_production(self) -> bool:
@@ -71,8 +72,11 @@ class Settings(BaseSettings):
                 raise RuntimeError("INVITE_EMAIL_FROM is required when invite email delivery is enabled")
             if not self.invite_email_api_key:
                 raise RuntimeError("INVITE_EMAIL_API_KEY is required when invite email delivery is enabled")
-        if self.push_provider.strip().lower() != "log":
-            raise RuntimeError("PUSH_PROVIDER must be log until APNs/FCM delivery is implemented")
+        push_provider = self.push_provider.strip().lower()
+        if push_provider not in {"log", "fcm"}:
+            raise RuntimeError("PUSH_PROVIDER must be log or fcm")
+        if push_provider == "fcm" and not self.fcm_project_id:
+            raise RuntimeError("FCM_PROJECT_ID is required when PUSH_PROVIDER=fcm")
 
 
 @lru_cache

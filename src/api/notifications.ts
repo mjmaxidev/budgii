@@ -39,7 +39,7 @@ export async function registerDeviceToken(
 ): Promise<DeviceTokenResponse> {
   return apiRequest<DeviceTokenResponse>(`/households/${householdId}/notifications/device-tokens`, {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: payload,
   })
 }
 

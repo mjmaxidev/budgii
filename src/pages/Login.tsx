@@ -6,7 +6,9 @@ import { ActionButton } from '@/components/ui/ActionButton'
 import { FormField } from '@/components/ui/FormField'
 import { isApiEnabled } from '@/api/config'
 import { loginAndBootstrap } from '@/api/bootstrap'
+import { loginGoogleAndCreateHousehold } from '@/api/bootstrap'
 import { ApiError } from '@/api/client'
+import { signInWithGoogle } from '@/api/firebase'
 
 export function Login() {
   const navigate = useNavigate()
@@ -38,6 +40,19 @@ export function Login() {
       navigate(from)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setLoading(true)
+    setError('')
+    try {
+      await loginGoogleAndCreateHousehold(await signInWithGoogle(), 'Budgii user')
+      navigate(from)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not sign in with Google')
     } finally {
       setLoading(false)
     }
@@ -108,6 +123,24 @@ export function Login() {
           Have an invite code?
         </button>
       </div>
+
+      {apiOn && (
+        <>
+          <div className="my-5 flex items-center gap-3 text-[13px] text-muted">
+            <span className="h-px flex-1 bg-line" />
+            or continue with
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleGoogleLogin()}
+            disabled={loading}
+            className="flex min-h-[54px] w-full items-center justify-center gap-3 rounded-input border border-line bg-surface text-[16px] font-bold text-ink active:bg-surfaceSoft disabled:opacity-50"
+          >
+            <span className="text-[18px] font-extrabold text-[#4285F4]">G</span> Continue with Google
+          </button>
+        </>
+      )}
 
       {!apiOn && (
         <p className="mt-4 text-center text-[12px] text-muted">Offline mode — data stays in local storage.</p>

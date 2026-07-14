@@ -6,6 +6,7 @@ import { restoreAuthTokens } from '@/api/auth'
 import { startSyncEngine, stopSyncEngine } from '@/api/syncEngine'
 import { PageTransition } from '@/components/motion/PageTransition'
 import { useAuthStore } from '@/store/authStore'
+import { registerNativePushToken } from '@/capacitor/push'
 
 const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/verification'])
 const TOKEN_RESTORE_TIMEOUT_MS = 1500
@@ -55,6 +56,8 @@ export function AuthGate() {
         if (status !== 'authenticated') {
           await bootstrapSession()
         }
+        const householdId = useAuthStore.getState().householdId
+        if (householdId) void registerNativePushToken(householdId)
         if (!cancelled) startSyncEngine()
       } catch {
         // login screen surfaces errors

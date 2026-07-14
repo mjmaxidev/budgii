@@ -40,8 +40,11 @@ services:
       RECEIPT_STORAGE_PATH: /app/uploads
       RECEIPT_OCR_PROVIDER: ${RECEIPT_OCR_PROVIDER:-deterministic}
       RECEIPT_OPENAI_MODEL: ${RECEIPT_OPENAI_MODEL:-gpt-5.5}
+      FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       AI_INSIGHTS_MODEL: ${AI_INSIGHTS_MODEL:-gpt-5.4-mini}
+      PUSH_PROVIDER: ${PUSH_PROVIDER:-log}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
       BUDGII_DEV_SEED: "true"
     volumes:
       - receipt_uploads:/app/uploads

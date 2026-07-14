@@ -58,3 +58,16 @@ def test_production_rejects_unknown_email_provider() -> None:
 
     with pytest.raises(RuntimeError, match="INVITE_EMAIL_PROVIDER"):
         settings.validate_runtime()
+
+
+def test_production_requires_fcm_project_id() -> None:
+    settings = Settings(
+        app_env="production",
+        app_debug=False,
+        cors_origins="https://budgii.app",
+        jwt_secret="a" * 32,
+        push_provider="fcm",
+    )
+
+    with pytest.raises(RuntimeError, match="FCM_PROJECT_ID"):
+        settings.validate_runtime()

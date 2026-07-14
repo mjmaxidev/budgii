@@ -215,6 +215,11 @@
   resolved "https://registry.npmjs.org/@capacitor/ios/-/ios-8.4.1.tgz"
   integrity sha512-EgcAk7NYheHMTyP3CUrA65qKs4D2UEAKgw44HI6Uk3dTw6KjLQkdLOQWvbeRncHaZ2gklfOojUoc5DlSw2lhYg==
 
+"@capacitor/push-notifications@^8.1.1":
+  version "8.1.1"
+  resolved "https://registry.npmjs.org/@capacitor/push-notifications/-/push-notifications-8.1.1.tgz"
+  integrity sha512-WqzjPKIbYbARMN+GC0XMAJcxJpUUzqgzS/Ny8RODLrro38pQhm3GXYwX2Mwd+LZlLY39rGImkCkrKyQSNfuikA==
+
 "@electron-internal/extract-zip@^1.0.1":
   version "1.0.3"
   resolved "https://registry.npmjs.org/@electron-internal/extract-zip/-/extract-zip-1.0.3.tgz"

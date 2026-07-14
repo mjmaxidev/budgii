@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Bell, DollarSign, Languages, Moon } from 'lucide-react'
+import { Capacitor } from '@capacitor/core'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -9,6 +10,8 @@ import { ToggleRow } from '@/components/ui/ToggleRow'
 import { isApiEnabled } from '@/api/config'
 import { flushSyncNow } from '@/api/syncEngine'
 import { useStore } from '@/store/appStore'
+import { registerNativePushToken, requestNativePushPermission } from '@/capacitor/push'
+import { useAuthStore } from '@/store/authStore'
 
 const CURRENCIES = [
   { code: 'USD', label: 'US Dollar ($)' },
@@ -33,6 +36,7 @@ export function Preferences() {
   const settings = useStore((s) => s.settings)
   const updatePrefs = useStore((s) => s.updateUserPreferences)
   const updateSettings = useStore((s) => s.updateSettings)
+  const householdId = useAuthStore((s) => s.householdId)
 
   const [currency, setCurrency] = useState(settings.currency || prefs.currency)
   const [language, setLanguage] = useState(prefs.language)
@@ -100,6 +104,15 @@ export function Preferences() {
     setError('')
     if (!next) {
       setNotifications(false)
+      return
+    }
+
+    if (Capacitor.isNativePlatform()) {
+      const granted = await requestNativePushPermission()
+      setNotifications(granted)
+      setNotificationPermission(granted ? 'granted' : 'denied')
+      if (granted && householdId) await registerNativePushToken(householdId)
+      if (!granted) setError('Notification permission was not granted.')
       return
     }
 
