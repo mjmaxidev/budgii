@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Calendar, Check, ChevronLeft, ChevronRight, Pencil, Plus, Repeat, Trash2 } from 'lucide-react'
+import { Calendar, Check, Pencil, Plus, Repeat, Trash2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { TopBar } from '@/components/layout/TopBar'
 import { Card } from '@/components/ui/Card'
@@ -18,16 +18,17 @@ import {
   sumOngoingIncome,
 } from '@/utils/income'
 import { CHALK_COLOR_PRESETS } from '@/constants/chalkColors'
+import { IncomeSummary } from '@/components/income/IncomeSummary'
+import { IncomeBreakdowns } from '@/components/income/IncomeBreakdowns'
+import {
+  defaultIncomeDate,
+  incomeMembers,
+  memberIncomeItems,
+  memberOngoingIncome,
+  salaryIncomeSourceId,
+} from '@/utils/incomeTracking'
 
 const SOURCE_COLORS = CHALK_COLOR_PRESETS
-
-function defaultDateForMonth(year: number, month: number) {
-  const now = new Date()
-  if (year === now.getFullYear() && month === now.getMonth()) {
-    return now.toISOString().slice(0, 10)
-  }
-  return new Date(year, month, 1).toISOString().slice(0, 10)
-}
 
 export function IncomeTracking() {
   const incomeItems = useStore((s) => s.incomeItems)
@@ -49,11 +50,11 @@ export function IncomeTracking() {
   const viewMonth = selectedMonth.getMonth()
 
   const visibleMembers = useMemo(
-    () => familyMembers.filter((m) => incomeMemberIds.includes(m.id)),
+    () => incomeMembers(familyMembers, incomeMemberIds, true),
     [familyMembers, incomeMemberIds],
   )
   const hiddenMembers = useMemo(
-    () => familyMembers.filter((m) => !incomeMemberIds.includes(m.id)),
+    () => incomeMembers(familyMembers, incomeMemberIds, false),
     [familyMembers, incomeMemberIds],
   )
 
@@ -70,7 +71,7 @@ export function IncomeTracking() {
   const [editingOngoingId, setEditingOngoingId] = useState<string | null>(null)
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(() => defaultDateForMonth(viewYear, viewMonth))
+  const [date, setDate] = useState(() => defaultIncomeDate(viewYear, viewMonth))
   const [sourceId, setSourceId] = useState(incomeSources[0]?.id ?? '')
   const [memberId, setMemberId] = useState<string | undefined>(
     () => familyMembers.find((m) => m.isDefault)?.id ?? familyMembers[0]?.id,
@@ -82,7 +83,7 @@ export function IncomeTracking() {
   const [editingMemberOneTimeId, setEditingMemberOneTimeId] = useState<string | null>(null)
   const [oneTimeAmount, setOneTimeAmount] = useState('')
   const [oneTimeSourceId, setOneTimeSourceId] = useState('')
-  const [oneTimeDate, setOneTimeDate] = useState(() => defaultDateForMonth(viewYear, viewMonth))
+  const [oneTimeDate, setOneTimeDate] = useState(() => defaultIncomeDate(viewYear, viewMonth))
   const [oneTimeNotes, setOneTimeNotes] = useState('')
 
   const [sourceEditMode, setSourceEditMode] = useState(false)
@@ -106,10 +107,7 @@ export function IncomeTracking() {
     setMemberId(visibleMembers.find((m) => m.isDefault)?.id ?? visibleMembers[0]?.id)
   }, [visibleMembers, memberId])
 
-  const memberOneTimeItems = useMemo(
-    () => (memberId ? monthItems.filter((i) => i.memberId === memberId) : []),
-    [monthItems, memberId],
-  )
+  const memberOneTimeItems = useMemo(() => memberIncomeItems(monthItems, memberId), [monthItems, memberId])
 
   const modalOngoingAmount = memberSalaryMode && ongoingEnabled ? parseFloat(amount) || 0 : 0
   const modalOneTimeTotal = sumIncomeItems(memberOneTimeItems)
@@ -121,7 +119,7 @@ export function IncomeTracking() {
 
   function resetForm() {
     setAmount('')
-    setDate(defaultDateForMonth(viewYear, viewMonth))
+    setDate(defaultIncomeDate(viewYear, viewMonth))
     setSourceId(incomeSources[0]?.id ?? '')
     setMemberId(visibleMembers.find((m) => m.isDefault)?.id ?? visibleMembers[0]?.id)
     setNotes('')
@@ -142,7 +140,7 @@ export function IncomeTracking() {
     setEditingMemberOneTimeId(null)
     setOneTimeAmount('')
     setOneTimeSourceId(incomeSources[0]?.id ?? '')
-    setOneTimeDate(defaultDateForMonth(viewYear, viewMonth))
+    setOneTimeDate(defaultIncomeDate(viewYear, viewMonth))
     setOneTimeNotes('')
   }
 
@@ -195,7 +193,7 @@ export function IncomeTracking() {
     }
     resetForm()
     setIsOngoing(ongoing)
-    setDate(defaultDateForMonth(viewYear, viewMonth))
+    setDate(defaultIncomeDate(viewYear, viewMonth))
     setShowModal(true)
   }
 
@@ -340,19 +338,9 @@ export function IncomeTracking() {
     setMemberAddOpen(false)
   }
 
-  function salarySourceId() {
-    return (
-      incomeSources.find((s) => s.id === 'incsrc_salary' || s.name === 'Salary')?.id ??
-      incomeSources[0]?.id ??
-      ''
-    )
-  }
-
   function openMemberSalary(id: string) {
-    const salaryId = salarySourceId()
-    const existing =
-      ongoingIncomes.find((o) => o.memberId === id && o.sourceId === salaryId) ??
-      ongoingIncomes.find((o) => o.memberId === id)
+    const salaryId = salaryIncomeSourceId(incomeSources)
+    const existing = memberOngoingIncome(ongoingIncomes, id, salaryId)
 
     if (existing) {
       openEditOngoing(existing.id)
@@ -363,7 +351,7 @@ export function IncomeTracking() {
     setMemberId(id)
     setIsOngoing(true)
     setSourceId(salaryId)
-    setDate(defaultDateForMonth(viewYear, viewMonth))
+    setDate(defaultIncomeDate(viewYear, viewMonth))
     setMemberSalaryMode(true)
     setShowModal(true)
   }
@@ -372,49 +360,14 @@ export function IncomeTracking() {
 
   return (
     <AppShell topBar={<TopBar title="Income Tracking" showBack />}>
-      {/* Month navigator */}
-      <Card className="mt-3 flex items-center justify-between py-3">
-        <button
-          type="button"
-          onClick={() => shiftMonth(-1)}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-line/40"
-          aria-label="Previous month"
-        >
-          <ChevronLeft size={22} />
-        </button>
-        <div className="text-center">
-          <p className="text-[17px] font-bold text-ink">{formatMonthYear(viewYear, viewMonth)}</p>
-          {isCurrentMonth(viewYear, viewMonth) && (
-            <p className="text-[12px] font-semibold text-primary">This month</p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => shiftMonth(1)}
-          className="flex h-10 w-10 items-center justify-center rounded-full active:bg-line/40"
-          aria-label="Next month"
-        >
-          <ChevronRight size={22} />
-        </button>
-      </Card>
-
-      {/* Month total */}
-      <Card className="mt-3 flex flex-col items-center gap-2 bg-green/10 py-5">
-        <span className="text-[14px] font-semibold text-muted">Income this month</span>
-        <MoneyText amount={monthTotal} className="text-[40px] font-extrabold text-green" />
-        <div className="mt-1 flex flex-wrap justify-center gap-3 text-[13px] text-muted">
-          {ongoingTotal > 0 && (
-            <span>
-              Ongoing <span className="font-semibold text-ink">${ongoingTotal.toFixed(0)}</span>
-            </span>
-          )}
-          {manualTotal > 0 && (
-            <span>
-              One-time <span className="font-semibold text-ink">${manualTotal.toFixed(0)}</span>
-            </span>
-          )}
-        </div>
-      </Card>
+      <IncomeSummary
+        monthLabel={formatMonthYear(viewYear, viewMonth)}
+        isCurrent={isCurrentMonth(viewYear, viewMonth)}
+        ongoingTotal={ongoingTotal}
+        manualTotal={manualTotal}
+        monthTotal={monthTotal}
+        onShiftMonth={shiftMonth}
+      />
 
       {/* Ongoing income */}
       <div className="mt-5">
@@ -570,62 +523,13 @@ export function IncomeTracking() {
         )}
       </div>
 
-      {/* By source — this month */}
-      <div className="mt-5">
-        <h2 className="mb-2 px-1 text-[15px] font-bold text-ink">By source</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {incomeSources.map((src) => {
-            const fromOngoing = ongoingIncomes
-              .filter((o) => o.enabled && o.sourceId === src.id)
-              .reduce((s, o) => s + o.amount, 0)
-            const fromManual = monthItems
-              .filter((i) => i.sourceId === src.id)
-              .reduce((s, i) => s + i.amount, 0)
-            return (
-              <Card key={src.id} className="flex flex-col items-center gap-1 py-3">
-                <span className="mb-0.5 h-2 w-2 rounded-full" style={{ backgroundColor: src.color }} />
-                <span className="text-[12px] font-semibold text-muted">{src.name}</span>
-                <MoneyText amount={fromOngoing + fromManual} className="text-[18px] font-bold text-ink" />
-              </Card>
-            )
-          })}
-        </div>
-      </div>
-
-      {visibleMembers.length > 0 && (
-        <div className="mt-5">
-          <h2 className="mb-2 px-1 text-[15px] font-bold text-ink">By family member</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {visibleMembers.map((m) => {
-              const fromOngoing = ongoingIncomes
-                .filter((o) => o.enabled && o.memberId === m.id)
-                .reduce((s, o) => s + o.amount, 0)
-              const fromManual = monthItems
-                .filter((i) => i.memberId === m.id)
-                .reduce((s, i) => s + i.amount, 0)
-              return (
-                <Card key={m.id} className="px-3 py-3">
-                  <button
-                    type="button"
-                    onClick={() => openMemberSalary(m.id)}
-                    className="flex w-full items-center gap-2 text-left active:opacity-70"
-                  >
-                    <span className="text-xl">{m.avatar}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-ink">{m.name}</p>
-                      <MoneyText
-                        amount={fromOngoing + fromManual}
-                        className="text-[16px] font-bold text-green"
-                      />
-                    </div>
-                    <Pencil size={14} className="shrink-0 text-muted" />
-                  </button>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      <IncomeBreakdowns
+        sources={incomeSources}
+        ongoingIncomes={ongoingIncomes}
+        monthItems={monthItems}
+        members={visibleMembers}
+        onMemberSalary={openMemberSalary}
+      />
 
       <ActionButton onClick={() => openAddModal(false)} className="mt-6">
         <Plus size={20} /> Add Income

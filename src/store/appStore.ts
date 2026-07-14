@@ -33,11 +33,11 @@ import {
 } from '@/data/seed'
 import { uid } from '@/utils/id'
 import { todayISO } from '@/utils/dates'
-import { mockExtractReceiptItems } from '@/utils/mockAi'
 import { generateSalt, hashPin, verifyPin } from '@/utils/pin'
 import { normalizeInviteCode } from '@/utils/familyInvite'
 import { defaultEditorLevel, normalizeEditorLevel } from '@/utils/memberAccess'
 import { createIncomeActions } from './incomeActions'
+import { createReceiptActions } from './receiptActions'
 
 const TAG_PALETTE = ['#FB8500', '#16A34A', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
 const CAT_PALETTE = ['#16A34A', '#FB8500', '#2386F6', '#9B5DE5', '#EF4444', '#F59E0B']
@@ -353,114 +353,7 @@ export const useStore = create<AppStore>()(
         return get().expenses.filter((e) => e.memberId === memberId)
       },
 
-      addReceipt: (merchant, date, total, imageUrl) => {
-        const id = uid('rec')
-        const receipt: Receipt = {
-          id,
-          merchant,
-          date,
-          total,
-          imageUrl,
-          itemIds: [],
-          status: 'uploaded',
-        }
-        set((s) => ({ receipts: [receipt, ...s.receipts] }))
-        return id
-      },
-
-      updateReceipt: (id, patch) =>
-        set((s) => ({ receipts: s.receipts.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
-
-      deleteReceipt: (id) =>
-        set((s) => ({
-          receipts: s.receipts.filter((r) => r.id !== id),
-          receiptItems: s.receiptItems.filter((i) => i.receiptId !== id),
-        })),
-
-      analyzeReceipt: (receiptId) => {
-        set((s) => ({
-          receipts: s.receipts.map((r) => (r.id === receiptId ? { ...r, status: 'analyzing' as const } : r)),
-        }))
-
-        const { receipts } = get()
-        const receipt = receipts.find((r) => r.id === receiptId)
-        if (!receipt) return
-
-        const { categories: allCategories, familyMembers } = get()
-        const resolveCategoryId = (name: string) => {
-          const match = allCategories.find((c) => c.name.toLowerCase() === name.toLowerCase())
-          return match?.id ?? allCategories[0]?.id ?? ''
-        }
-        const defaultMember = familyMembers.find((m) => m.isDefault)?.id
-        const items = mockExtractReceiptItems({
-          receiptId,
-          resolveCategoryId,
-          defaultMemberId: defaultMember,
-        })
-        set((s) => ({
-          receiptItems: [...items, ...s.receiptItems],
-          receipts: s.receipts.map((r) =>
-            r.id === receiptId
-              ? { ...r, status: 'needs_review' as const, itemIds: items.map((i) => i.id) }
-              : r,
-          ),
-        }))
-      },
-
-      confirmReceiptItems: (receiptId) => {
-        const { receiptItems, receipts, expenses } = get()
-        const receipt = receipts.find((r) => r.id === receiptId)
-        if (!receipt) return
-        const items = receiptItems.filter((i) => i.receiptId === receiptId)
-        const existing = new Set(expenses.filter((e) => e.receiptId === receiptId).map((e) => e.id))
-        const newExpenses: Expense[] = items
-          .filter((i) => !existing.has(`exp_${i.id}`))
-          .map((i) => ({
-            id: `exp_${i.id}`,
-            amount: i.amount,
-            date: receipt.date,
-            merchant: i.name,
-            categoryId: i.categoryId,
-            tagIds: i.tagIds,
-            memberId: i.memberId,
-            notes: `From ${receipt.merchant}`,
-            receiptId,
-            source: 'receipt_ai' as const,
-          }))
-
-        set((s) => ({
-          expenses: [...newExpenses, ...s.expenses],
-          receipts: s.receipts.map((r) => (r.id === receiptId ? { ...r, status: 'processed' as const } : r)),
-        }))
-      },
-
-      updateReceiptItem: (id, patch) =>
-        set((s) => ({
-          receiptItems: s.receiptItems.map((i) =>
-            i.id === id ? { ...i, ...patch, manuallyEdited: true } : i,
-          ),
-        })),
-
-      removeReceiptItem: (id) =>
-        set((s) => ({
-          receiptItems: s.receiptItems.filter((i) => i.id !== id),
-          expenses: s.expenses.filter((e) => e.id !== `exp_${id}`),
-        })),
-
-      addReceiptItem: (receiptId: string, item: Partial<Omit<ReceiptItem, 'id' | 'receiptId'>>) =>
-        set((s) => {
-          const newItem = {
-            id: `item_${Date.now()}`,
-            receiptId,
-            name: '',
-            amount: 0,
-            categoryId: '',
-            tagIds: [] as string[],
-            aiConfidence: 0,
-            ...item,
-          } as ReceiptItem
-          return { receiptItems: [...s.receiptItems, newItem] }
-        }),
+      ...createReceiptActions(set, get),
 
       addCategory: (name, icon, color) => {
         const id = uid('cat')
