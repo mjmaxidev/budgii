@@ -77,7 +77,7 @@ Revert before release builds. Electron dev scripts are unchanged.
 
 Universal link target (configured later in Apple/Google consoles):
 
-`https://budgii.app/join?code=ABC123`
+`https://budgii.com.au/join?code=ABC123`
 
 The app listens via `@capacitor/app` and routes to `#/join-family?code=ABC123`. Native associated-domains / intent-filter setup is still TODO — see `src/capacitor/deepLinks.ts`.
 

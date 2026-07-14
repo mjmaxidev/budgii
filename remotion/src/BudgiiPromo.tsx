@@ -169,7 +169,7 @@ const CtaScene: React.FC = () => {
         }}
       >
         <h2 style={{ margin: 0, fontSize: 72, fontWeight: 900, color: colors.ink }}>Start budgeting together</h2>
-        <p style={{ margin: '16px 0 0', fontSize: 30, color: colors.muted }}>budgii.app</p>
+        <p style={{ margin: '16px 0 0', fontSize: 30, color: colors.muted }}>budgii.com.au</p>
       </div>
 
       <div style={{ display: 'flex', gap: 36, alignItems: 'flex-end' }}>

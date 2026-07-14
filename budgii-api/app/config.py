@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     ai_insights_model: str = "gpt-5.4-mini"
 
-    invite_link_base: str = "https://budgii.app/join"
-    auth_link_base: str = "https://budgii.app"
+    invite_link_base: str = "https://budgii.com.au/join"
+    auth_link_base: str = "https://budgii.com.au"
     invite_email_provider: str = "log"
     invite_email_from: str = ""
     invite_email_api_key: str = ""

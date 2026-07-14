@@ -10,9 +10,9 @@
 
 ## Deep links
 
-1. Host `https://budgii.app/.well-known/assetlinks.json` with Android package `app.mjproductions.budgii` and the release signing certificate SHA-256 fingerprint.
-2. Add the `applinks:budgii.app` Associated Domains capability in Xcode and host `https://budgii.app/.well-known/apple-app-site-association` for the Apple team ID and bundle ID.
-3. Verify `https://budgii.app/join?code=ABC123` opens Budgii and routes to the household join screen.
+1. Host `https://budgii.com.au/.well-known/assetlinks.json` with Android package `app.mjproductions.budgii` and the release signing certificate SHA-256 fingerprint.
+2. Add the `applinks:budgii.com.au` Associated Domains capability in Xcode and host `https://budgii.com.au/.well-known/apple-app-site-association` for the Apple team ID and bundle ID.
+3. Verify `https://budgii.com.au/join?code=ABC123` opens Budgii and routes to the household join screen.
 
 ## Apple sign-in
 

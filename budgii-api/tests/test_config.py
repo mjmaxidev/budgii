@@ -6,7 +6,7 @@ def test_production_rejects_default_jwt_secret() -> None:
     settings = Settings(
         app_env="production",
         app_debug=False,
-        cors_origins="https://budgii.app",
+        cors_origins="https://budgii.com.au",
         jwt_secret="change-me-in-production",
     )
 
@@ -27,19 +27,19 @@ def test_production_requires_cors_origins() -> None:
 
 
 def test_cors_origins_are_trimmed() -> None:
-    settings = Settings(cors_origins=" https://budgii.app, capacitor://localhost ,,")
+    settings = Settings(cors_origins=" https://budgii.com.au, capacitor://localhost ,,")
 
-    assert settings.cors_origin_list == ["https://budgii.app", "capacitor://localhost"]
+    assert settings.cors_origin_list == ["https://budgii.com.au", "capacitor://localhost"]
 
 
 def test_production_requires_email_key_when_provider_enabled() -> None:
     settings = Settings(
         app_env="production",
         app_debug=False,
-        cors_origins="https://budgii.app",
+        cors_origins="https://budgii.com.au",
         jwt_secret="a" * 32,
         invite_email_provider="resend",
-        invite_email_from="Budgii <invites@budgii.app>",
+        invite_email_from="Budgii <invites@budgii.com.au>",
         invite_email_api_key="",
     )
 
@@ -51,7 +51,7 @@ def test_production_rejects_unknown_email_provider() -> None:
     settings = Settings(
         app_env="production",
         app_debug=False,
-        cors_origins="https://budgii.app",
+        cors_origins="https://budgii.com.au",
         jwt_secret="a" * 32,
         invite_email_provider="smtp",
     )
@@ -64,7 +64,7 @@ def test_production_requires_fcm_project_id() -> None:
     settings = Settings(
         app_env="production",
         app_debug=False,
-        cors_origins="https://budgii.app",
+        cors_origins="https://budgii.com.au",
         jwt_secret="a" * 32,
         push_provider="fcm",
     )

@@ -129,8 +129,8 @@ export function Help() {
             <p className="text-[15px] font-bold text-primary">Still have questions?</p>
             <p className="text-[13px] text-primary/80">
               Reach out to our support team at{' '}
-              <a href="mailto:support@budgii.app" className="font-semibold underline">
-                support@budgii.app
+              <a href="mailto:support@budgii.com.au" className="font-semibold underline">
+                support@budgii.com.au
               </a>
             </p>
           </div>

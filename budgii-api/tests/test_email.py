@@ -8,7 +8,7 @@ def invite_message() -> InviteEmail:
         to_email="family@example.com",
         household_name="Family Budget",
         inviter_name="Alex",
-        invite_url="https://budgii.app/join?code=ABC123",
+        invite_url="https://budgii.com.au/join?code=ABC123",
         access_label="editor:standard",
     )
 
@@ -35,7 +35,7 @@ async def test_resend_provider_posts_expected_payload(monkeypatch) -> None:
     await send_invite_email(
         Settings(
             invite_email_provider="resend",
-            invite_email_from="Budgii <invites@budgii.app>",
+            invite_email_from="Budgii <invites@budgii.com.au>",
             invite_email_api_key="test-key",
         ),
         invite_message(),
@@ -44,9 +44,9 @@ async def test_resend_provider_posts_expected_payload(monkeypatch) -> None:
     url, headers, payload = calls[0]
     assert url == "https://api.resend.com/emails"
     assert headers["Authorization"] == "Bearer test-key"
-    assert payload["from"] == "Budgii <invites@budgii.app>"
+    assert payload["from"] == "Budgii <invites@budgii.com.au>"
     assert payload["to"] == ["family@example.com"]
-    assert "https://budgii.app/join?code=ABC123" in payload["text"]
+    assert "https://budgii.com.au/join?code=ABC123" in payload["text"]
 
 
 @pytest.mark.anyio
@@ -70,11 +70,11 @@ async def test_sendgrid_provider_splits_sender_name(monkeypatch) -> None:
     await send_invite_email(
         Settings(
             invite_email_provider="sendgrid",
-            invite_email_from="Budgii <invites@budgii.app>",
+            invite_email_from="Budgii <invites@budgii.com.au>",
             invite_email_api_key="test-key",
         ),
         invite_message(),
     )
 
     _, _, payload = calls[0]
-    assert payload["from"] == {"email": "invites@budgii.app", "name": "Budgii"}
+    assert payload["from"] == {"email": "invites@budgii.com.au", "name": "Budgii"}

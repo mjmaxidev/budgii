@@ -1,7 +1,7 @@
 import { App, type URLOpenListenerEvent } from '@capacitor/app'
 import { buildFamilyInviteAppPath } from '@/utils/familyInvite'
 
-const JOIN_HOST = 'budgii.app'
+const JOIN_HOST = 'budgii.com.au'
 
 function parseJoinDeepLink(url: string): string | null {
   try {

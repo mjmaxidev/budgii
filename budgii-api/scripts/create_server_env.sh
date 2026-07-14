@@ -20,7 +20,7 @@ SERVER_API_PORT=18087
 SERVER_FRONTEND_PORT=18088
 
 PUBLIC_API_BASE_URL=http://localhost:18087/v1
-CORS_ORIGINS=http://localhost:18088,http://127.0.0.1:18088,https://budgii.app,capacitor://localhost
+CORS_ORIGINS=http://localhost:18088,http://127.0.0.1:18088,https://budgii.com.au,capacitor://localhost
 VITE_SHOW_DEMO_TOOLS=false
 
 POSTGRES_USER=budgii
@@ -40,7 +40,7 @@ GOOGLE_CLIENT_ID=
 
 OPENAI_API_KEY=
 
-INVITE_LINK_BASE=https://budgii.app/join
+INVITE_LINK_BASE=https://budgii.com.au/join
 AUTH_LINK_BASE=http://localhost:18088
 INVITE_EMAIL_PROVIDER=log
 INVITE_EMAIL_FROM=

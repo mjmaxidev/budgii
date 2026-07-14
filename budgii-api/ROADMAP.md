@@ -124,7 +124,7 @@ Storage is split into `household_sync_meta` (revision + `updated_at`) and `house
 - Email/password, email verification, password reset, and Apple/Google OAuth (token verification implemented; needs client IDs)
 - In-process auth endpoint rate limiting via `AUTH_RATE_LIMIT_*` env vars
 - Capacitor: store refresh token in secure storage; refresh on 401
-- Deep link `https://budgii.app/join?code=` → auth → `POST /households/join`
+- Deep link `https://budgii.com.au/join?code=` → auth → `POST /households/join`
 
 ### Storage
 
@@ -278,8 +278,8 @@ GET  /receipts/{id}/file                                        ✅
 | OCR             | Async worker reading from `RECEIPT_STORAGE_PATH` (same volume mount as API, or shared NFS if split)                                                                                            |
 | Schedulers      | ✅ Compose `recurring-worker` and `push-worker` services using the API image and configurable intervals; runs persist to `background_job_runs` for admin status UX                              |
 | Monitoring      | ✅ `/v1/health`, request IDs, and structured request logs; Sentry remains optional at deploy                                                                                                   |
-| Mobile          | Capacitor → `https://api.budgii.app/v1`                                                                                                                                                        |
-| Universal links | `https://budgii.app/join?code=` → app or web                                                                                                                                                   |
+| Mobile          | Capacitor → `https://api.budgii.com.au/v1`                                                                                                                                                    |
+| Universal links | `https://budgii.com.au/join?code=` → app or web                                                                                                                                                 |
 | CORS            | ✅ `CORS_ORIGINS` locks origins when `APP_DEBUG=false`; production startup rejects weak/default JWT secrets                                                                                    |
 
 ---

@@ -15,7 +15,7 @@ export function formatInviteCode(code: string) {
 
 export function buildFamilyInviteUrl(code: string) {
   const normalized = normalizeInviteCode(code)
-  return `https://budgii.app/join?code=${encodeURIComponent(normalized)}`
+  return `https://budgii.com.au/join?code=${encodeURIComponent(normalized)}`
 }
 
 /** In-app hash route for invite deep links inside Budgii. */
