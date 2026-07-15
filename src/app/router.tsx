@@ -1,46 +1,11 @@
 import { createHashRouter, Navigate, RouteObject } from 'react-router-dom'
+import type { ComponentType } from 'react'
 import { AppLayout } from './AppLayout'
 import { AuthGate } from '@/components/auth/AuthGate'
-import { Login } from '@/pages/Login'
-import { Verification } from '@/pages/Verification'
-import { ForgotPassword } from '@/pages/ForgotPassword'
-import { ResetPassword } from '@/pages/ResetPassword'
-import { OnBoarding } from '@/pages/OnBoarding'
-import { Home } from '@/pages/Home'
-import { AddExpense } from '@/pages/AddExpense'
-import { AddExpenseChoice } from '@/pages/AddExpenseChoice'
-import { ScanReceipt } from '@/pages/ScanReceipt'
-import { ReceiptResults } from '@/pages/ReceiptResults'
-import { ReceiptHistory } from '@/pages/ReceiptHistory'
-import { ItemDetail } from '@/pages/ItemDetail'
-import { TransactionConfirm } from '@/pages/TransactionConfirm'
-import { Transactions } from '@/pages/Transactions'
-import { ReportsBudget } from '@/pages/ReportsBudget'
-import { SpendingBreakdown } from '@/pages/SpendingBreakdown'
-import { BudgetSetup } from '@/pages/BudgetSetup'
-import { BudgetNextMonth } from '@/pages/BudgetNextMonth'
-import { CategoriesTags } from '@/pages/CategoriesTags'
-import { FamilyMembers } from '@/pages/FamilyMembers'
-import { Settings } from '@/pages/Settings'
-import { DealWatchlist } from '@/pages/DealWatchlist'
-import { TodaysDealReport } from '@/pages/TodaysDealReport'
-import { DealCards } from '@/pages/DealCards'
-import { ShoppingList } from '@/pages/ShoppingList'
-import { FamilyInvitation } from '@/pages/FamilyInvitation'
-import { FamilyJoin } from '@/pages/FamilyJoin'
-import { AccountSettings } from '@/pages/AccountSettings'
-import { ActiveSessions } from '@/pages/ActiveSessions'
-import { Preferences } from '@/pages/Preferences'
-import { IncomeTracking } from '@/pages/IncomeTracking'
-import { RecurringTransactions } from '@/pages/RecurringTransactions'
-import { SpendingAlerts } from '@/pages/SpendingAlerts'
-import { MonthlySummary } from '@/pages/MonthlySummary'
-import { ReceiptImageViewer } from '@/pages/ReceiptImageViewer'
-import { DataExport } from '@/pages/DataExport'
-import { Help } from '@/pages/Help'
-import { BudgetComparison } from '@/pages/BudgetComparison'
-import { Notifications } from '@/pages/Notifications'
-import { BackgroundJobs } from '@/pages/BackgroundJobs'
+
+function lazyPage<T extends object, K extends keyof T>(load: () => Promise<T>, name: K) {
+  return async () => ({ Component: (await load())[name] as ComponentType })
+}
 
 export type RouteMeta = {
   label?: string
@@ -57,187 +22,207 @@ export const appRoutes: RouteWithMeta[] = [
   { path: '/', element: <Navigate to="/home" replace /> },
   {
     path: '/home',
-    element: <Home />,
+    lazy: lazyPage(() => import('@/pages/Home'), 'Home'),
     meta: { label: 'Home', description: 'Budget overview', section: 'app' },
   },
   {
     path: '/add-expense-choice',
-    element: <AddExpenseChoice />,
+    lazy: lazyPage(() => import('@/pages/AddExpenseChoice'), 'AddExpenseChoice'),
     meta: { label: 'Add Expense', description: 'Manual or scan', section: 'app' },
   },
   {
     path: '/add-expense',
-    element: <AddExpense />,
+    lazy: lazyPage(() => import('@/pages/AddExpense'), 'AddExpense'),
     meta: { label: 'Add Expense Form', description: 'Manual entry', section: 'app', hidden: true },
   },
   {
     path: '/scan-receipt',
-    element: <ScanReceipt />,
+    lazy: lazyPage(() => import('@/pages/ScanReceipt'), 'ScanReceipt'),
     meta: { label: 'Scan Receipt', description: 'Receipt capture', section: 'app' },
   },
   {
     path: '/receipt-results/:receiptId',
-    element: <ReceiptResults />,
+    lazy: lazyPage(() => import('@/pages/ReceiptResults'), 'ReceiptResults'),
     meta: { label: 'Receipt Results', description: 'AI item review', section: 'app', hidden: true },
   },
   {
     path: '/item/:itemId',
-    element: <ItemDetail />,
+    lazy: lazyPage(() => import('@/pages/ItemDetail'), 'ItemDetail'),
     meta: { label: 'Item Detail', description: 'Source receipt', section: 'app', hidden: true },
   },
-  { path: '/transaction-confirm', element: <TransactionConfirm />, meta: { hidden: true } },
-  { path: '/transaction-confirm/:expenseId', element: <TransactionConfirm />, meta: { hidden: true } },
+  {
+    path: '/transaction-confirm',
+    lazy: lazyPage(() => import('@/pages/TransactionConfirm'), 'TransactionConfirm'),
+    meta: { hidden: true },
+  },
+  {
+    path: '/transaction-confirm/:expenseId',
+    lazy: lazyPage(() => import('@/pages/TransactionConfirm'), 'TransactionConfirm'),
+    meta: { hidden: true },
+  },
   {
     path: '/transactions',
-    element: <Transactions />,
+    lazy: lazyPage(() => import('@/pages/Transactions'), 'Transactions'),
     meta: { label: 'Transactions', description: 'Expense rows', section: 'app' },
   },
   {
     path: '/reports',
-    element: <ReportsBudget />,
+    lazy: lazyPage(() => import('@/pages/ReportsBudget'), 'ReportsBudget'),
     meta: { label: 'Reports', description: 'Budget charts', section: 'app' },
   },
   {
     path: '/spending-breakdown',
-    element: <SpendingBreakdown />,
+    lazy: lazyPage(() => import('@/pages/SpendingBreakdown'), 'SpendingBreakdown'),
     meta: { label: 'Breakdown', description: 'Category details', section: 'app' },
   },
   {
     path: '/budget-setup',
-    element: <BudgetSetup />,
+    lazy: lazyPage(() => import('@/pages/BudgetSetup'), 'BudgetSetup'),
     meta: { label: 'Budget Setup', description: 'Budget form', section: 'app' },
   },
   {
     path: '/budget-next-month',
-    element: <BudgetNextMonth />,
+    lazy: lazyPage(() => import('@/pages/BudgetNextMonth'), 'BudgetNextMonth'),
     meta: { label: 'Plan Next Month', description: 'Forward budget planning', section: 'app' },
   },
   {
     path: '/categories-tags',
-    element: <CategoriesTags />,
+    lazy: lazyPage(() => import('@/pages/CategoriesTags'), 'CategoriesTags'),
     meta: { label: 'Categories', description: 'Tags setup', section: 'app' },
   },
   {
     path: '/family-members',
-    element: <FamilyMembers />,
+    lazy: lazyPage(() => import('@/pages/FamilyMembers'), 'FamilyMembers'),
     meta: { label: 'Family', description: 'Member tags', section: 'app' },
   },
   {
     path: '/settings',
-    element: <Settings />,
+    lazy: lazyPage(() => import('@/pages/Settings'), 'Settings'),
     meta: { label: 'Settings', description: 'Account groups', section: 'app' },
   },
   {
     path: '/deal-watchlist',
-    element: <DealWatchlist />,
+    lazy: lazyPage(() => import('@/pages/DealWatchlist'), 'DealWatchlist'),
     meta: { label: 'Watchlist', description: 'Tracked deals', section: 'app' },
   },
   {
     path: '/todays-deal-report',
-    element: <TodaysDealReport />,
+    lazy: lazyPage(() => import('@/pages/TodaysDealReport'), 'TodaysDealReport'),
     meta: { label: 'Today Deals', description: 'Daily deals', section: 'app' },
   },
   {
     path: '/deal-cards',
-    element: <DealCards />,
+    lazy: lazyPage(() => import('@/pages/DealCards'), 'DealCards'),
     meta: { label: 'Deal Cards', description: 'Swipe cards', section: 'app' },
   },
   {
     path: '/shopping-list',
-    element: <ShoppingList />,
+    lazy: lazyPage(() => import('@/pages/ShoppingList'), 'ShoppingList'),
     meta: { label: 'Shopping List', description: 'Selected items', section: 'app' },
   },
   {
     path: '/onboarding',
-    element: <OnBoarding />,
+    lazy: lazyPage(() => import('@/pages/OnBoarding'), 'OnBoarding'),
     meta: { label: 'OnBoarding', description: 'Setup flow', section: 'app' },
   },
   {
     path: '/account-settings',
-    element: <AccountSettings />,
+    lazy: lazyPage(() => import('@/pages/AccountSettings'), 'AccountSettings'),
     meta: { label: 'Account', description: 'Profile & account settings', section: 'app' },
   },
   {
     path: '/active-sessions',
-    element: <ActiveSessions />,
+    lazy: lazyPage(() => import('@/pages/ActiveSessions'), 'ActiveSessions'),
     meta: { label: 'Sessions', description: 'Signed-in devices', section: 'app' },
   },
   {
     path: '/preferences',
-    element: <Preferences />,
+    lazy: lazyPage(() => import('@/pages/Preferences'), 'Preferences'),
     meta: { label: 'Preferences', description: 'Currency, language, notifications', section: 'app' },
   },
   {
     path: '/income-tracking',
-    element: <IncomeTracking />,
+    lazy: lazyPage(() => import('@/pages/IncomeTracking'), 'IncomeTracking'),
     meta: { label: 'Income', description: 'Income log', section: 'app' },
   },
   {
     path: '/recurring-transactions',
-    element: <RecurringTransactions />,
+    lazy: lazyPage(() => import('@/pages/RecurringTransactions'), 'RecurringTransactions'),
     meta: { label: 'Recurring', description: 'Scheduled items', section: 'app' },
   },
   {
     path: '/spending-alerts',
-    element: <SpendingAlerts />,
+    lazy: lazyPage(() => import('@/pages/SpendingAlerts'), 'SpendingAlerts'),
     meta: { label: 'Alerts', description: 'Budget notifications', section: 'app' },
   },
-  { path: '/family-invitation', element: <FamilyInvitation />, meta: { hidden: true } },
+  {
+    path: '/family-invitation',
+    lazy: lazyPage(() => import('@/pages/FamilyInvitation'), 'FamilyInvitation'),
+    meta: { hidden: true },
+  },
   {
     path: '/join-family',
-    element: <FamilyJoin />,
+    lazy: lazyPage(() => import('@/pages/FamilyJoin'), 'FamilyJoin'),
     meta: { label: 'Join Family', description: 'Redeem invite code', section: 'app' },
   },
   {
     path: '/monthly-summary',
-    element: <MonthlySummary />,
+    lazy: lazyPage(() => import('@/pages/MonthlySummary'), 'MonthlySummary'),
     meta: { label: 'Monthly Summary', description: 'Month overview', section: 'app' },
   },
   {
     path: '/receipt-history',
-    element: <ReceiptHistory />,
+    lazy: lazyPage(() => import('@/pages/ReceiptHistory'), 'ReceiptHistory'),
     meta: { label: 'Receipt History', description: 'Past receipts', section: 'app' },
   },
-  { path: '/receipt-viewer/:receiptId', element: <ReceiptImageViewer />, meta: { hidden: true } },
+  {
+    path: '/receipt-viewer/:receiptId',
+    lazy: lazyPage(() => import('@/pages/ReceiptImageViewer'), 'ReceiptImageViewer'),
+    meta: { hidden: true },
+  },
   {
     path: '/data-export',
-    element: <DataExport />,
+    lazy: lazyPage(() => import('@/pages/DataExport'), 'DataExport'),
     meta: { label: 'Data Export', description: 'Export data', section: 'app' },
   },
-  { path: '/help', element: <Help />, meta: { label: 'Help', description: 'Support', section: 'app' } },
+  {
+    path: '/help',
+    lazy: lazyPage(() => import('@/pages/Help'), 'Help'),
+    meta: { label: 'Help', description: 'Support', section: 'app' },
+  },
   {
     path: '/background-jobs',
-    element: <BackgroundJobs />,
+    lazy: lazyPage(() => import('@/pages/BackgroundJobs'), 'BackgroundJobs'),
     meta: { label: 'Background Jobs', description: 'Worker status', section: 'app' },
   },
   {
     path: '/budget-comparison',
-    element: <BudgetComparison />,
+    lazy: lazyPage(() => import('@/pages/BudgetComparison'), 'BudgetComparison'),
     meta: { label: 'Budget Comparison', description: 'Compare periods', section: 'app' },
   },
   {
     path: '/notifications',
-    element: <Notifications />,
+    lazy: lazyPage(() => import('@/pages/Notifications'), 'Notifications'),
     meta: { label: 'Notifications', description: 'Updates', section: 'app' },
   },
   {
     path: '/login',
-    element: <Login />,
+    lazy: lazyPage(() => import('@/pages/Login'), 'Login'),
     meta: { label: 'Login', description: 'Welcome / sign in', section: 'app', hidden: true },
   },
   {
     path: '/forgot-password',
-    element: <ForgotPassword />,
+    lazy: lazyPage(() => import('@/pages/ForgotPassword'), 'ForgotPassword'),
     meta: { label: 'Forgot Password', description: 'Request reset link', section: 'app', hidden: true },
   },
   {
     path: '/reset-password',
-    element: <ResetPassword />,
+    lazy: lazyPage(() => import('@/pages/ResetPassword'), 'ResetPassword'),
     meta: { label: 'Reset Password', description: 'Set new password', section: 'app', hidden: true },
   },
   {
     path: '/verification',
-    element: <Verification />,
+    lazy: lazyPage(() => import('@/pages/Verification'), 'Verification'),
     meta: { label: 'Verification', description: 'Account verification', section: 'app' },
   },
   { path: '*', element: <Navigate to="/home" replace /> },
