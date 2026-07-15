@@ -18,7 +18,7 @@ npx cap add android  # once per machine / after cloning if android/ is not in re
 npm run cap:sync
 ```
 
-Native projects (`ios/`, `android/`) are gitignored and regenerated locally with `cap add`. Commit `capacitor.config.ts` and web source only.
+Native projects (`ios/`, `android/`) are tracked so signing capabilities, permissions, and platform configuration remain reproducible. Firebase configuration files and generated build output stay ignored.
 
 For API-backed mobile testing, set `VITE_API_ENABLED=true` and point
 `VITE_API_BASE_URL` at a backend URL the device can reach. `localhost` inside a

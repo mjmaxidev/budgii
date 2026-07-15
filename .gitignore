@@ -8,8 +8,9 @@ dist/
 dist-ssr/
 release/
 
-# Capacitor native projects
-ios/
+# Capacitor native secrets
+ios/App/App/GoogleService-Info.plist
+android/app/google-services.json
 *.tsbuildinfo
 
 # Vite

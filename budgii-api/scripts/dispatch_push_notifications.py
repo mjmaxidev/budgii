@@ -3,7 +3,7 @@
 
 Usage:
   cd budgii-api && python scripts/dispatch_push_notifications.py
-  docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/dispatch_push_notifications.py
+  docker compose run --rm --entrypoint python api scripts/dispatch_push_notifications.py
 """
 
 from __future__ import annotations

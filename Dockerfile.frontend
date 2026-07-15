@@ -14,14 +14,7 @@ RUN apt-get update \
     python3 \
   && rm -rf /var/lib/apt/lists/*
 
-ARG VITE_API_ENABLED=true
-ARG VITE_API_BASE_URL=http://localhost:18087/v1
-ARG VITE_SHOW_DEMO_TOOLS=false
-
-ENV VITE_API_ENABLED=$VITE_API_ENABLED \
-    VITE_API_BASE_URL=$VITE_API_BASE_URL \
-    VITE_SHOW_DEMO_TOOLS=$VITE_SHOW_DEMO_TOOLS \
-    PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY package.json package-lock.json ./
 RUN npm ci

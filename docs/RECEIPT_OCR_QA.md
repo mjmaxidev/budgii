@@ -17,7 +17,7 @@ Do not commit real personal receipt images.
 ## Setup
 
 ```bash
-RECEIPT_OCR_PROVIDER=openai docker compose -f docker-compose.dev.yml up --build
+RECEIPT_OCR_PROVIDER=openai docker compose up --build
 ```
 
 Confirm `.env` contains `OPENAI_API_KEY` and `RECEIPT_OPENAI_MODEL`.

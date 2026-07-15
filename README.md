@@ -16,52 +16,31 @@ npm run preview  # preview the production build
 Open in a narrow window or device toolbar — the UI is framed to a 375–440px phone
 width and centered as a device mockup on larger screens.
 
-To run the backend:
+To run the full stack:
 
 ```bash
-cp budgii-api/.env.example budgii-api/.env
-docker compose -f docker-compose.dev.yml up --build
+cp .env.backend.example .env.backend
+cp .env.frontend.example .env.frontend
+docker compose up --build
 ```
 
-For a staging deployment-style stack, use the staging compose file. It runs the
-frontend on `:18088`, the API in production mode on `:18087`, and keeps
-Postgres private on the Docker network instead of exposing common host ports like
-`3000`, `5173`, `8000`, `8001`, or `5432`. It also starts recurring and push
-worker services with configurable intervals.
-
-```bash
-budgii-api/scripts/create_server_env.sh
-docker compose --env-file .env.server -f docker-compose.staging.yml up --build -d
-# Frontend: http://SERVER_HOST:18088
-# API: http://SERVER_HOST:18087/v1/health
-```
+The frontend runs on `:8080`, the API on `:8001`, and Postgres remains private
+on the Docker network. The stack also starts recurring and push workers.
 
 Leave `INVITE_EMAIL_PROVIDER=log` until a real `INVITE_EMAIL_API_KEY` is set.
-Leave `PUSH_PROVIDER=log` until APNs/FCM delivery is implemented.
+Leave `PUSH_PROVIDER=log` until FCM credentials are configured and tested.
 Set `AUTH_LINK_BASE` to the public frontend origin so password reset and email
 verification links open the right app.
 Auth endpoints are rate-limited by default; tune `AUTH_RATE_LIMIT_REQUESTS` and
 `AUTH_RATE_LIMIT_WINDOW_SECONDS` per environment.
 
-Compose stack names are pinned in the files:
-`budgii-dev`, `budgii-staging`, and `budgii-production`. The root server compose
-is the production stack and defaults to `:28088` frontend / `:28087` API so it can
-run separately from staging.
-
-```bash
-cp budgii-api/.env.production.example .env.production.server
-docker compose --env-file .env.production.server -f docker-compose.production.yml up --build -d
-# Production frontend: http://SERVER_HOST:28088
-# Production API: http://SERVER_HOST:28087/v1/health
-```
-
 The server stacks include:
 
-- `recurring-worker`: applies due recurring expenses every `RECURRING_WORKER_INTERVAL_SECONDS`
-- `push-worker`: dispatches eligible push notifications every `PUSH_WORKER_INTERVAL_SECONDS`
+- `recurring-worker`: applies due recurring expenses hourly
+- `push-worker`: dispatches eligible push notifications every five minutes
 
 ```bash
-docker compose --env-file .env.server -f docker-compose.staging.yml logs -f recurring-worker push-worker
+docker compose logs -f recurring-worker push-worker
 ```
 
 The local dev login is `dev@mjproductions.app` / `password`. To fully reset and
@@ -70,6 +49,8 @@ reseed the local Docker dev database:
 ```bash
 budgii-api/scripts/reset_dev_db.sh --yes
 ```
+
+See [ROADMAP.md](ROADMAP.md) for current status and priorities.
 
 ## Checks
 
@@ -83,28 +64,28 @@ npm run lint
 npm run format:check
 npm run build
 
-docker compose -f docker-compose.dev.yml exec -T api scripts/lint.sh
-docker compose -f docker-compose.dev.yml exec -T -e RECEIPT_OCR_PROVIDER=deterministic api python -m pytest
+docker compose exec -T api scripts/lint.sh
+docker compose exec -T -e RECEIPT_OCR_PROVIDER=deterministic api python -m pytest
 ```
 
 To run due recurring transactions manually, for example from a cron/scheduler:
 
 ```bash
-docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py
-docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/apply_recurring.py --date 2026-07-09
+docker compose run --rm --entrypoint python api scripts/apply_recurring.py
+docker compose run --rm --entrypoint python api scripts/apply_recurring.py --date 2026-07-09
 ```
 
 To dispatch eligible push notifications manually:
 
 ```bash
-docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/dispatch_push_notifications.py
+docker compose run --rm --entrypoint python api scripts/dispatch_push_notifications.py
 ```
 
 To test the same scheduler loop locally:
 
 ```bash
-docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/run_scheduler.py recurring --once
-docker compose -f docker-compose.dev.yml run --rm --entrypoint python api scripts/run_scheduler.py push --once
+docker compose run --rm --entrypoint python api scripts/run_scheduler.py recurring --once
+docker compose run --rm --entrypoint python api scripts/run_scheduler.py push --once
 ```
 
 ## Desktop app (Electron)

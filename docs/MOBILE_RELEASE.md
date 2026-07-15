@@ -17,7 +17,7 @@
 ## Apple sign-in
 
 1. Enable Sign in with Apple for `app.mjproductions.budgii` in Apple Developer.
-2. Add the Sign in with Apple capability in Xcode. The iOS project is generated locally and intentionally ignored by Git.
+2. Add the Sign in with Apple capability in Xcode and commit the resulting entitlement/project changes.
 3. Create an Apple Services ID for web sign-in, register the production return URL, and set `APPLE_CLIENT_ID` to that identifier in the API runtime environment.
 4. Add native Apple sign-in after the Apple Developer identifiers are available; it requires the final team ID and entitlement profile.
 

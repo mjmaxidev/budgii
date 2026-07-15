@@ -5,7 +5,7 @@ Usage from the host:
   cd budgii-api && python scripts/seed_mock_data.py
 
 Usage from Docker Compose:
-  docker compose -f docker-compose.dev.yml exec api python scripts/seed_mock_data.py
+  docker compose exec api python scripts/seed_mock_data.py
 
 Defaults match the dev login form:
   dev@mjproductions.app / password

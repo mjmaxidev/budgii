@@ -66,15 +66,15 @@ if [ "$backend_changed" = "1" ]; then
   if command -v ruff >/dev/null 2>&1; then
     scripts/lint.sh
   elif command -v docker >/dev/null 2>&1; then
-    api_container="$(docker compose -f "$ROOT/docker-compose.dev.yml" ps -q api 2>/dev/null || true)"
+    api_container="$(docker compose -f "$ROOT/docker-compose.yml" ps -q api 2>/dev/null || true)"
     if [ -n "$api_container" ]; then
-      docker compose -f "$ROOT/docker-compose.dev.yml" exec -T api scripts/lint.sh
+      docker compose -f "$ROOT/docker-compose.yml" exec -T api scripts/lint.sh
     elif docker image inspect budgii-api-api:latest >/dev/null 2>&1; then
       docker run --rm --entrypoint ruff -v "$PWD:/app" -w /app budgii-api-api check .
       docker run --rm --entrypoint ruff -v "$PWD:/app" -w /app budgii-api-api format --check .
     else
       echo "Ruff is not installed and the backend Docker image is missing."
-      echo "Run: docker compose -f docker-compose.dev.yml build api"
+      echo "Run: docker compose build api"
       exit 1
     fi
   else

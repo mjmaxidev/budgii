@@ -1,4 +1,4 @@
-name: budgii-production
+name: budgii
 
 services:
   db:
@@ -7,25 +7,24 @@ services:
     env_file:
       - .env.backend
     volumes:
-      - server_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-budgii} -d ${POSTGRES_DB:-budgii}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-budgii} -d $${POSTGRES_DB:-budgii}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   api:
     build:
       context: ./budgii-api
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${SERVER_API_PORT:-28087}:8000"
     env_file:
       - .env.backend
+    ports:
+      - "8001:8000"
     volumes:
-      - server_receipt_uploads:/app/uploads
+      - receipt_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -40,38 +39,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_ENABLED: "true"
-        VITE_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:28087/v1}
-        VITE_SHOW_DEMO_TOOLS: ${VITE_SHOW_DEMO_TOOLS:-false}
     restart: unless-stopped
     ports:
-      - "${SERVER_FRONTEND_PORT:-28088}:8080"
+      - "8080:8080"
     depends_on:
       api:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   recurring-worker:
     build:
       context: ./budgii-api
       dockerfile: Dockerfile
     restart: unless-stopped
-    command:
-      [
-        "python",
-        "scripts/run_scheduler.py",
-        "recurring",
-        "--interval-seconds",
-        "${RECURRING_WORKER_INTERVAL_SECONDS:-3600}",
-      ]
     env_file:
       - .env.backend
+    command: ["python", "scripts/run_scheduler.py", "recurring", "--interval-seconds", "3600"]
     depends_on:
       api:
         condition: service_healthy
@@ -81,20 +63,13 @@ services:
       context: ./budgii-api
       dockerfile: Dockerfile
     restart: unless-stopped
-    command:
-      [
-        "python",
-        "scripts/run_scheduler.py",
-        "push",
-        "--interval-seconds",
-        "${PUSH_WORKER_INTERVAL_SECONDS:-300}",
-      ]
     env_file:
       - .env.backend
+    command: ["python", "scripts/run_scheduler.py", "push", "--interval-seconds", "300"]
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
-  server_postgres_data:
-  server_receipt_uploads:
+  postgres_data:
+  receipt_uploads:

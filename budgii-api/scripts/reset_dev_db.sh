@@ -12,7 +12,7 @@ fi
 
 cd "$(dirname "$0")/.."
 
-COMPOSE_FILE="${COMPOSE_FILE:-../docker-compose.dev.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-../docker-compose.yml}"
 
 docker compose -f "$COMPOSE_FILE" up -d db api
 docker compose -f "$COMPOSE_FILE" exec -T db psql -U budgii -d budgii -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
