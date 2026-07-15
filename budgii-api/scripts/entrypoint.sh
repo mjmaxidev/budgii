@@ -6,7 +6,7 @@ if [ "${BUDGII_RUN_MIGRATIONS:-true}" = "true" ]; then
 fi
 
 if [ "${BUDGII_DEV_SEED:-false}" = "true" ]; then
-  python scripts/seed_dev_user.py
+  python scripts/seed_mock_data.py
 fi
 
 if [ "$#" -gt 0 ]; then

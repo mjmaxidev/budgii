@@ -43,6 +43,7 @@ The server stacks include:
 docker compose logs -f recurring-worker push-worker
 ```
 
+Set `BUDGII_DEV_SEED=true` to load the full mock dataset when the API starts.
 The local dev login is `dev@mjproductions.app` / `password`. To fully reset and
 reseed the local Docker dev database:
 
