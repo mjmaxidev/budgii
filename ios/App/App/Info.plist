@@ -28,6 +28,10 @@
 	<string>Budgii uses the camera to capture receipt photos for item extraction.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Budgii lets you choose receipt photos from your library.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Budgii can save receipt photos to your library when requested.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Budgii may use the microphone when capturing receipt videos.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
