@@ -5,6 +5,7 @@ import { bootstrapSession } from '@/api/bootstrap'
 import { restoreAuthTokens } from '@/api/auth'
 import { startSyncEngine, stopSyncEngine } from '@/api/syncEngine'
 import { PageTransition } from '@/components/motion/PageTransition'
+import { LoginBrandLogo } from '@/components/auth/LoginBrandLogo'
 import { useAuthStore } from '@/store/authStore'
 import { registerNativePushToken } from '@/capacitor/push'
 
@@ -80,8 +81,9 @@ export function AuthGate() {
 
   if (!tokensRestored) {
     return (
-      <div className="flex min-h-full items-center justify-center px-6 text-center">
-        <p className="text-[14px] font-semibold text-muted">Loading Budgii...</p>
+      <div className="flex min-h-full flex-col items-center justify-center bg-bg px-6 text-center">
+        <LoginBrandLogo />
+        <p className="mt-5 text-[14px] font-semibold text-muted">Getting your budget ready…</p>
       </div>
     )
   }
