@@ -94,6 +94,12 @@ export async function registerAndCreateHousehold(
 
 export async function loginAndBootstrap(email: string, password: string): Promise<void> {
   await loginEmail(email, password)
+  const { households } = await listHouseholds()
+  if (households.length === 0) {
+    const user = await getMe()
+    const household = await createHousehold(`${user.name.trim() || 'My'}'s Household`)
+    useAuthStore.getState().setHouseholdId(household.id)
+  }
   await bootstrapSession()
 }
 

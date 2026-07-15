@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin'
 
 type StoredAuthTokens = {
   accessToken: string
@@ -8,11 +9,6 @@ type StoredAuthTokens = {
 const ACCESS_TOKEN_KEY = 'budgii.accessToken'
 const REFRESH_TOKEN_KEY = 'budgii.refreshToken'
 const WEB_TOKEN_KEY = 'budgii-auth-tokens'
-
-async function getSecureStorage() {
-  const { SecureStoragePlugin } = await import('capacitor-secure-storage-plugin')
-  return SecureStoragePlugin
-}
 
 function isNativeSecureStorage(): boolean {
   return Capacitor.isNativePlatform()
@@ -38,11 +34,8 @@ export async function loadStoredAuthTokens(): Promise<StoredAuthTokens | null> {
   }
 
   try {
-    const secureStorage = await getSecureStorage()
-    const [accessToken, refreshToken] = await Promise.all([
-      secureStorage.get({ key: ACCESS_TOKEN_KEY }),
-      secureStorage.get({ key: REFRESH_TOKEN_KEY }),
-    ])
+    const accessToken = await SecureStoragePlugin.get({ key: ACCESS_TOKEN_KEY })
+    const refreshToken = await SecureStoragePlugin.get({ key: REFRESH_TOKEN_KEY })
     return { accessToken: accessToken.value, refreshToken: refreshToken.value }
   } catch {
     return null
@@ -55,11 +48,8 @@ export async function saveStoredAuthTokens(tokens: StoredAuthTokens): Promise<vo
     return
   }
 
-  const secureStorage = await getSecureStorage()
-  await Promise.all([
-    secureStorage.set({ key: ACCESS_TOKEN_KEY, value: tokens.accessToken }),
-    secureStorage.set({ key: REFRESH_TOKEN_KEY, value: tokens.refreshToken }),
-  ])
+  await SecureStoragePlugin.set({ key: ACCESS_TOKEN_KEY, value: tokens.accessToken })
+  await SecureStoragePlugin.set({ key: REFRESH_TOKEN_KEY, value: tokens.refreshToken })
 }
 
 export async function clearStoredAuthTokens(): Promise<void> {
@@ -69,11 +59,8 @@ export async function clearStoredAuthTokens(): Promise<void> {
   }
 
   try {
-    const secureStorage = await getSecureStorage()
-    await Promise.all([
-      secureStorage.remove({ key: ACCESS_TOKEN_KEY }),
-      secureStorage.remove({ key: REFRESH_TOKEN_KEY }),
-    ])
+    await SecureStoragePlugin.remove({ key: ACCESS_TOKEN_KEY })
+    await SecureStoragePlugin.remove({ key: REFRESH_TOKEN_KEY })
   } catch {
     // Missing secure-storage keys are already cleared for session purposes.
   }
