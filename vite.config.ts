@@ -15,10 +15,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        // The app (index.html) and the QA studio (qa.html) are separate entry
-        // points sharing one source tree; QA embeds the app in an iframe.
+        // The app, QA studio, and public landing page ship as separate entries.
         main: path.resolve(__dirname, 'index.html'),
         qa: path.resolve(__dirname, 'qa.html'),
+        landing: path.resolve(__dirname, 'landing.html'),
       },
       output: {
         manualChunks(id) {
