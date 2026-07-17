@@ -18,7 +18,11 @@ export default defineConfig({
         // The app, QA studio, and public landing page ship as separate entries.
         main: path.resolve(__dirname, 'index.html'),
         qa: path.resolve(__dirname, 'qa.html'),
-        landing: path.resolve(__dirname, 'landing.html'),
+        landing: path.resolve(__dirname, 'website/index.html'),
+        privacy: path.resolve(__dirname, 'website/privacy/index.html'),
+        terms: path.resolve(__dirname, 'website/terms/index.html'),
+        accountDeletion: path.resolve(__dirname, 'website/delete-account/index.html'),
+        support: path.resolve(__dirname, 'website/support/index.html'),
       },
       output: {
         manualChunks(id) {
