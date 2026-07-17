@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'au.com.budgii.app',
+  appId: 'app.mjproductions.budgii',
   appName: 'Budgii',
   webDir: 'dist',
   plugins: {
