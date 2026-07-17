@@ -62,3 +62,4 @@ _archive/
 
 # Excluded per project preference
 build/
+capacitor.config.js

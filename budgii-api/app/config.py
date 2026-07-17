@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
+    @property
+    def google_client_ids(self) -> set[str]:
+        return {client_id.strip() for client_id in self.google_client_id.split(",") if client_id.strip()}
+
     def validate_runtime(self) -> None:
         if not self.is_production:
             return

@@ -52,7 +52,7 @@ export function Login() {
       await loginGoogleAndCreateHousehold(await signInWithGoogle(), 'Budgii user')
       navigate(from)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not sign in with Google')
+      setError(err instanceof Error ? err.message : 'Could not sign in with Google')
     } finally {
       setLoading(false)
     }

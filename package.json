@@ -30,6 +30,7 @@
     "android:build:debug": "npm run build && cap sync android && cd android && JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.3.0",
     "@capacitor/app": "^8.1.0",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/core": "^8.4.1",

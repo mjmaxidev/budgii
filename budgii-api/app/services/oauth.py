@@ -10,7 +10,7 @@ class OAuthVerificationError(Exception):
 
 
 async def verify_google_id_token(id_token: str, settings: Settings) -> tuple[str, str, str | None]:
-    if not settings.google_client_id:
+    if not settings.google_client_ids:
         raise OAuthVerificationError("Google Sign In is not configured")
 
     async with httpx.AsyncClient(timeout=10) as client:
@@ -22,7 +22,7 @@ async def verify_google_id_token(id_token: str, settings: Settings) -> tuple[str
         raise OAuthVerificationError("Invalid Google token")
 
     payload = response.json()
-    if payload.get("aud") != settings.google_client_id:
+    if payload.get("aud") not in settings.google_client_ids:
         raise OAuthVerificationError("Google token audience mismatch")
 
     email = payload.get("email")

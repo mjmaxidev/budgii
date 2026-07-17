@@ -32,6 +32,12 @@ def test_cors_origins_are_trimmed() -> None:
     assert settings.cors_origin_list == ["https://budgii.com.au", "capacitor://localhost"]
 
 
+def test_google_client_ids_are_trimmed() -> None:
+    settings = Settings(google_client_id=" web-client, ios-client ,, android-client ")
+
+    assert settings.google_client_ids == {"web-client", "ios-client", "android-client"}
+
+
 def test_production_requires_email_key_when_provider_enabled() -> None:
     settings = Settings(
         app_env="production",

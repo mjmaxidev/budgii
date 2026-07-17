@@ -1,9 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'app.mjproductions.budgii',
+  appId: 'au.com.budgii.app',
   appName: 'Budgii',
   webDir: 'dist',
+  plugins: {
+    FirebaseAuthentication: {
+      providers: ['google.com'],
+    },
+  },
   server: {
     // Use https scheme on Android so cookies/localStorage behave like a secure origin.
     androidScheme: 'https',

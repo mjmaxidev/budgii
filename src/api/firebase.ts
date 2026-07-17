@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -8,6 +10,14 @@ const config = {
 }
 
 export async function signInWithGoogle(): Promise<string> {
+  if (Capacitor.isNativePlatform()) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication')
+    const result = await FirebaseAuthentication.signInWithGoogle()
+    const idToken = result.credential?.idToken
+    if (!idToken) throw new Error('Google did not return an ID token')
+    return idToken
+  }
+
   const [{ getApp, getApps, initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup }] =
     await Promise.all([import('firebase/app'), import('firebase/auth')])
   const auth = getAuth(getApps().length ? getApp() : initializeApp(config))

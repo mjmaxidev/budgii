@@ -52,7 +52,7 @@ deploy: check-deploy-config
 	scp -i "$(SSH_KEY)" $(DEPLOY_DIR)/compose.yml $(SSH_USER)@$(SERVER):$(REMOTE_DIR)/compose.yml; \
 	scp -i "$(SSH_KEY)" $(BACKEND_ENV) $(SSH_USER)@$(SERVER):$(REMOTE_DIR)/.env.backend; \
 	ssh -i "$(SSH_KEY)" $(SSH_USER)@$(SERVER) \
-		'cd $(REMOTE_DIR) && mkdir -p data/postgres data/uploads && chmod 600 .env.backend && docker load --input budgii-images.tar && docker compose -f compose.yml up -d --no-build && docker compose -f compose.yml ps'
+		'cd $(REMOTE_DIR) && mkdir -p data/postgres data/uploads && chmod 600 .env.backend && docker load --input budgii-images.tar && docker compose -f compose.yml up -d --no-build --no-recreate db && docker compose -f compose.yml up -d --no-build --force-recreate --no-deps api frontend recurring-worker && docker compose -f compose.yml ps'
 
 deploy-frontend: check-deploy-config
 	@set -eu; \

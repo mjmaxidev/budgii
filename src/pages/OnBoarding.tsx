@@ -326,7 +326,7 @@ export function OnBoarding() {
             await loginGoogleAndCreateHousehold(idToken, name)
             navigate('/')
           } catch (err) {
-            setSubmitError(err instanceof ApiError ? err.message : 'Could not sign in with Google')
+            setSubmitError(err instanceof Error ? err.message : 'Could not sign in with Google')
           } finally {
             setSubmitting(false)
           }
