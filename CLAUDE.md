@@ -10,7 +10,7 @@ Budgii is a household budget tracking Electron + React app. It ships as two sepa
 ## Tech Stack
 
 - **React 18 + TypeScript** (strict)
-- **Vite 5** — two entry points: `index.html` (app) and `qa.html` (QA studio)
+- **Vite 5** — separate entry points: `index.html` (app), `qa/index.html` (QA studio), and `website/` (public site)
 - **React Router v6** (`createHashRouter` — required for Electron `file://`)
 - **Tailwind CSS v3** with a custom design token set (`bg`, `ink`, `muted`, `primary`, `line`, `surface`, etc.)
 - **Zustand** for global app state (`src/store/appStore.ts`)
@@ -23,10 +23,10 @@ Budgii is a household budget tracking Electron + React app. It ships as two sepa
 
 ```
 index.html  →  src/main.tsx         →  app router + pages (QA-unaware)
-qa.html     →  src/qa/qa-main.tsx   →  QAShell (iframe + sidebar + annotation)
+qa/index.html  →  qa/src/qa-main.tsx  →  QAShell (iframe + sidebar + annotation)
 ```
 
-The QA studio embeds the real app in an `<iframe src="./index.html#/path">`. Navigation happens via `frame.contentWindow.location.hash`. They share `localStorage` (same origin).
+The QA studio embeds the real app in an `<iframe src="../index.html#/path">`. Navigation happens via `frame.contentWindow.location.hash`. They share `localStorage` (same origin).
 
 ### Key directories
 
@@ -37,15 +37,14 @@ src/
   components/
     ui/          shared design system (ActionButton, Card, Modal, etc.)
     layout/      AppShell.tsx (per-screen shell with TopBar + BottomNav)
-    dev/         AnnotationLayer.tsx (red-pen overlay — QA only)
   store/         appStore.ts (Zustand)
-  qa/            QAShell, PageNavSidebar, pageManifest, tools (QA-only code)
 electron/
   main-app.cjs   Electron main for the app (390×844, phone window)
-  main-qa.cjs    Electron main for QA (1080×1000, wide window)
   dev-app.cjs    Dev launcher — Vite on 5173 + app Electron
-  dev-qa.cjs     Dev launcher — Vite on 5174 + QA Electron
   preload.cjs    Exposes window.budgetApp.isElectron
+qa/
+  src/           QA shell, page manifest, tools, and annotation overlay
+  electron/      QA Electron main process and dev launcher
 scripts/
   build-app-variant.cjs  Swaps main/appId/productName in package.json before electron-builder
 ```
@@ -62,7 +61,7 @@ All per-screen layout lives in `AppShell`. Bottom button bars must use `absolute
 
 - Hash-based (`createHashRouter`) — required for Electron
 - App router: only app routes. No `/qa` branch, no `MobileFrame`, no QA concerns.
-- QA sidebar nav is driven by `src/qa/pageManifest.ts` (pure data — no component imports).
+- QA sidebar nav is driven by `qa/src/pageManifest.ts` (pure data — no component imports).
 
 ## Electron Setup
 

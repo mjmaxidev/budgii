@@ -4,7 +4,8 @@ const path = require('path')
 // Set unique app ID so app and QA versions can run simultaneously
 app.setAppUserModelId('app.mjproductions.budgii.qa')
 
-const DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL || (process.env.ELECTRON_DEV ? 'http://localhost:5173' : '')
+const DEV_SERVER_URL =
+  process.env.VITE_DEV_SERVER_URL || (process.env.ELECTRON_DEV ? 'http://localhost:5173' : '')
 const isDev = !!DEV_SERVER_URL
 
 /** @type {BrowserWindow | null} */
@@ -21,7 +22,7 @@ function createWindow() {
     titleBarStyle: 'default',
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, '..', '..', 'electron', 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -29,10 +30,10 @@ function createWindow() {
   })
 
   if (isDev) {
-    mainWindow.loadURL(DEV_SERVER_URL + 'qa.html')
+    mainWindow.loadURL(DEV_SERVER_URL + 'qa/index.html')
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
-    const qaPath = path.join(__dirname, '..', 'dist', 'qa.html')
+    const qaPath = path.join(__dirname, '..', '..', 'dist', 'qa', 'index.html')
     mainWindow.loadURL(`file://${qaPath}`)
   }
 

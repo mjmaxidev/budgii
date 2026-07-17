@@ -111,8 +111,8 @@ npm run cap:android:run -- --target emulator-5554
 npm run android:build:debug
 ```
 
-The Electron shell lives in [electron/](electron/): `main-app.cjs` / `main-qa.cjs`,
-`preload.cjs`, and `dev-app.cjs` / `dev-qa.cjs` dev launchers.
+The app Electron shell lives in [electron/](electron/). The QA studio and its Electron
+launcher live together under [qa/](qa/).
 The app uses a **hash router** and **relative asset base** so the same build runs both in
 the browser and from `file://` inside Electron. Packaging is configured under the `build`
 field in `package.json` (electron-builder); output goes to `release/`.

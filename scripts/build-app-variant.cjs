@@ -17,7 +17,7 @@ if (!variant || !command) {
 // (localStorage) directory. The two can be installed and run side by side.
 const VARIANTS = {
   app: { main: 'electron/main-app.cjs', productName: 'Budgii', appId: 'app.mjproductions.budgii' },
-  qa: { main: 'electron/main-qa.cjs', productName: 'Budgii QA', appId: 'app.mjproductions.budgii.qa' },
+  qa: { main: 'qa/electron/main.cjs', productName: 'Budgii QA', appId: 'app.mjproductions.budgii.qa' },
 }
 
 const config = VARIANTS[variant]

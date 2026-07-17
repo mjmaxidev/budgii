@@ -5,19 +5,19 @@
   "type": "module",
   "description": "Budgii — Smart household budgeting for better financial futures",
   "author": "MJ Productions <dev@mjproductions.app>",
-  "main": "electron/main-qa.cjs",
+  "main": "qa/electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "lint": "eslint src vite.config.ts capacitor.config.ts",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,json,html}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.{js,ts,json,html}\"",
+    "lint": "eslint src qa/src vite.config.ts capacitor.config.ts",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"qa/**/*.{ts,tsx,html}\" \"*.{js,ts,json,html}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"qa/**/*.{ts,tsx,html}\" \"*.{js,ts,json,html}\"",
     "hooks:install": "git config core.hooksPath .githooks",
     "precommit": "RUN_ALL=1 scripts/precommit.sh",
     "build": "tsc -b && vite build",
     "smoke:routes": "node scripts/smoke-routes.mjs",
     "preview": "vite preview",
     "electron:dev:app": "node electron/dev-app.cjs",
-    "electron:dev:qa": "node electron/dev-qa.cjs",
+    "electron:dev:qa": "node qa/electron/dev.cjs",
     "electron:start:app": "node scripts/build-app-variant.cjs app start",
     "electron:start:qa": "node scripts/build-app-variant.cjs qa start",
     "electron:dist:app": "node scripts/build-app-variant.cjs app dist",
@@ -80,6 +80,7 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
+      "qa/electron/**/*",
       "package.json"
     ],
     "mac": {

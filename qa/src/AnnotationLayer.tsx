@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Eraser, MousePointer2, Pen, Trash2, Undo2 } from 'lucide-react'
 import { cn } from '@/utils/cn'
-import { AnnotationContext, useAnnotation, type AnnotationApi } from '@/components/dev/annotationContext'
+import { AnnotationContext, useAnnotation, type AnnotationApi } from './annotationContext'
 
 /**
  * Desktop-only "red pen" review overlay, styled to match the codexUI review studio.

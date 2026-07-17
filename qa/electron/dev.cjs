@@ -17,7 +17,7 @@ function launchElectron(url) {
   console.log(`\n[electron-qa] launching against ${url}\n`)
   const env = { ...process.env, VITE_DEV_SERVER_URL: url }
   delete env.ELECTRON_RUN_AS_NODE
-  electronProc = spawn(electron, ['electron/main-qa.cjs'], { stdio: 'inherit', env })
+  electronProc = spawn(electron, ['qa/electron/main.cjs'], { stdio: 'inherit', env })
   electronProc.on('close', () => shutdown(0))
 }
 
@@ -29,8 +29,12 @@ vite.stdout.on('data', (chunk) => {
 })
 
 function shutdown(code) {
-  try { vite.kill() } catch {}
-  try { electronProc && electronProc.kill() } catch {}
+  try {
+    vite.kill()
+  } catch {}
+  try {
+    electronProc && electronProc.kill()
+  } catch {}
   process.exit(code)
 }
 

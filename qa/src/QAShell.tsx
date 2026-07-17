@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AnnotationProvider, AnnotationToolbar } from '@/components/dev/AnnotationLayer'
+import { AnnotationProvider, AnnotationToolbar } from './AnnotationLayer'
 import { PageNavSidebar } from './PageNavSidebar'
 import { appPages } from './pageManifest'
 import { qaTools } from './tools'
@@ -68,7 +68,7 @@ export function QAShell() {
                 <iframe
                   ref={frameRef}
                   title="Budgii app preview"
-                  src={`./index.html#${DEFAULT_PATH}`}
+                  src={`../index.html#${DEFAULT_PATH}`}
                   className="h-full w-full border-0"
                 />
                 {activeTool && (

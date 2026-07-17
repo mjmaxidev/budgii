@@ -20,7 +20,7 @@ else
         frontend_changed=1
         backend_changed=1
         ;;
-      src/* | public/* | index.html | qa.html | vite.config.ts | capacitor.config.ts | \
+      src/* | qa/* | public/* | index.html | vite.config.ts | capacitor.config.ts | \
         tailwind.config.js | tailwind.config.ts | postcss.config.js | postcss.config.cjs | \
         eslint.config.js | eslint.config.mjs | tsconfig*.json | package.json | package-lock.json | \
         yarn.lock)

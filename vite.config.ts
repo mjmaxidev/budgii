@@ -17,7 +17,7 @@ export default defineConfig({
       input: {
         // The app, QA studio, and public landing page ship as separate entries.
         main: path.resolve(__dirname, 'index.html'),
-        qa: path.resolve(__dirname, 'qa.html'),
+        qa: path.resolve(__dirname, 'qa/index.html'),
         landing: path.resolve(__dirname, 'website/index.html'),
         privacy: path.resolve(__dirname, 'website/privacy/index.html'),
         terms: path.resolve(__dirname, 'website/terms/index.html'),
